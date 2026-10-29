@@ -2024,6 +2024,10 @@ Object.assign(PVK, (function(){
     V.show = n =>{ el.style.height = px(head + n * rowH); el.classList.toggle("pv-vt-2", n === 2);
       if(n >= 2) K.show(V.plus); if(n >= 3) K.show(V.line); };
     V.lightRow = (r, on)=> V.bands[r].classList.toggle("on", on !== false);
+    V.moveBy = (dy, ms)=>{ if(!dy) return K.wait(0); V.y += dy; PVSFX.move();
+      [el, V.plus, V.line].forEach(e => K.shift(e, 0, dy, ms));
+      V.rows.forEach(R =>{ R.y += dy; R.ghosts.forEach(g => K.shift(g, 0, dy, ms)); R.relayout(ms); });
+      return K.wait(ms); };
     V.ghosts = ()=> V.rows.flatMap(R => R.ghosts);
     return V;
   }
@@ -2082,7 +2086,7 @@ Object.assign(PVK, (function(){
 /* the stacked table's sizes: inside the tutorial card / under the header band (the three rows, a rod tall each, in the
    room each screen has); cards: the written sum's column (x, card height) */
 const PV_ADD_LAY = {
-  tut:  { cx: 540, y: 198, G: 19, rowH: 140, head: 42, cardX: 900, cardH: 74 },
+  tut:  { cx: 560, y: 118, G: 19, rowH: 136, head: 42, cardX: 970, cardH: 72 },   // (T2 has no heading - user 2026-10-29: the table grows into its room; bottom 586, clear of the → button)
   main: { cx: 500, y: 156, G: 18, rowH: 136, head: 44, cardX: 890, cardH: 74 }
 };
 /* the rows' middles of a stacked table (where the written sum's cards stand) */
@@ -2648,13 +2652,13 @@ const PVModules = {
     mount(host, slide){
       const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {};
       state.ownsAudio = true; setNavActive(false); setSwMood("teach"); pvReplay(C);
-      $("navBtn").style.left = "1090px";                                  // (the next button beside the written sum, clear of the blocks)
       const sum = d.mode === "sum", s = d.a + d.b, [P0, P1] = d.people;
-      const Y = sum ? [258, 390, 530] : [298, 464, 600], AV = sum ? 100 : 124, BH = sum ? 112 : 146, PX = 350, GX = 570, CX = 900;
-      const person = (p, y)=>{ const e = K.person(sc, p.who, p.name, PX, y - AV / 2, AV); e.classList.add("pv-tag"); return e; };
+      const Y = sum ? [250, 378, 508] : [298, 464, 600], AV = sum ? 100 : 124, BH = sum ? 108 : 146, PX = 350, GX = 570, CX = 900;
+      const person = (p, y)=>{ const e = K.person(sc, p.who, "", PX, y - AV / 2, AV); e.classList.add("pv-tag"); return e; };   // (no names on T1 / T3 - user 2026-10-29)
       const pA = person(P0, Y[0]), pB = person(P1, Y[1]);
       const gA = K.group(sc, d.a, GX, Y[0] + BH / 2, BH, 4).make(), gB = K.group(sc, d.b, GX, Y[1] + BH / 2, BH, 4).make();
-      const W = K.vcards(sc, d.a, d.b, CX, Y, sum ? 84 : 92);
+      /* the written sum close together (user 2026-10-29 "reduce the space between 23 and 14"), centred on the rows */
+      const CH = 84, cy = sum ? (Y[0] + Y[2]) / 2 : (Y[0] + Y[1]) / 2 + 50, W = K.vcards(sc, d.a, d.b, CX, [cy - CH - 16, cy, cy + CH + 26], CH);
       /* a name said: that child's portrait lights (and comes in, the first time) */
       const hl = who =>{ const e = who === P1.who ? pB : pA; if(e.classList.contains("pv-hide")){ K.show(e); sfxPop(); }
         e.classList.remove("pv-person-hl"); void e.offsetWidth; e.classList.add("pv-person-hl"); };
@@ -2701,10 +2705,16 @@ const PVModules = {
     mount(host, slide){
       const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {}, L = PV_ADD_LAY.tut;
       state.ownsAudio = true; setNavActive(false); setSwMood("teach"); pvReplay(C);
-      $("navBtn").style.left = "1090px";
       const A = pvSplit(d.a), B = pvSplit(d.b);
-      const V = K.vtable(sc, L), [R0, R1, S] = V.rows; V.el.classList.add("pv-hide"); V.show(1);
+      /* the table stays centred on MID (user 2026-10-29): it starts in the middle with its first row and moves up as each row
+         is added below it - the written sum and the + buttons move with it */
+      const MID = L.y + (L.head + 3 * L.rowH) / 2, topFor = n => Math.round(MID - (L.head + n * L.rowH) / 2);
+      const V = K.vtable(sc, Object.assign({}, L, { y: topFor(1) })), [R0, R1, S] = V.rows; V.el.classList.add("pv-hide"); V.show(1);
       const W = K.vcards(sc, d.a, d.b, L.cardX, pvAddYs(V), L.cardH); W.all().forEach(e => e.classList.add("pv-hide"));
+      let src = null;
+      const grow = n =>{ const dy = topFor(n) - V.y; V.show(n);
+        if(src && src.bar.isConnected) K.glide(src.bar, { x: src.bar._x, y: topFor(n) + L.head + n * L.rowH + 16 }, 600, false);   // (the + buttons stay under the table)
+        return Promise.all([V.moveBy(dy, 600), W.place(L.cardX, pvAddYs(V), L.cardH, 600)]); };
       const digits = (card, role)=>{ const c = CU[role] || { t: .4, o: .7 };
         return C.cue(role, [[c.t, ()=>{ K.lightDigit(card, "t"); K.beat([V.th], 0); }], [c.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o"); K.beat([V.oh], 0); }]])
           .then(()=>{ K.lightDigit(card, "o", false); }); };
@@ -2717,19 +2727,20 @@ const PVModules = {
         await H.tap({ x: V.cx, y: R0.mid() }); H.off();
         K.show(V.el); V.lightRow(0); PVSFX.appear(); await C.wait(300); K.show(W.a); sfxPop();
         await digits(W.a, "r1");
-        const src = K.sources(sc, { x: V.x, W: V.W, G: V.G }, S.y + 18);
+        src = K.sources(sc, { x: V.x, W: V.W, G: V.G }, V.y + V.head + V.rowH + 16);
         src.show(); [src.t, src.o].forEach(g => g.classList.add("demo", "off"));
         await Promise.all([C.say("tens"), C.wait(600).then(()=> K.demoAdd(C, H, src.t, R0, A.t, "t"))]);
         await Promise.all([C.say("ones"), C.wait(600).then(()=> K.demoAdd(C, H, src.o, R0, A.o, "o"))]);
         H.off(); V.lightRow(0, false);
-        V.show(2); V.lightRow(1); K.show(W.plus); K.show(W.b); sfxPop();
+        await grow(2); C.guard(); V.lightRow(1); K.show(W.plus); K.show(W.b); sfxPop();
         await digits(W.b, "r2");
         [src.t, src.o].forEach(g => g.classList.remove("demo", "off", "pv-done"));
         await C.say("build");
         await K.childBuild(C, R1, d.b, src); C.guard();
         GameBus.emit("pv_build_done", { slide_id: slide.id });
         V.lightRow(1, false);
-        await C.cue("go", [[0.45, ()=>{ src.fade(); }], [0.7, ()=>{ V.show(3); K.show(W.line); K.show(W.q); sfxPop(); }]]);
+        await C.cue("go", [[0.45, ()=>{ src.fade(); }], [0.7, ()=>{ grow(3).then(()=>{ if(C.alive()){ K.show(W.line); K.show(W.q); sfxPop(); } }); }]]);
+        await C.wait(650); C.guard();
         await C.say("o_add"); await K.moveKind(C, V, "o");
         await pvAddSumLine(C, V, "o", "o_sum");
         await C.say("t_add"); await K.moveKind(C, V, "t");
@@ -3195,7 +3206,8 @@ const PVLanding = {
       '<div class="sgp-bcast" style="transform-origin:' + L.MID + 'px ' + foot + 'px">' + casts + '</div>' +
       '<i class="sgp-bshd" style="left:' + (bx0 - 6) + 'px;width:' + (bx1 - bx0 + 12) + 'px;top:' + (foot - 7) + 'px"></i>' +
       pieces + kid(h.people[0], 0) + kid(h.people[1], 1) +
-      (kind === "addv" ? '<div class="sgp-vsum"><span class="vs-n">' + h.a + '</span><span class="vs-n"><i>+</i>' + h.b + '</span><i class="vs-line"></i><span class="vs-n vs-q">?</span></div>' : "") +
+      (kind === "addv" ? '<div class="sgp-vsum"><span class="vs-n">' + [...String(h.a)].map(c => '<b>' + c + '</b>').join("") + '</span><span class="vs-n"><i>+</i>' +
+        [...String(h.b)].map(c => '<b>' + c + '</b>').join("") + '</span><i class="vs-line"></i><span class="vs-n vs-q">?</span></div>' : "") +   // (each digit its own box - user 2026-10-29)
       '</div>';
   },
   intro(){

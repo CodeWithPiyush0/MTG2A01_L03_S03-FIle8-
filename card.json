@@ -340,7 +340,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "PV_ADD_DEMO",
-   "prompt_hi": "आइए, 23 और 14 को जोड़ते हैं।",
+   "prompt_hi": "",
    "audio": {
     "head": "vo_t2_head",
     "intro": "vo_t2_intro",
@@ -398,7 +398,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_ADD",
-   "prompt_hi": "कुल कितने ब्लॉक्स?",
+   "prompt_hi": "",
    "audio": {
     "eq": "vo_t3_eq",
     "tot": "vo_t3_tot"

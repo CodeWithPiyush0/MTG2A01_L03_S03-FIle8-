@@ -56,7 +56,7 @@ slides.append({
 
 # deck page 3 - 23 + 14 in the stacked table: Swiftee builds 23, the child builds 14, the child moves the ones, then the tens
 slides.append({
-    "id": "T2", "phase": "tutorial", "eis": "iconic", "type": "PV_ADD_DEMO", "prompt_hi": "आइए, 23 और 14 को जोड़ते हैं।",
+    "id": "T2", "phase": "tutorial", "eis": "iconic", "type": "PV_ADD_DEMO", "prompt_hi": "",   # (no heading text - user 2026-10-29; its line is still said)
     "audio": {"head": vo("vo_t2_head", "आइए, 23 और 14 को जोड़ते हैं।"),
               "intro": vo("vo_t2_intro", "सबसे पहले ब्लॉक्स की सहायता से दोनों संख्याएँ बनाते हैं।"),
               "r1": vo("vo_t2_r1", "23 में 2 दहाई और 3 इकाई हैं।"),
@@ -75,7 +75,7 @@ slides.append({
 
 # deck page 4 - replaced: "कुल कितने ब्लॉक्स?" again - their blocks come together, 23 / + 14 / 37
 slides.append({
-    "id": "T3", "phase": "tutorial", "eis": "iconic", "type": "STORY_ADD", "prompt_hi": "कुल कितने ब्लॉक्स?",
+    "id": "T3", "phase": "tutorial", "eis": "iconic", "type": "STORY_ADD", "prompt_hi": "",   # (no heading - user 2026-10-29)
     "audio": {"eq": vo("vo_t3_eq", "23 जोड़ 14 बराबर 37"),
               "tot": vo("vo_t3_tot", "आकाश और मोनी के पास कुल मिलाकर 37 ब्लॉक्स हैं।")},
     "data": {"mode": "sum", "a": 23, "b": 14, "people": PEOPLE}})

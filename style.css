@@ -2471,3 +2471,20 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 .gm-act .gm-eq em{font-style:normal;transition:opacity .3s;}
 /* data.no_head (the game): no header band, no header Swiftie - the garden fills the stage */
 .stage.no-head .header-row,.stage.no-head .mascot-wrap{display:none !important;}
+
+/* each digit of the written sum in its own box, tens over tens and ones over ones (user 2026-10-29: "2 3 / + 1 4"):
+   the card itself goes (no frame), its digits (.pv-d, numHTML) become the boxes. The "?" stays one box until the answer
+   fills it; then its digits are boxes too, green */
+.pv-num.pv-vc:not(.pv-q),.pv-num.pv-vc.pv-q.filled{background:none;border:none;box-shadow:none;padding:0;gap:.12em;}
+.pv-vc:not(.pv-q) .pv-d,.pv-vc.pv-q.filled .pv-d{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:1.08em;height:1.4em;
+  border-radius:.28em;background:#fff;border:3px solid #D5D8DF;box-shadow:0 4px 0 #D9D9D9;}
+.pv-vc.pv-q.filled .pv-d{border:4px solid #00B132;background:#EFFBF2;box-shadow:0 4px 0 #A8E3B9,0 0 6px #00B132;}
+.pv-vc .pv-d.hl-t{scale:1.1;color:#2E7D0F;background:#E7F6DC;border-color:#3E9B16;text-shadow:none;}
+.pv-vc .pv-d.hl-o{scale:1.1;color:#E07800;background:#FFF1D8;border-color:#F08A00;text-shadow:none;}
+.pv-vc.pv-say{animation:none;}
+.pv-vc.pv-say .pv-d{animation:pvSay .75s ease-in-out 1;}
+/* the cover's written sum: the same boxes */
+.sgp-vsum .vs-n{letter-spacing:0;gap:6px;}
+.sgp-vsum .vs-n b{display:flex;align-items:center;justify-content:center;width:40px;height:48px;box-sizing:border-box;border-radius:11px;background:#fff;
+  border:2.5px solid #D5D8DF;box-shadow:0 3px 0 #D9D9D9;font-weight:800;}
+.sgp-vsum .vs-q{min-width:86px;height:48px;box-sizing:border-box;}

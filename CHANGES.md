@@ -125,3 +125,17 @@ close to "Baby") and `vo_p1_correct_late` (इकसठ was slurred). Listen fir
   lesson_completed (+ phase_transition, pv_block_added, pv_merge_done, answer_wrong).
 - Each screen captured and read; help ladders exercised to the 3rd step on G2, P1 (cards) and P2 (keypad).
 - Taps were simulated by script (element clicks). A human play-through on a tablet is still the final touch test.
+
+## User changes (2026-10-29)
+| # | Change | Status | Proof |
+|---|---|---|---|
+| U1 | The → button placed as in File7 | ✅ DONE | the per-page override is gone: bottom centre on the tutorial pages (File7's CSS). The T2 table was made compact (its bottom at 588, the button's top at ~599) and T3's rows moved up, so nothing sits under it — captures T1, T2 (end), T3 |
+| U2 | Page 1: no names of the kids | ✅ DONE | T1 portraits without names (T3 keeps them) — capture T1 |
+| U3 | Each page: every digit in its own box (2 3 / + 1 4 / line) | ✅ DONE | the written sum on every page (T1–T3, G1–G4, P1–P3) and the cover; the "?" stays one box and fills as digit boxes; lit digits light their own box — captures cover, T1, T2, T3, G1, P2 |
+| U4 | Less space between 23 and 14 | ✅ DONE | T1 / T3: the written sum is one compact block beside the rows (it no longer follows the rows' spacing); the table pages keep each card level with its row — captures T1, T3 |
+| U5 | T2 and T3: no heading | ✅ DONE | prompt_hi "" on both; T2's heading line is still spoken (only the text is gone) — captures T2, T3 |
+| U6 | Digit boxes closer: gap 0.12em | ✅ DONE | `.pv-num.pv-vc` gap .16em → .12em (every page) |
+| U7 | T3: no names of the characters | ✅ DONE | T3 portraits without names — capture T3 |
+| U8 | T2: a bigger table | ✅ DONE | blocks 16.5 → 20.5 px wide, rows 118 → 146 px; the table now starts where the heading was and still ends above the → button (586) — captures T2 at 24 s / end |
+| U9 | T2: the table a little smaller | ✅ DONE | blocks 20.5 → 19 px, rows 146 → 136 px; it now sits a little lower with more room above it and above the → button — capture T2 end |
+| U10 | T2: the table starts in the centre and moves up as each row is added below | ✅ DONE | `vtable.moveBy`; T2 keeps the table centred: row 1 in the middle, it glides up half a row as row 2, then the sum row come in; the written sum and the + buttons move with it (the + buttons stay under the table) — captures T2 at 14 / 25 / 36 / 86 s |
