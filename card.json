@@ -1,0 +1,948 @@
+{
+ "version": "0.2",
+ "skill_code": "MTG2A01_L03_S03",
+ "lo_code": "MTG2A01_L03",
+ "grade": "G2",
+ "attribute": "A01",
+ "skill_type": "CORE",
+ "part_label": "",
+ "theme": "toybox",
+ "title": {
+  "hi": "संख्याओं का जोड़",
+  "en": "Adds vertically without regrouping"
+ },
+ "landing_hero": {
+  "kind": "pv_story",
+  "people": [
+   "akash",
+   "moni"
+  ],
+  "build": "addv",
+  "title_look": "wall",
+  "start_at": 0,
+  "a": 23,
+  "b": 14,
+  "beats": {
+   "glide": 0.28,
+   "drop": 1.3,
+   "a": 2.58,
+   "b": 2.99,
+   "q": 3.81,
+   "cheer": 4.28,
+   "end": 4.89
+  }
+ },
+ "skill_description_hi": "दो अंकों की दो संख्याओं को ऊपर-नीचे लिखकर (बिना हासिल के) जोड़ता है: पहले इकाई, फिर दहाई।",
+ "phase_distribution": {
+  "tutorial": 3,
+  "guided": 4,
+  "practice": 5
+ },
+ "scaffold_rules": {
+  "nudge_timeout_ms": {
+   "tutorial": 7000,
+   "guided": 7000,
+   "practice": 7000,
+   "independent": 7000
+  },
+  "max_attempts": 3
+ },
+ "signals_expected": [
+  "slide_entered",
+  "slide_completed",
+  "pv_build_done",
+  "pv_block_moved",
+  "mcq_correct",
+  "numpad_correct",
+  "game_check",
+  "mastery_score",
+  "lesson_completed"
+ ],
+ "assets": {
+  "audio_ext": "ogg",
+  "img_ext": "webp",
+  "audio": {
+   "sfx_celebrate": "assets/voiceover/sfx_celebrate.ogg",
+   "vo_ask_pick": "assets/voiceover/vo_ask_pick.ogg",
+   "vo_ask_pick2": "assets/voiceover/vo_ask_pick2.ogg",
+   "vo_ask_type": "assets/voiceover/vo_ask_type.ogg",
+   "vo_cel": "assets/voiceover/vo_cel.ogg",
+   "vo_g1_correct": "assets/voiceover/vo_g1_correct.ogg",
+   "vo_g1_go": "assets/voiceover/vo_g1_go.ogg",
+   "vo_g1_intro": "assets/voiceover/vo_g1_intro.ogg",
+   "vo_g1_o_add": "assets/voiceover/vo_g1_o_add.ogg",
+   "vo_g1_o_sum": "assets/voiceover/vo_g1_o_sum.ogg",
+   "vo_g1_r1": "assets/voiceover/vo_g1_r1.ogg",
+   "vo_g1_r2": "assets/voiceover/vo_g1_r2.ogg",
+   "vo_g1_t_add": "assets/voiceover/vo_g1_t_add.ogg",
+   "vo_g1_t_sum": "assets/voiceover/vo_g1_t_sum.ogg",
+   "vo_g1_total": "assets/voiceover/vo_g1_total.ogg",
+   "vo_g2_correct": "assets/voiceover/vo_g2_correct.ogg",
+   "vo_g2_correct_late": "assets/voiceover/vo_g2_correct_late.ogg",
+   "vo_g2_h2": "assets/voiceover/vo_g2_h2.ogg",
+   "vo_g2_prompt": "assets/voiceover/vo_g2_prompt.ogg",
+   "vo_g3_correct": "assets/voiceover/vo_g3_correct.ogg",
+   "vo_g3_correct_late": "assets/voiceover/vo_g3_correct_late.ogg",
+   "vo_g3_h2": "assets/voiceover/vo_g3_h2.ogg",
+   "vo_g3_prompt": "assets/voiceover/vo_g3_prompt.ogg",
+   "vo_g4_correct": "assets/voiceover/vo_g4_correct.ogg",
+   "vo_g4_correct_late": "assets/voiceover/vo_g4_correct_late.ogg",
+   "vo_g4_h2": "assets/voiceover/vo_g4_h2.ogg",
+   "vo_g4_prompt": "assets/voiceover/vo_g4_prompt.ogg",
+   "vo_gm1_build_a": "assets/voiceover/vo_gm1_build_a.ogg",
+   "vo_gm1_build_b": "assets/voiceover/vo_gm1_build_b.ogg",
+   "vo_gm1_done": "assets/voiceover/vo_gm1_done.ogg",
+   "vo_gm1_intro": "assets/voiceover/vo_gm1_intro.ogg",
+   "vo_gm1_ok_a": "assets/voiceover/vo_gm1_ok_a.ogg",
+   "vo_gm1_ok_b": "assets/voiceover/vo_gm1_ok_b.ogg",
+   "vo_gm1_ones": "assets/voiceover/vo_gm1_ones.ogg",
+   "vo_gm1_total": "assets/voiceover/vo_gm1_total.ogg",
+   "vo_gm2_build_a": "assets/voiceover/vo_gm2_build_a.ogg",
+   "vo_gm2_build_b": "assets/voiceover/vo_gm2_build_b.ogg",
+   "vo_gm2_done": "assets/voiceover/vo_gm2_done.ogg",
+   "vo_gm2_intro": "assets/voiceover/vo_gm2_intro.ogg",
+   "vo_gm2_ok_a": "assets/voiceover/vo_gm2_ok_a.ogg",
+   "vo_gm2_ok_b": "assets/voiceover/vo_gm2_ok_b.ogg",
+   "vo_gm2_ones": "assets/voiceover/vo_gm2_ones.ogg",
+   "vo_gm2_total": "assets/voiceover/vo_gm2_total.ogg",
+   "vo_gm3_build_a": "assets/voiceover/vo_gm3_build_a.ogg",
+   "vo_gm3_build_b": "assets/voiceover/vo_gm3_build_b.ogg",
+   "vo_gm3_done": "assets/voiceover/vo_gm3_done.ogg",
+   "vo_gm3_intro": "assets/voiceover/vo_gm3_intro.ogg",
+   "vo_gm3_ok_a": "assets/voiceover/vo_gm3_ok_a.ogg",
+   "vo_gm3_ok_b": "assets/voiceover/vo_gm3_ok_b.ogg",
+   "vo_gm3_ones": "assets/voiceover/vo_gm3_ones.ogg",
+   "vo_gm3_total": "assets/voiceover/vo_gm3_total.ogg",
+   "vo_gm4_build_a": "assets/voiceover/vo_gm4_build_a.ogg",
+   "vo_gm4_build_b": "assets/voiceover/vo_gm4_build_b.ogg",
+   "vo_gm4_done": "assets/voiceover/vo_gm4_done.ogg",
+   "vo_gm4_intro": "assets/voiceover/vo_gm4_intro.ogg",
+   "vo_gm4_ok_a": "assets/voiceover/vo_gm4_ok_a.ogg",
+   "vo_gm4_ok_b": "assets/voiceover/vo_gm4_ok_b.ogg",
+   "vo_gm4_ones": "assets/voiceover/vo_gm4_ones.ogg",
+   "vo_gm4_total": "assets/voiceover/vo_gm4_total.ogg",
+   "vo_gm_add": "assets/voiceover/vo_gm_add.ogg",
+   "vo_gm_final": "assets/voiceover/vo_gm_final.ogg",
+   "vo_gm_next": "assets/voiceover/vo_gm_next.ogg",
+   "vo_gm_tens": "assets/voiceover/vo_gm_tens.ogg",
+   "vo_gm_w1": "assets/voiceover/vo_gm_w1.ogg",
+   "vo_gm_w2": "assets/voiceover/vo_gm_w2.ogg",
+   "vo_gm_w3": "assets/voiceover/vo_gm_w3.ogg",
+   "vo_h1_pick": "assets/voiceover/vo_h1_pick.ogg",
+   "vo_h1_type": "assets/voiceover/vo_h1_type.ogg",
+   "vo_idle_build_o": "assets/voiceover/vo_idle_build_o.ogg",
+   "vo_idle_build_t": "assets/voiceover/vo_idle_build_t.ogg",
+   "vo_landing": "assets/voiceover/vo_landing.ogg",
+   "vo_p1_correct": "assets/voiceover/vo_p1_correct.ogg",
+   "vo_p1_correct_late": "assets/voiceover/vo_p1_correct_late.ogg",
+   "vo_p1_h1": "assets/voiceover/vo_p1_h1.ogg",
+   "vo_p2_correct": "assets/voiceover/vo_p2_correct.ogg",
+   "vo_p2_correct_late": "assets/voiceover/vo_p2_correct_late.ogg",
+   "vo_p2_h1": "assets/voiceover/vo_p2_h1.ogg",
+   "vo_p2_prompt": "assets/voiceover/vo_p2_prompt.ogg",
+   "vo_p3_correct": "assets/voiceover/vo_p3_correct.ogg",
+   "vo_p3_correct_late": "assets/voiceover/vo_p3_correct_late.ogg",
+   "vo_p3_h1": "assets/voiceover/vo_p3_h1.ogg",
+   "vo_p3_prompt": "assets/voiceover/vo_p3_prompt.ogg",
+   "vo_pt_guided": "assets/voiceover/vo_pt_guided.ogg",
+   "vo_pt_practice": "assets/voiceover/vo_pt_practice.ogg",
+   "vo_pt_tutorial": "assets/voiceover/vo_pt_tutorial.ogg",
+   "vo_t1_a": "assets/voiceover/vo_t1_a.ogg",
+   "vo_t1_ask": "assets/voiceover/vo_t1_ask.ogg",
+   "vo_t1_b": "assets/voiceover/vo_t1_b.ogg",
+   "vo_t2_build": "assets/voiceover/vo_t2_build.ogg",
+   "vo_t2_done": "assets/voiceover/vo_t2_done.ogg",
+   "vo_t2_go": "assets/voiceover/vo_t2_go.ogg",
+   "vo_t2_head": "assets/voiceover/vo_t2_head.ogg",
+   "vo_t2_intro": "assets/voiceover/vo_t2_intro.ogg",
+   "vo_t2_o_add": "assets/voiceover/vo_t2_o_add.ogg",
+   "vo_t2_o_sum": "assets/voiceover/vo_t2_o_sum.ogg",
+   "vo_t2_ones": "assets/voiceover/vo_t2_ones.ogg",
+   "vo_t2_r1": "assets/voiceover/vo_t2_r1.ogg",
+   "vo_t2_r2": "assets/voiceover/vo_t2_r2.ogg",
+   "vo_t2_t_add": "assets/voiceover/vo_t2_t_add.ogg",
+   "vo_t2_t_sum": "assets/voiceover/vo_t2_t_sum.ogg",
+   "vo_t2_tens": "assets/voiceover/vo_t2_tens.ogg",
+   "vo_t2_total": "assets/voiceover/vo_t2_total.ogg",
+   "vo_t3_eq": "assets/voiceover/vo_t3_eq.ogg",
+   "vo_t3_tot": "assets/voiceover/vo_t3_tot.ogg"
+  },
+  "audio_text": {
+   "vo_ask_pick": "सही जोड़ चुनिए।",
+   "vo_ask_pick2": "बहुत बढ़िया! अब सही जोड़ चुनिए।",
+   "vo_ask_type": "सही जोड़ टाइप करिए।",
+   "vo_cel": "शाबाश! अब आप ऊपर-नीचे लिखकर जोड़ सकते हैं। याद रखिए — जोड़ हमेशा इकाई से शुरू होता है।",
+   "vo_g1_correct": "शाबाश! 34 और 25 को जोड़ने पर 59 मिलता है।",
+   "vo_g1_go": "बहुत बढ़िया! अब दोनों संख्याओं को जोड़ते हैं।",
+   "vo_g1_intro": "पहले ब्लॉक्स की सहायता से दोनों संख्याएँ बनाते हैं।",
+   "vo_g1_o_add": "पहले इकाइयों को जोड़ते हैं।",
+   "vo_g1_o_sum": "4 इकाई और 5 इकाई मिलाकर हुईं, 9 इकाई।",
+   "vo_g1_r1": "34 में 3 दहाई और 4 इकाई हैं। ब्लॉक्स की सहायता से 34 बनाइए।",
+   "vo_g1_r2": "25 में 2 दहाई और 5 इकाई हैं। ब्लॉक्स की सहायता से 25 बनाइए।",
+   "vo_g1_t_add": "अब दहाइयों को जोड़ते हैं।",
+   "vo_g1_t_sum": "3 दहाई और 2 दहाई मिलाकर हुईं, 5 दहाई।",
+   "vo_g1_total": "अब हमारे पास कुल 5 दहाइयाँ और 9 इकाइयाँ हैं, यानी 59",
+   "vo_g2_correct": "शाबाश! 42 और 35 का जोड़ 77 है।",
+   "vo_g2_correct_late": "42 और 35 का जोड़ 77 है।",
+   "vo_g2_h2": "ध्यान से देखिए, कुल 7 दहाइयाँ और 7 इकाइयाँ हैं।",
+   "vo_g2_prompt": "42 और 35 को जोड़िए।",
+   "vo_g3_correct": "शाबाश! 56 और 33 का जोड़ 89 है।",
+   "vo_g3_correct_late": "56 और 33 का जोड़ 89 है।",
+   "vo_g3_h2": "ध्यान से देखिए, कुल 8 दहाइयाँ और 9 इकाइयाँ हैं।",
+   "vo_g3_prompt": "56 और 33 को जोड़िए।",
+   "vo_g4_correct": "शाबाश! 47 और 21 का जोड़ 68 है।",
+   "vo_g4_correct_late": "47 और 21 का जोड़ 68 है।",
+   "vo_g4_h2": "ध्यान से देखिए, कुल 6 दहाइयाँ और 8 इकाइयाँ हैं।",
+   "vo_g4_prompt": "47 और 21 को जोड़िए और सही जोड़ टाइप करिए।",
+   "vo_gm1_build_a": "पहले बीबी के लिए 2 दहाई और 5 इकाई बनाइए।",
+   "vo_gm1_build_b": "अब जॉनी के लिए 1 दहाई और 2 इकाई बनाइए।",
+   "vo_gm1_done": "वाह! 37 ब्लॉक्स से बीबी और जॉनी की पहली एक्टिविटी पूरी हो गई!",
+   "vo_gm1_intro": "बीबी और जॉनी ब्लॉक्स से एक्टिविटी कर रहे हैं। बीबी को 25 और जॉनी को 12 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
+   "vo_gm1_ok_a": "शाबाश! बीबी के 25 ब्लॉक्स तैयार हैं।",
+   "vo_gm1_ok_b": "बहुत बढ़िया! जॉनी के 12 ब्लॉक्स भी तैयार हैं।",
+   "vo_gm1_ones": "5 इकाई और 2 इकाई जोड़िए।",
+   "vo_gm1_total": "बहुत बढ़िया! 3 दहाई और 7 इकाई, यानी 37 ब्लॉक्स।",
+   "vo_gm2_build_a": "पहले बीबी के लिए 1 दहाई और 3 इकाई बनाइए।",
+   "vo_gm2_build_b": "अब जॉनी के लिए 5 दहाई और 5 इकाई बनाइए।",
+   "vo_gm2_done": "वाह! 68 ब्लॉक्स से बीबी और जॉनी की दूसरी एक्टिविटी पूरी हो गई!",
+   "vo_gm2_intro": "अब बीबी को 13 और जॉनी को 55 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
+   "vo_gm2_ok_a": "शाबाश! बीबी के 13 ब्लॉक्स तैयार हैं।",
+   "vo_gm2_ok_b": "बहुत बढ़िया! जॉनी के 55 ब्लॉक्स भी तैयार हैं।",
+   "vo_gm2_ones": "3 इकाई और 5 इकाई जोड़िए।",
+   "vo_gm2_total": "बहुत बढ़िया! 6 दहाई और 8 इकाई, यानी 68 ब्लॉक्स।",
+   "vo_gm3_build_a": "पहले बीबी के लिए 3 दहाई और 1 इकाई बनाइए।",
+   "vo_gm3_build_b": "अब जॉनी के लिए 4 दहाई और 5 इकाई बनाइए।",
+   "vo_gm3_done": "वाह! 76 ब्लॉक्स से बीबी और जॉनी की तीसरी एक्टिविटी पूरी हो गई!",
+   "vo_gm3_intro": "अब बीबी को 31 और जॉनी को 45 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
+   "vo_gm3_ok_a": "शाबाश! बीबी के 31 ब्लॉक्स तैयार हैं।",
+   "vo_gm3_ok_b": "बहुत बढ़िया! जॉनी के 45 ब्लॉक्स भी तैयार हैं।",
+   "vo_gm3_ones": "1 इकाई और 5 इकाई जोड़िए।",
+   "vo_gm3_total": "बहुत बढ़िया! 7 दहाई और 6 इकाई, यानी 76 ब्लॉक्स।",
+   "vo_gm4_build_a": "पहले बीबी के लिए 4 दहाई और 2 इकाई बनाइए।",
+   "vo_gm4_build_b": "अब जॉनी के लिए 4 दहाई और 6 इकाई बनाइए।",
+   "vo_gm4_done": "वाह! 88 ब्लॉक्स से बीबी और जॉनी की चौथी एक्टिविटी पूरी हो गई!",
+   "vo_gm4_intro": "अब बीबी को 42 और जॉनी को 46 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
+   "vo_gm4_ok_a": "शाबाश! बीबी के 42 ब्लॉक्स तैयार हैं।",
+   "vo_gm4_ok_b": "बहुत बढ़िया! जॉनी के 46 ब्लॉक्स भी तैयार हैं।",
+   "vo_gm4_ones": "2 इकाई और 6 इकाई जोड़िए।",
+   "vo_gm4_total": "बहुत बढ़िया! 8 दहाई और 8 इकाई, यानी 88 ब्लॉक्स।",
+   "vo_gm_add": "अब दोनों के ब्लॉक्स को जोड़ते हैं। पहले इकाई जोड़िए।",
+   "vo_gm_final": "शाबाश! आपने बीबी और जॉनी की सभी एक्टिविटी पूरी कर दीं!",
+   "vo_gm_next": "अब अगली एक्टिविटी शुरू करें!",
+   "vo_gm_tens": "शाबाश! अब दहाइयाँ जोड़िए।",
+   "vo_gm_w1": "फिर से कोशिश कीजिए।",
+   "vo_gm_w2": "ब्लॉक्स ध्यान से गिनिए।",
+   "vo_gm_w3": "देखिए, सही ब्लॉक्स ये हैं।",
+   "vo_h1_pick": "ब्लॉक्स को गिनिए और सही जोड़ चुनिए।",
+   "vo_h1_type": "ब्लॉक्स को गिनिए और सही जोड़ टाइप करिए।",
+   "vo_idle_build_o": "अब इकाई बनाइए।",
+   "vo_idle_build_t": "अब दहाई बनाइए।",
+   "vo_landing": "नमस्ते दोस्त! मैं हूँ स्विफ्टी! आज हम संख्याओं को जोड़ना सीखेंगे।",
+   "vo_p1_correct": "शाबाश! 61 और 20 का जोड़ 81 है।",
+   "vo_p1_correct_late": "61 और 20 का जोड़ 81 है।",
+   "vo_p1_h1": "ध्यान से देखिए— 1 इकाई और 0 इकाई; 6 दहाई और 2 दहाई। अब सही जोड़ चुनिए।",
+   "vo_p2_correct": "शाबाश! 76 और 22 का जोड़ 98 है।",
+   "vo_p2_correct_late": "76 और 22 का जोड़ 98 है।",
+   "vo_p2_h1": "ध्यान से देखिए— 6 इकाई और 2 इकाई; 7 दहाई और 2 दहाई। अब सही जोड़ टाइप करिए।",
+   "vo_p2_prompt": "76 और 22 को जोड़िए और सही जोड़ टाइप करिए।",
+   "vo_p3_correct": "शाबाश! 37 और 60 का जोड़ 97 है।",
+   "vo_p3_correct_late": "37 और 60 का जोड़ 97 है।",
+   "vo_p3_h1": "ध्यान से देखिए— 7 इकाई और 0 इकाई; 3 दहाई और 6 दहाई। अब सही जोड़ टाइप करिए।",
+   "vo_p3_prompt": "37 और 60 को जोड़िए और सही जोड़ टाइप करिए।",
+   "vo_pt_guided": "बहुत बढ़िया! अब हम साथ मिलकर शुरू करते हैं। चलिए, साथ में करें!",
+   "vo_pt_practice": "वाह! अब आपकी बारी।",
+   "vo_pt_tutorial": "ध्यान से देखिए और मेरे साथ जानिए। चलिए, शुरू करें!",
+   "vo_t1_a": "आकाश और मोनी ब्लॉक्स से खेल रहे हैं, और ये सारे ब्लॉक्स मिलाकर एक ऊँची बिल्डिंग बना रहे हैं।",
+   "vo_t1_ask": "चलिए, पता करते हैं, दोनों के पास मिलाकर कुल कितने ब्लॉक्स हैं?",
+   "vo_t1_b": "आकाश के पास 23 ब्लॉक्स हैं और मोनी के पास 14 ब्लॉक्स हैं।",
+   "vo_t2_build": "अब आप ब्लॉक्स की सहायता से 14 बनाइए।",
+   "vo_t2_done": "इसलिए, 23 और 14 को जोड़ने पर 37 मिलता है।",
+   "vo_t2_go": "बहुत बढ़िया! अब दोनों संख्याओं को जोड़ते हैं।",
+   "vo_t2_head": "आइए, 23 और 14 को जोड़ते हैं।",
+   "vo_t2_intro": "सबसे पहले ब्लॉक्स की सहायता से दोनों संख्याएँ बनाते हैं।",
+   "vo_t2_o_add": "पहले इकाइयों को जोड़ते हैं।",
+   "vo_t2_o_sum": "3 इकाई और 4 इकाई मिलाकर हुई, 7 इकाई।",
+   "vo_t2_ones": "अब 3 इकाई के लिए 3 ब्लॉक रखते हैं।",
+   "vo_t2_r1": "23 में 2 दहाई और 3 इकाई हैं।",
+   "vo_t2_r2": "इसी तरह, 14 में 1 दहाई और 4 इकाई हैं।",
+   "vo_t2_t_add": "अब दहाइयों को जोड़ते हैं।",
+   "vo_t2_t_sum": "2 दहाई और 1 दहाई मिलाकर हुई, 3 दहाई।",
+   "vo_t2_tens": "पहले 2 दहाई के लिए 2 बंडल रखते हैं।",
+   "vo_t2_total": "अब हमारे पास कुल 3 दहाइयाँ और 7 इकाइयाँ हैं, यानी 37",
+   "vo_t3_eq": "23 जोड़ 14 बराबर 37",
+   "vo_t3_tot": "आकाश और मोनी के पास कुल मिलाकर 37 ब्लॉक्स हैं।"
+  }
+ },
+ "slides": [
+  {
+   "id": "T1",
+   "phase": "tutorial",
+   "eis": "iconic",
+   "type": "STORY_ADD",
+   "prompt_hi": "कुल कितने ब्लॉक्स?",
+   "audio": {
+    "a": "vo_t1_a",
+    "b": "vo_t1_b",
+    "ask": "vo_t1_ask"
+   },
+   "data": {
+    "mode": "ask",
+    "a": 23,
+    "b": 14,
+    "people": [
+     {
+      "who": "akash",
+      "name": "आकाश"
+     },
+     {
+      "who": "moni",
+      "name": "मोनी"
+     }
+    ],
+    "cues": {
+     "names": {
+      "a": [
+       [
+        0.049,
+        "akash"
+       ],
+       [
+        0.124,
+        "moni"
+       ]
+      ],
+      "b": [
+       [
+        0.058,
+        "akash"
+       ],
+       [
+        0.504,
+        "moni"
+       ]
+      ]
+     },
+     "b": {
+      "a": 0.211,
+      "b": 0.658
+     },
+     "a": {
+      "bld": 0.436
+     },
+     "ask": {
+      "q": 0.617
+     }
+    }
+   }
+  },
+  {
+   "id": "T2",
+   "phase": "tutorial",
+   "eis": "iconic",
+   "type": "PV_ADD_DEMO",
+   "prompt_hi": "आइए, 23 और 14 को जोड़ते हैं।",
+   "audio": {
+    "head": "vo_t2_head",
+    "intro": "vo_t2_intro",
+    "r1": "vo_t2_r1",
+    "tens": "vo_t2_tens",
+    "ones": "vo_t2_ones",
+    "r2": "vo_t2_r2",
+    "build": "vo_t2_build",
+    "go": "vo_t2_go",
+    "o_add": "vo_t2_o_add",
+    "o_sum": "vo_t2_o_sum",
+    "t_add": "vo_t2_t_add",
+    "t_sum": "vo_t2_t_sum",
+    "total": "vo_t2_total",
+    "done": "vo_t2_done"
+   },
+   "data": {
+    "a": 23,
+    "b": 14,
+    "demo": true,
+    "cues": {
+     "r1": {
+      "t": 0.336,
+      "o": 0.6
+     },
+     "r2": {
+      "t": 0.455,
+      "o": 0.667
+     },
+     "o_sum": {
+      "a": 0.069,
+      "b": 0.299,
+      "s": 0.72
+     },
+     "t_sum": {
+      "a": 0.065,
+      "b": 0.297,
+      "s": 0.723
+     },
+     "total": {
+      "t": 0.293,
+      "o": 0.507,
+      "n": 0.837
+     },
+     "done": {
+      "a": 0.181,
+      "b": 0.344,
+      "n": 0.653
+     }
+    }
+   }
+  },
+  {
+   "id": "T3",
+   "phase": "tutorial",
+   "eis": "iconic",
+   "type": "STORY_ADD",
+   "prompt_hi": "कुल कितने ब्लॉक्स?",
+   "audio": {
+    "eq": "vo_t3_eq",
+    "tot": "vo_t3_tot"
+   },
+   "data": {
+    "mode": "sum",
+    "a": 23,
+    "b": 14,
+    "people": [
+     {
+      "who": "akash",
+      "name": "आकाश"
+     },
+     {
+      "who": "moni",
+      "name": "मोनी"
+     }
+    ],
+    "cues": {
+     "names": {
+      "tot": [
+       [
+        0.055,
+        "akash"
+       ],
+       [
+        0.189,
+        "moni"
+       ]
+      ]
+     },
+     "eq": {
+      "a": 0.085,
+      "op": 0.275,
+      "b": 0.393,
+      "eq": 0.582,
+      "n": 0.725
+     },
+     "tot": {
+      "n": 0.576
+     }
+    }
+   }
+  },
+  {
+   "id": "G1",
+   "phase": "guided",
+   "eis": "iconic",
+   "type": "PV_ADD",
+   "prompt_hi": "संख्याएँ जोड़िए।",
+   "audio": {
+    "intro": "vo_g1_intro",
+    "r1": "vo_g1_r1",
+    "r2": "vo_g1_r2",
+    "go": "vo_g1_go",
+    "o_add": "vo_g1_o_add",
+    "o_sum": "vo_g1_o_sum",
+    "t_add": "vo_g1_t_add",
+    "t_sum": "vo_g1_t_sum",
+    "total": "vo_g1_total",
+    "correct": "vo_g1_correct"
+   },
+   "data": {
+    "a": 34,
+    "b": 25,
+    "build": true,
+    "answer": "none",
+    "cues": {
+     "r1": {
+      "t": 0.186,
+      "o": 0.331
+     },
+     "r2": {
+      "t": 0.191,
+      "o": 0.333
+     },
+     "o_sum": {
+      "a": 0.07,
+      "b": 0.294,
+      "s": 0.723
+     },
+     "t_sum": {
+      "a": 0.069,
+      "b": 0.294,
+      "s": 0.724
+     },
+     "total": {
+      "t": 0.295,
+      "o": 0.506,
+      "n": 0.831
+     },
+     "correct": {
+      "a": 0.172,
+      "b": 0.34,
+      "n": 0.661
+     }
+    }
+   }
+  },
+  {
+   "id": "G2",
+   "phase": "guided",
+   "eis": "iconic",
+   "type": "PV_ADD",
+   "prompt_hi": "संख्याएँ जोड़िए।",
+   "audio": {
+    "prompt": "vo_g2_prompt",
+    "h1": "vo_h1_pick",
+    "h2": "vo_g2_h2",
+    "correct": "vo_g2_correct",
+    "reask": "vo_ask_pick",
+    "ask": "vo_ask_pick2",
+    "correct_late": "vo_g2_correct_late"
+   },
+   "data": {
+    "a": 42,
+    "b": 35,
+    "build": false,
+    "answer": "mcq",
+    "prompt2": "सही जोड़ चुनिए।",
+    "options": [
+     77,
+     76,
+     14
+    ],
+    "cues": {
+     "correct": {
+      "a": 0.209,
+      "b": 0.409,
+      "n": 0.7
+     },
+     "correct_late": {
+      "a": 0.08,
+      "b": 0.311,
+      "n": 0.645
+     },
+     "h2": {
+      "t": 0.402,
+      "o": 0.645
+     }
+    }
+   }
+  },
+  {
+   "id": "G3",
+   "phase": "guided",
+   "eis": "iconic",
+   "type": "PV_ADD",
+   "prompt_hi": "संख्याएँ जोड़िए।",
+   "audio": {
+    "prompt": "vo_g3_prompt",
+    "h1": "vo_h1_pick",
+    "h2": "vo_g3_h2",
+    "correct": "vo_g3_correct",
+    "reask": "vo_ask_pick",
+    "ask": "vo_ask_pick2",
+    "correct_late": "vo_g3_correct_late"
+   },
+   "data": {
+    "a": 56,
+    "b": 33,
+    "build": false,
+    "answer": "mcq",
+    "prompt2": "सही जोड़ चुनिए।",
+    "options": [
+     98,
+     89,
+     17
+    ],
+    "cues": {
+     "correct": {
+      "a": 0.212,
+      "b": 0.409,
+      "n": 0.697
+     },
+     "correct_late": {
+      "a": 0.082,
+      "b": 0.311,
+      "n": 0.645
+     },
+     "h2": {
+      "t": 0.403,
+      "o": 0.642
+     }
+    }
+   }
+  },
+  {
+   "id": "G4",
+   "phase": "guided",
+   "eis": "iconic",
+   "type": "PV_ADD",
+   "prompt_hi": "संख्याएँ जोड़िए।",
+   "audio": {
+    "prompt": "vo_g4_prompt",
+    "h1": "vo_h1_type",
+    "h2": "vo_g4_h2",
+    "correct": "vo_g4_correct",
+    "reask": "vo_ask_type",
+    "correct_late": "vo_g4_correct_late"
+   },
+   "data": {
+    "a": 47,
+    "b": 21,
+    "build": false,
+    "answer": "numpad",
+    "prompt2": "सही जोड़ टाइप करिए।",
+    "cues": {
+     "correct": {
+      "a": 0.208,
+      "b": 0.409,
+      "n": 0.701
+     },
+     "correct_late": {
+      "a": 0.081,
+      "b": 0.311,
+      "n": 0.645
+     },
+     "h2": {
+      "t": 0.403,
+      "o": 0.639
+     }
+    }
+   }
+  },
+  {
+   "id": "P1",
+   "phase": "practice",
+   "eis": "symbolic",
+   "type": "MENTAL_ADD",
+   "prompt_hi": "संख्याएँ जोड़िए और सही जोड़ चुनिए।",
+   "audio": {
+    "prompt": "vo_ask_pick",
+    "h1": "vo_p1_h1",
+    "h2": "vo_h1_pick",
+    "correct": "vo_p1_correct",
+    "reask": "vo_ask_pick",
+    "correct_late": "vo_p1_correct_late"
+   },
+   "data": {
+    "a": 61,
+    "b": 20,
+    "answer": "mcq",
+    "options": [
+     80,
+     18,
+     81
+    ],
+    "cues": {
+     "h1": {
+      "ao": 0.226,
+      "bo": 0.36,
+      "at": 0.484,
+      "bt": 0.618
+     },
+     "correct": {
+      "a": 0.207,
+      "b": 0.409,
+      "n": 0.703
+     },
+     "correct_late": {
+      "a": 0.089,
+      "b": 0.314,
+      "n": 0.641
+     }
+    }
+   }
+  },
+  {
+   "id": "P2",
+   "phase": "practice",
+   "eis": "symbolic",
+   "type": "MENTAL_ADD",
+   "prompt_hi": "संख्याएँ जोड़िए और सही जोड़ टाइप करिए।",
+   "audio": {
+    "prompt": "vo_p2_prompt",
+    "h1": "vo_p2_h1",
+    "h2": "vo_h1_type",
+    "correct": "vo_p2_correct",
+    "reask": "vo_ask_type",
+    "correct_late": "vo_p2_correct_late"
+   },
+   "data": {
+    "a": 76,
+    "b": 22,
+    "answer": "numpad",
+    "cues": {
+     "h1": {
+      "ao": 0.217,
+      "bo": 0.345,
+      "at": 0.463,
+      "bt": 0.591
+     },
+     "correct": {
+      "a": 0.208,
+      "b": 0.409,
+      "n": 0.701
+     },
+     "correct_late": {
+      "a": 0.086,
+      "b": 0.313,
+      "n": 0.642
+     }
+    }
+   }
+  },
+  {
+   "id": "P3",
+   "phase": "practice",
+   "eis": "symbolic",
+   "type": "MENTAL_ADD",
+   "prompt_hi": "संख्याएँ जोड़िए और सही जोड़ टाइप करिए।",
+   "audio": {
+    "prompt": "vo_p3_prompt",
+    "h1": "vo_p3_h1",
+    "h2": "vo_h1_type",
+    "correct": "vo_p3_correct",
+    "reask": "vo_ask_type",
+    "correct_late": "vo_p3_correct_late"
+   },
+   "data": {
+    "a": 37,
+    "b": 60,
+    "answer": "numpad",
+    "cues": {
+     "h1": {
+      "ao": 0.216,
+      "bo": 0.345,
+      "at": 0.463,
+      "bt": 0.592
+     },
+     "correct": {
+      "a": 0.205,
+      "b": 0.409,
+      "n": 0.704
+     },
+     "correct_late": {
+      "a": 0.088,
+      "b": 0.313,
+      "n": 0.641
+     }
+    }
+   }
+  },
+  {
+   "id": "GAME",
+   "phase": "practice",
+   "eis": "enactive",
+   "type": "ADD_GAME",
+   "prompt_hi": "",
+   "audio": {
+    "w1": "vo_gm_w1",
+    "w2": "vo_gm_w2",
+    "w3": "vo_gm_w3",
+    "next": "vo_gm_next",
+    "add": "vo_gm_add",
+    "tens": "vo_gm_tens",
+    "final": "vo_gm_final",
+    "intro1": "vo_gm1_intro",
+    "build_a1": "vo_gm1_build_a",
+    "ok_a1": "vo_gm1_ok_a",
+    "build_b1": "vo_gm1_build_b",
+    "ok_b1": "vo_gm1_ok_b",
+    "ones1": "vo_gm1_ones",
+    "total1": "vo_gm1_total",
+    "done1": "vo_gm1_done",
+    "intro2": "vo_gm2_intro",
+    "build_a2": "vo_gm2_build_a",
+    "ok_a2": "vo_gm2_ok_a",
+    "build_b2": "vo_gm2_build_b",
+    "ok_b2": "vo_gm2_ok_b",
+    "ones2": "vo_gm2_ones",
+    "total2": "vo_gm2_total",
+    "done2": "vo_gm2_done",
+    "intro3": "vo_gm3_intro",
+    "build_a3": "vo_gm3_build_a",
+    "ok_a3": "vo_gm3_ok_a",
+    "build_b3": "vo_gm3_build_b",
+    "ok_b3": "vo_gm3_ok_b",
+    "ones3": "vo_gm3_ones",
+    "total3": "vo_gm3_total",
+    "done3": "vo_gm3_done",
+    "intro4": "vo_gm4_intro",
+    "build_a4": "vo_gm4_build_a",
+    "ok_a4": "vo_gm4_ok_a",
+    "build_b4": "vo_gm4_build_b",
+    "ok_b4": "vo_gm4_ok_b",
+    "ones4": "vo_gm4_ones",
+    "total4": "vo_gm4_total",
+    "done4": "vo_gm4_done"
+   },
+   "data": {
+    "no_head": true,
+    "acts": [
+     [
+      25,
+      12
+     ],
+     [
+      13,
+      55
+     ],
+     [
+      31,
+      45
+     ],
+     [
+      42,
+      46
+     ]
+    ],
+    "kids": [
+     {
+      "who": "bibi",
+      "name": "बीबी"
+     },
+     {
+      "who": "johny",
+      "name": "जॉनी"
+     }
+    ]
+   }
+  },
+  {
+   "id": "CEL",
+   "phase": "practice",
+   "eis": "enactive",
+   "type": "CELEBRATION",
+   "prompt_hi": "",
+   "audio": {
+    "prompt": "vo_cel"
+   },
+   "data": {}
+  }
+ ],
+ "end_anim": {
+  "base": "assets/celebration/",
+  "vo": "vo_cel",
+  "meta": {
+   "cols": 6,
+   "frames": 36,
+   "fw": 329,
+   "fh": 440,
+   "shabaash": {
+    "src": "cel_shabaash.webp",
+    "pre": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "word": [
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "post": [
+     30,
+     31,
+     32,
+     33,
+     34,
+     35
+    ]
+   },
+   "talk": {
+    "src": "cel_talk.webp",
+    "open": [
+     0,
+     1,
+     2,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     15,
+     16,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     28,
+     29,
+     30,
+     31,
+     32
+    ]
+   },
+   "idle": {
+    "src": "cel_idle.webp",
+    "loop": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     30,
+     31,
+     32,
+     33,
+     34,
+     35
+    ]
+   }
+  },
+  "track": {
+   "bits": "000000000000000001111000001111100111000011100000000000001111111100000000111100001111111111000111111100000111100011110000001100000110000000000000000000000000111110000011100000111000000000000000001100001111110000011111111000011100000110000111000000001100000111110001110001100000000000000000000",
+   "step_ms": 25,
+   "ms": 7284
+  }
+ }
+}
