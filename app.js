@@ -892,7 +892,7 @@ function pvChar(w, full){
    make_blinks.py - only the eyes differ) shows it for a moment every 2.5-6s, each on its own clock, now and then twice.
    The copy is decoded before its first use, so the swap is instant; the shadows' copies (.sgp-cast) do not blink. */
 const PVBlink = (function(){
-  const ready = {}, SEL = ".pv-av, .sgp-fw .sgp-pose";
+  const ready = {}, SEL = ".pv-av, .sgp-fw .sgp-pose, .gm-kid, .gm-lab img";   // (+ the game's children and its table's portraits)
   const shut = src =>{ const f = src.replace(/(\.webp)(\?.*)?$/, "_blink$1"); return Object.prototype.hasOwnProperty.call(ASSET_SIZES, f) ? f : null; };
   /* the boot loader shows its pictures from blob: URLs (Assets) and keeps the file in data-asset - and it swaps any
      file path an <img> is given for its blob. So the shut copy is shown by the very URL that was decoded for it (its
@@ -1595,6 +1595,10 @@ Object.assign(PVK, (function(){
       if(cfg.padAt) setXY(pad, cfg.padAt.cx != null ? cfg.padAt.cx - pad.offsetWidth / 2 : cfg.padAt.x, cfg.padAt.y);
       else setXY(pad, x0 + ansW + 40, cfg.y + 40 + ans.offsetHeight / 2 - pad.offsetHeight / 2);
       let typed = [], wrong = 0, busy = false, open = false, over = false, idleT = 0, guide = null, ready = false;
+      /* the written sum's two boxes fill from the ones (user 2026-10-29: "addition always starts from ones"): the first key
+         goes into the ones box, the next into the tens; the keys to press (3rd help) come in that order too */
+      const rtl = !!(T && T._boxes), order = rtl ? digits.slice().reverse() : digits;
+      const boxOf = j =>{ const bx = T._boxes(); return bx[bx.length - 1 - j]; };
       (C.waits = C.waits || []).push({ live: ()=> ready && !over, busy: ()=> busy });
       const P = { ans, pad,
         hide(on){ if(!T) ans.classList.toggle("pv-hide", on !== false); pad.classList.toggle("pv-hide", on !== false || !open); },
@@ -1602,12 +1606,16 @@ Object.assign(PVK, (function(){
       /* the third layer: the right digit keys light one after the other, then the tick */
       /* every key locked but the one to tap now (user 2026-10-22: 45 - first only 4, then only 5, then the tick) */
       const lightKey = ()=>{ Object.values(keys).forEach(b =>{ b.classList.remove("hint-on"); if(guide != null) b.classList.add("locked"); });
-        if(guide == null || guide > N) return; const b = guide < N ? keys[digits[guide]] : ok; b.classList.remove("locked"); b.classList.add("hint-on"); };
+        if(guide == null || guide > N) return; const b = guide < N ? keys[order[guide]] : ok; b.classList.remove("locked"); b.classList.add("hint-on"); };
         /* (user 2026-10-26: no yellow ring round the key to press - the others are off, it pulses) */   // the key lights (the decks' WA3 "highlight the correct digit buttons in sequence") - no hand
       /* the tick: dim until a digit is in, pulsing once the box holds the whole answer */
       const okState = ()=>{ ok.classList.toggle("off", !typed.length); ok.classList.toggle("pulse", typed.length >= N && !over && !busy); };
       const render = ()=>{ const full = typed.length >= N || over;
         if(T && !open && !typed.length){ if(ok) okState(); return; }          // (the "?" stays until the pad opens)
+        if(rtl){ T._boxes().forEach((b, i, bx)=>{ const j = bx.length - 1 - i, cur = open && !full && j === typed.length;   // the written sum's two boxes: a digit each, the ones first
+            b.innerHTML = typed[j] != null ? '<span class="pv-ch">' + typed[j] + '</span>' : cur ? '<span class="pv-caret">|</span>' : "?";
+            b.classList.toggle("pv-qd", typed[j] == null); b.classList.toggle("pv-cur", cur); });
+          if(ok) okState(); return; }
         slot.innerHTML = typed.map(d => '<span class="pv-ch">' + d + '</span>').join("") + (full ? "" : '<span class="pv-caret">|</span>');
         slot.classList.toggle("on", open && !full); if(ok) okState(); };
       render();                                                    // the cursor shows from the start
@@ -1619,24 +1627,25 @@ Object.assign(PVK, (function(){
       P.open = openPad;
       async function check(){
         busy = true; clearTimeout(idleT); stopNudge(); okState();
-        const v = typed.join("");
+        const v = (rtl ? typed.slice().reverse() : typed).join("");
         if(v === String(cfg.answer)){
-          over = true; state.locked = true; ans.classList.add("ok"); Object.values(keys).forEach(b => b.classList.add("locked")); okState();
+          over = true; if(!cfg.keep) state.locked = true; ans.classList.add("ok"); Object.values(keys).forEach(b => b.classList.add("locked")); okState();
           try{ XAPI.send("question_answered", { slide_id: slide.id, type: slide.type, phase: slide.phase }, { is_correct: true, attempt: wrong + 1, score: wrong === 0 ? 1 : 0, response: v }); }catch(e){}
-          recordResult(slide, wrong === 0);
+          if(!cfg.keep) recordResult(slide, wrong === 0);
           GameBus.emit("numpad_correct", { slide_id: slide.id, phase: slide.phase, value: wrong === 0, first_try: wrong === 0, attempts: wrong + 1, latency_ms: Date.now() - state.slideStart });
           sfxCorrect(); try{ confettiCannon(); }catch(e){} setSwMood("happy");
           pad.classList.add("pv-gone");   // the keypad goes as the answer goes up (review 2026-10-14)
           C.late = wrong > 0;                                            // (no "शाबाश" after a wrong answer - ctx right())
           if(cfg.onRight) await cfg.onRight(ans);
           await (cfg.sayCorrect ? cfg.sayCorrect() : C.say("correct")); if(cfg.after) await cfg.after(); await C.wait(500);
+          if(cfg.keep){ res(wrong); return; }                            // (cfg.keep: one step of a page - the game's keypad activities - the page goes on)
           completeSlide(wrong === 0); res(); return;
         }
         wrong++;
         try{ XAPI.send("question_answered", { slide_id: slide.id, type: slide.type, phase: slide.phase }, { is_correct: false, attempt: wrong, score: 0, response: v }); }catch(e){}
         GameBus.emit("answer_wrong", { slide_id: slide.id, phase: slide.phase, attempts: wrong });
         sfxWrongSoft(); setSwMood("tryagain"); ans.classList.add("wrong"); shake(ans, 9);
-        await C.wait(800); ans.classList.remove("wrong"); typed = []; render();
+        await C.wait(800); ans.classList.remove("wrong"); typed = []; render(); P.last = v;   // (P.last: what was typed - the game's column hints)
         /* (QA BUG_06: Swiftee stays sad through the whole wrong-answer sequence - the hint too; back to normal after it) */
         await cfg.ladder(wrong, P);
         if(C.alive() && !over){ busy = false; setSwMood("point"); render(); arm(); }
@@ -1647,7 +1656,7 @@ Object.assign(PVK, (function(){
         if(b._k === "⌫"){ typed.pop(); render(); return; }
         if(b._k === "✓"){ if(!typed.length) return; K.knock(); check().catch(()=>{}); return; }   // the answer goes in on the tick only
         if(typed.length >= N) return;
-        typed.push(b._k); K.knock(); render(); pop(slot.querySelectorAll(".pv-ch")[typed.length - 1]);
+        typed.push(b._k); K.knock(); render(); pop(rtl ? boxOf(typed.length - 1) : slot.querySelectorAll(".pv-ch")[typed.length - 1]);
         if(guide != null){ guide++; lightKey(); }
       }));
       P.ready = ()=>{ ready = true; arm(); };   // the box pulses its cursor; the hand only after 7s idle (user 2026-10-15: "comes too early")
@@ -1982,8 +1991,9 @@ Object.assign(PVK, (function(){
   const K = PVK, { px, add, setXY, glide, wait, pop } = K;
   /* o: { cx, y, G (a cube's width - a rod is ten of them), rowH, head }. V.show(n): the frame shows its first n rows */
   function vtable(sc, o){
-    const G = o.G, g = Math.max(3, Math.round(G * .24)), rW = G, rH = G * K.ROD.ar, rg = Math.max(5, Math.round(G * .55)), cH = G * K.CUBE.ar;
-    const head = o.head || 44, rowH = o.rowH, colW = Math.round(9 * rW + 8 * rg + 24), W = 2 * colW, x = o.cx - W / 2, fs = Math.round(head * .6);
+    /* a rod a little shorter than its row (user 2026-10-29: "the tens block is touching the table border") */
+    const G = o.G, g = Math.max(3, Math.round(G * .24)), rH = Math.min(G * K.ROD.ar, Math.round(o.rowH * .82)), rW = rH / K.ROD.ar, rg = Math.max(5, Math.round(G * .55)), cH = G * K.CUBE.ar;
+    const head = o.head || 44, rowH = o.rowH, colW = Math.round(9 * G + 8 * rg + 24), W = 2 * colW, x = o.cx - W / 2, fs = Math.round(head * .6);
     const el = add(sc, "div", "pv-table pv-vt", "width:" + px(W) + ";height:" + px(head + 3 * rowH) + ";--head:" + px(head));
     el.innerHTML = '<div class="pv-th pv-th-t" style="width:' + px(colW) + ';height:' + px(head) + ';font-size:' + px(fs) + '">दहाई</div>' +
       '<div class="pv-th pv-th-o" style="left:' + px(colW) + ';right:0;height:' + px(head) + ';font-size:' + px(fs) + '">इकाई</div>' +
@@ -2017,15 +2027,13 @@ Object.assign(PVK, (function(){
       return R;
     }
     V.rows = [0, 1, 2].map(row);
-    /* the "+" left of the second row, and the thick line over the sum row, out under it */
-    V.plus = add(sc, "div", "pv-op pv-vt-plus pv-hide", "font-size:" + px(Math.round(rowH * .42))); V.plus.textContent = "+";
-    setXY(V.plus, x - 46, o.y + head + 1.5 * rowH - rowH * .23);
-    V.line = add(sc, "i", "pv-vt-line pv-hide", "width:" + px(W + 52)); setXY(V.line, x - 52, o.y + head + 2 * rowH - 3);
+    /* the thick line over the sum row (no "+" left of the table - user 2026-10-29: the "+" is only the written sum's) */
+    V.line = add(sc, "i", "pv-vt-line pv-hide", "width:" + px(W - 6)); setXY(V.line, x + 3, o.y + head + 2 * rowH - 3);   // (inside the table's border - user 2026-10-29)
     V.show = n =>{ el.style.height = px(head + n * rowH); el.classList.toggle("pv-vt-2", n === 2);
-      if(n >= 2) K.show(V.plus); if(n >= 3) K.show(V.line); };
+      if(n >= 3) K.show(V.line); };
     V.lightRow = (r, on)=> V.bands[r].classList.toggle("on", on !== false);
     V.moveBy = (dy, ms)=>{ if(!dy) return K.wait(0); V.y += dy; PVSFX.move();
-      [el, V.plus, V.line].forEach(e => K.shift(e, 0, dy, ms));
+      [el, V.line].forEach(e => K.shift(e, 0, dy, ms));
       V.rows.forEach(R =>{ R.y += dy; R.ghosts.forEach(g => K.shift(g, 0, dy, ms)); R.relayout(ms); });
       return K.wait(ms); };
     V.ghosts = ()=> V.rows.flatMap(R => R.ghosts);
@@ -2043,6 +2051,12 @@ Object.assign(PVK, (function(){
       [W.a, W.b, W.q].forEach(size); W.plus.style.fontSize = px(h * .78); W.line.style.width = px(w + 64);
       return Promise.all([to(W.a, cx, ys[0] - h / 2), to(W.b, cx, ys[1] - h / 2), to(W.q, cx, ys[2] - h / 2),
                           to(W.plus, cx - w / 2 - h * .62, ys[1] - h * .42), to(W.line, cx - w / 2 - 56, (ys[1] + ys[2]) / 2 - 3)]); };
+    /* the answer: two empty boxes with a "?", tens and ones (user 2026-10-29), each filled when its digit is known */
+    W.q.innerHTML = '<span class="pv-d pv-dt pv-qd">?</span><span class="pv-d pv-do pv-qd">?</span>';
+    W.q._boxes = ()=> [...W.q.querySelectorAll(".pv-d")];
+    W.fillDigit = (kind, v)=>{ const e = W.q.querySelector(kind === "t" ? ".pv-dt" : ".pv-do"); if(!e) return;
+      e.textContent = String(v); e.classList.remove("pv-qd"); e.classList.add("pv-df"); pop(e);
+      if(!W.q.querySelector(".pv-qd")) W.q.classList.add("filled"); };
     W.fill = n =>{ W.q.innerHTML = K.numHTML(n); W.q.classList.add("filled"); W.q.classList.remove("pv-typein"); pop(W.q); };
     W.all = ()=> [W.a, W.plus, W.b, W.line, W.q];
     W.place(cx, ys, h, 0);
@@ -2070,7 +2084,7 @@ Object.assign(PVK, (function(){
      table to the center, replacing the first two PV tables") */
   async function soloSum(C, V, W, cx, y){
     const S = V.rows[2], dx = cx - V.cx, dy = y + V.head - S.y;
-    [V.el, V.plus, V.line, ...V.rows[0].all(), ...V.rows[1].all(), ...V.ghosts(), W.a, W.b, W.plus, W.line].forEach(e => e.classList.add("pv-gone"));
+    [V.el, V.line, ...V.rows[0].all(), ...V.rows[1].all(), ...V.ghosts(), W.a, W.b, W.plus, W.line].forEach(e => e.classList.add("pv-gone"));
     PVSFX.move();
     const T = add(V.sc, "div", "pv-table pv-vt pv-vt-solo pv-hide", "width:" + px(V.W) + ";height:" + px(V.head + V.rowH) + ";--head:" + px(V.head));
     T.innerHTML = V.el.innerHTML; T.querySelectorAll(".pv-vt-r0, .pv-vt-r1").forEach(e => e.remove());
@@ -2085,6 +2099,15 @@ Object.assign(PVK, (function(){
 })());
 /* the stacked table's sizes: inside the tutorial card / under the header band (the three rows, a rod tall each, in the
    room each screen has); cards: the written sum's column (x, card height) */
+/* QA (user 2026-10-29: "add submenu for game part … I have to play the entire game to test one part"): where the game
+   starts - the ?dev=1 menu's game list (window.PV_GAME_JUMP, used once) or ?gm=2.total in the address. part: meet | make |
+   make_b (Rohan's number) | total; a keypad activity: meet | type; or final. null: from the start. */
+function pvGameJump(){
+  let j = window.PV_GAME_JUMP; window.PV_GAME_JUMP = null;
+  if(!j){ const q = new URLSearchParams(location.search).get("gm");
+    if(q){ const [a, p] = q.split("."); j = a === "final" ? { part: "final" } : { i: parseInt(a, 10) || 1, part: p || "meet" }; } }
+  return j || null;
+}
 const PV_ADD_LAY = {
   tut:  { cx: 560, y: 118, G: 19, rowH: 136, head: 42, cardX: 970, cardH: 72 },   // (T2 has no heading - user 2026-10-29: the table grows into its room; bottom 586, clear of the → button)
   main: { cx: 500, y: 156, G: 18, rowH: 136, head: 44, cardX: 890, cardH: 74 }
@@ -2092,17 +2115,20 @@ const PV_ADD_LAY = {
 /* the rows' middles of a stacked table (where the written sum's cards stand) */
 const pvAddYs = V => V.rows.map(R => R.mid());
 /* "3 इकाई और 4 इकाई मिलाकर हुई, 7 इकाई।" - the sum's blocks of that kind from the first row beat on "3 इकाई", the second's on
-   "4 इकाई", all of them and the column's head on "7 इकाई" (deck: "Highlights the blocks on the sum card in sync") */
-function pvAddSumLine(C, V, kind, role){
-  const S = V.rows[2], c = ((C.slide.data.cues || {})[role]) || { a: .1, b: .35, s: .75 }, from = r => S.list(kind).filter(b => b._row === r);
-  return C.cue(role, [[c.a, ()=> PVK.beat(from(0), 60)], [c.b, ()=> PVK.beat(from(1), 60)], [c.s, ()=> PVK.beatCol(S, kind)]]);
+   "4 इकाई", all of them and the column's head on "7 इकाई" (deck: "Highlights the blocks on the sum card in sync") - and on
+   "7 इकाई" the 7 goes into the answer's ones box (user 2026-10-29) */
+function pvAddSumLine(C, V, W, kind, role){
+  const d = C.slide.data, S = V.rows[2], c = ((d.cues || {})[role]) || { a: .1, b: .35, s: .75 }, from = r => S.list(kind).filter(b => b._row === r);
+  const v = pvSplit(d.a + d.b)[kind];
+  return C.cue(role, [[c.a, ()=> PVK.beat(from(0), 60)], [c.b, ()=> PVK.beat(from(1), 60)],
+                      [c.s, ()=>{ PVK.beatCol(S, kind); W.fillDigit(kind, v); sfxPop(); }]]);
 }
 /* "अब हमारे पास कुल 3 दहाइयाँ और 7 इकाइयाँ हैं, यानी 37": on "3 दहाइयाँ" the rods beat and the sum's card gets its number (its
    tens digit lit), on "7 इकाइयाँ" the cubes and its ones digit, on "37" the card (deck: "Highlight the rods, blocks, digits
    on the card and the number 37 in sync with the VO") */
 function pvAddTotal(C, V, W){
   const d = C.slide.data, S = V.rows[2], c = (d.cues || {}).total || { t: .35, o: .55, n: .85 }, K = PVK;
-  return C.cue("total", [[c.t, ()=>{ K.beatCol(S, "t"); W.fill(d.a + d.b); K.lightDigit(W.q, "t"); }],
+  return C.cue("total", [[c.t, ()=>{ K.beatCol(S, "t"); if(!W.q.classList.contains("filled")) W.fill(d.a + d.b); K.lightDigit(W.q, "t"); }],
                          [c.o, ()=>{ K.beatCol(S, "o"); K.lightDigit(W.q, "t", false); K.lightDigit(W.q, "o"); }],
                          [c.n, ()=>{ K.lightDigit(W.q, "o", false); K.sayEl(W.q); }]]);
 }
@@ -2653,7 +2679,7 @@ const PVModules = {
       const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {};
       state.ownsAudio = true; setNavActive(false); setSwMood("teach"); pvReplay(C);
       const sum = d.mode === "sum", s = d.a + d.b, [P0, P1] = d.people;
-      const Y = sum ? [250, 378, 508] : [298, 464, 600], AV = sum ? 100 : 124, BH = sum ? 108 : 146, PX = 350, GX = 570, CX = 900;
+      const Y = sum ? [190, 345, 500] : [298, 464, 600], AV = sum ? 130 : 124, BH = sum ? 138 : 146, PX = 350, GX = 570, CX = 900;   // (T3's kids and blocks bigger - user 2026-10-29)
       const person = (p, y)=>{ const e = K.person(sc, p.who, "", PX, y - AV / 2, AV); e.classList.add("pv-tag"); return e; };   // (no names on T1 / T3 - user 2026-10-29)
       const pA = person(P0, Y[0]), pB = person(P1, Y[1]);
       const gA = K.group(sc, d.a, GX, Y[0] + BH / 2, BH, 4).make(), gB = K.group(sc, d.b, GX, Y[1] + BH / 2, BH, 4).make();
@@ -2672,8 +2698,11 @@ const PVModules = {
                                          drop(gA); setTimeout(()=> C.alive() && drop(gB), 300); }]]));
           const cb = CU.b || { a: .2, b: .7 };
           await C.cue("b", names("b", [[cb.a, ()=>{ K.show(W.a); sfxPop(); K.beat(gA.all(), 30); }],
-                                       [cb.b, ()=>{ K.show(W.plus); K.show(W.b); sfxPop(); K.beat(gB.all(), 30); }]]));
-          await C.cue("ask", [[(CU.ask || { q: .6 }).q, ()=>{ K.show(W.line); K.beat([...gA.all(), ...gB.all()], 25); }]]);
+                                       [cb.b, ()=>{ K.show(W.b); sfxPop(); K.beat(gB.all(), 30); }]]));
+          /* "…दोनों के पास मिलाकर…": the "+" on "दोनों", the line and the two empty boxes on "मिलाकर" (user 2026-10-29) */
+          const ca = CU.ask || { p: .4, q: .55 };
+          await C.cue("ask", [[ca.p, ()=>{ K.show(W.plus); sfxPop(); }],
+                              [ca.q, ()=>{ K.show(W.line); K.show(W.q); sfxPop(); K.beat([...gA.all(), ...gB.all()], 25); }]]);
           setNavActive(true); return;
         }
         /* page 4: the pile of the two together under them (made, hidden; each piece shown as its copy lands) */
@@ -2687,8 +2716,8 @@ const PVModules = {
         await C.cue("eq", [[ce.a, ()=>{ K.show(pA); gA.all().forEach(x => K.show(x)); K.show(W.a); sfxPop(); }],
                            [ce.op, ()=>{ K.show(W.plus); }],
                            [ce.b, ()=>{ K.show(pB); gB.all().forEach(x => K.show(x)); K.show(W.b); sfxPop(); }],
-                           [ce.eq, ()=>{ K.show(W.line); fly(); }],
-                           [ce.n, ()=>{ K.show(W.q); W.fill(s); sfxCorrect(); }]]);
+                           [ce.eq, ()=>{ K.show(W.line); K.show(W.q); fly(); }],
+                           [ce.n, ()=>{ W.fill(s); sfxCorrect(); }]]);
         await C.wait(500);
         try{ confettiCannon(); }catch(e){} setSwMood("happy");
         await C.cue("tot", names("tot", [[(CU.tot || { n: .7 }).n, ()=>{ K.beat(gS.all(), 30); K.sayEl(W.q); }]]));
@@ -2723,8 +2752,7 @@ const PVModules = {
         await C.say("head");
         await C.say("intro");
         const H = K.hand(sc);
-        /* "[Tap on the first row, the table will appear and then card as well]" */
-        await H.tap({ x: V.cx, y: R0.mid() }); H.off();
+        /* the table comes in, then 23 beside it (no hand tapping where no table is yet - user 2026-10-29) */
         K.show(V.el); V.lightRow(0); PVSFX.appear(); await C.wait(300); K.show(W.a); sfxPop();
         await digits(W.a, "r1");
         src = K.sources(sc, { x: V.x, W: V.W, G: V.G }, V.y + V.head + V.rowH + 16);
@@ -2732,19 +2760,23 @@ const PVModules = {
         await Promise.all([C.say("tens"), C.wait(600).then(()=> K.demoAdd(C, H, src.t, R0, A.t, "t"))]);
         await Promise.all([C.say("ones"), C.wait(600).then(()=> K.demoAdd(C, H, src.o, R0, A.o, "o"))]);
         H.off(); V.lightRow(0, false);
-        await grow(2); C.guard(); V.lightRow(1); K.show(W.plus); K.show(W.b); sfxPop();
+        await grow(2); C.guard(); V.lightRow(1); K.show(W.b); sfxPop();
         await digits(W.b, "r2");
         [src.t, src.o].forEach(g => g.classList.remove("demo", "off", "pv-done"));
         await C.say("build");
         await K.childBuild(C, R1, d.b, src); C.guard();
         GameBus.emit("pv_build_done", { slide_id: slide.id });
         V.lightRow(1, false);
-        await C.cue("go", [[0.45, ()=>{ src.fade(); }], [0.7, ()=>{ grow(3).then(()=>{ if(C.alive()){ K.show(W.line); K.show(W.q); sfxPop(); } }); }]]);
+        /* "अब दोनों संख्याओं को जोड़ते हैं।": the + buttons go, the "+" comes in on "दोनों", the sum row with the line and the two
+           empty boxes on "जोड़ते" (user 2026-10-29) */
+        const cg = CU.go || { p: .45, s: .75 };
+        await C.cue("go", [[0.3, ()=>{ src.fade(); }], [cg.p, ()=>{ K.show(W.plus); sfxPop(); }],
+                           [cg.s, ()=>{ grow(3).then(()=>{ if(C.alive()){ K.show(W.line); K.show(W.q); sfxPop(); } }); }]]);
         await C.wait(650); C.guard();
         await C.say("o_add"); await K.moveKind(C, V, "o");
-        await pvAddSumLine(C, V, "o", "o_sum");
+        await pvAddSumLine(C, V, W, "o", "o_sum");
         await C.say("t_add"); await K.moveKind(C, V, "t");
-        await pvAddSumLine(C, V, "t", "t_sum");
+        await pvAddSumLine(C, V, W, "t", "t_sum");
         await pvAddTotal(C, V, W);
         H.el.remove();
         pvCelebrate();
@@ -2770,14 +2802,16 @@ const PVModules = {
       const V = K.vtable(sc, L), [R0, R1, S] = V.rows; V.show(3);
       const W = K.vcards(sc, d.a, d.b, L.cardX, pvAddYs(V), L.cardH);
       const h2 = ()=>{ const c = CU.h2 || { t: .45, o: .7 }; return C.cue("h2", [[c.t, ()=> K.beatCol(S, "t")], [c.o, ()=> K.beatCol(S, "o")]]); };
+      W.plus.classList.add("pv-hide");          // the "+" comes in when the VO says to add them (user 2026-10-29)
+      const plusIn = ()=>{ K.show(W.plus); sfxPop(); };
       K.run(C, async ()=>{
         if(d.build){
           await C.wait(300);
           await C.say("intro");
-          const H = K.hand(sc);
           for(const [R, n, role] of [[R0, d.a, "r1"], [R1, d.b, "r2"]]){
-            /* "[Auto tap on the row]", then the child builds it - the tens + pulsing first */
-            await H.tap({ x: V.cx, y: R.mid() }); H.off(); V.lightRow(R.r); PVSFX.tap();
+            /* "[Auto tap on the row]" - the row lights by itself, no hand on the table (user 2026-10-29); then the child
+               builds it - the tens + pulsing first */
+            await C.wait(250); V.lightRow(R.r); PVSFX.tap();
             const src = K.sources(sc, { x: V.x, W: V.W, G: V.G }, V.y + V.H + 10); src.show();
             const card = R.r ? W.b : W.a, c = CU[role] || { t: .2, o: .4 };
             await C.cue(role, [[c.t, ()=>{ K.lightDigit(card, "t"); K.beat([src.t], 0); }], [c.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o"); K.beat([src.o], 0); }]]);
@@ -2785,25 +2819,24 @@ const PVModules = {
             await K.childBuild(C, R, n, src); C.guard();
             src.fade(); V.lightRow(R.r, false); await C.wait(300);
           }
-          H.el.remove();
           GameBus.emit("pv_build_done", { slide_id: slide.id });
-          await C.say("go");
+          await C.cue("go", [[(CU.go || { p: .45 }).p, plusIn]]);
           await C.say("o_add"); await K.moveKind(C, V, "o");
-          await pvAddSumLine(C, V, "o", "o_sum");
+          await pvAddSumLine(C, V, W, "o", "o_sum");
           await C.say("t_add"); await K.moveKind(C, V, "t");
-          await pvAddSumLine(C, V, "t", "t_sum");
+          await pvAddSumLine(C, V, W, "t", "t_sum");
           await pvAddTotal(C, V, W);
           recordResult(slide, true); pvCelebrate();
           await pvAddSay(C, W, "correct");
           await C.wait(500); completeSlide(true); return;
         }
         /* the numbers built one by one, each card with its row */
-        [W.a, W.b, W.plus].forEach(e => e.classList.add("pv-hide"));
+        [W.a, W.b].forEach(e => e.classList.add("pv-hide"));
         await C.wait(200);
         K.show(W.a); await R0.fill(d.a, 80); K.popTable(R0);
-        K.show(W.plus); K.show(W.b); await R1.fill(d.b, 80); K.popTable(R1);
+        K.show(W.b); await R1.fill(d.b, 80); K.popTable(R1);
         await C.wait(250);
-        await C.say("prompt");
+        await C.cue("prompt", [[(CU.prompt || { p: .45 }).p, plusIn]]);   // "42 और 35 को जोड़िए।": the "+" on "जोड़िए"
         await K.moveKind(C, V, "o");
         await K.moveKind(C, V, "t");
         GameBus.emit("pv_merge_done", { slide_id: slide.id });
@@ -2837,7 +2870,8 @@ const PVModules = {
       const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {}, L = PV_ADD_LAY.main, s = d.a + d.b;
       const pick = d.answer === "mcq";
       state.ownsAudio = true; state.locked = false; setNavActive(false); $("navBtn").style.display = "none"; setSwMood("point"); pvReplay(C);
-      const BIG = pick ? { cx: 666, ys: [222, 330, 452], h: 92 } : { cx: 560, ys: [222, 330, 452], h: 92 };
+      const BIG = pick ? { cx: 666, ys: [222, 330, 452], h: 92 } : { cx: 520, ys: [222, 330, 452], h: 92 };
+      const PAD = { x: 700, y: 164 }, PAD_BY_TABLE = { x: 985, y: 238 };   // (P2/P3: the keypad near the sum - user 2026-10-29; beside the table once it comes)
       const W = K.vcards(sc, d.a, d.b, BIG.cx, BIG.ys, BIG.h);
       const h1 = async ()=>{ const c = CU.h1 || { ao: .2, bo: .35, at: .55, bt: .7 };
         await C.cue("h1", [[c.ao, ()=> K.lightDigit(W.a, "o")], [c.bo, ()=> K.lightDigit(W.b, "o")],
@@ -2849,7 +2883,7 @@ const PVModules = {
         if(V) return; hide(true);
         const cx = pick ? L.cx : 430;
         V = K.vtable(sc, Object.assign({}, L, { cx })); V.el.classList.add("pv-hide"); V.el.style.height = PVK.px(V.head + 2 * V.rowH);
-        await W.place(pick ? L.cardX : 830, pvAddYs(V), L.cardH, 520); C.guard();
+        await W.place(pick ? L.cardX + 50 : 830, pvAddYs(V), L.cardH, 520); C.guard();   // (P1: a little right of the table - user 2026-10-29)
         K.showTable({ el: V.el }); V.show(2); await C.wait(250);
         await V.rows[0].fill(d.a, 80); K.popTable(V.rows[0]); await V.rows[1].fill(d.b, 80); K.popTable(V.rows[1]); C.guard();
         await C.say("h2");
@@ -2864,7 +2898,7 @@ const PVModules = {
             sayCorrect: ()=> C.cue("correct", [[((CU[C.right("correct")] || CU.correct || {}).n) || .8, ()=> K.sayEl(W.q)]]),
             ladder: async (n, M)=>{
               if(n === 1) await h1();
-              else if(n === 2){ await blocks(on => M.hide(on)); M.moveTo(V.y + V.head + 2 * V.rowH + 40); M.hide(false); }
+              else if(n === 2){ await blocks(on => M.hide(on)); M.moveTo(W.ys[2] + W.h / 2 + 26); M.hide(false); }   // (under the answer's boxes, not over them - user 2026-10-29)
               else {
                 await blocks(on => M.hide(on)); M.hide(true);
                 V.show(3); K.show(V.line); await C.wait(400);
@@ -2874,186 +2908,343 @@ const PVModules = {
               } } });
           return;
         }
-        await K.numpad(C, { answer: s, x: BIG.cx, y: 600, reask: "reask", target: W.q, padAt: { x: 985, y: 238 },
+        await K.numpad(C, { answer: s, x: BIG.cx, y: 600, reask: "reask", target: W.q, padAt: PAD,
           onReady: P =>{ P.hide(true); C.say("prompt").then(()=>{ P.hide(false); P.ready(); }, ()=>{}); },
           onRight: ()=> W.fill(s),
           sayCorrect: ()=> C.cue("correct", [[((CU[C.right("correct")] || CU.correct || {}).n) || .8, ()=> K.sayEl(W.q)]]),
-          ladder: async (n, P)=>{ if(n === 1) await h1(); else if(n === 2) await blocks(()=>{}); else P.guideKeys(); } });
+          ladder: async (n, P)=>{ if(n === 1) await h1(); else if(n === 2){ K.glide(P.pad, PAD_BY_TABLE, 520, false); await blocks(()=>{}); } else P.guideKeys(); } });
       });
     }
   },
   ADD_GAME: {
-    /* deck slide 17 - "Bibi & Johny – ब्लॉक्स की एक्टिविटी", four activities in the garden of the deck's picture (user 2026-10-28:
-       "all 4, garden look"; Swiftee is the third character: she hands the blocks out, then leads the total). Each activity:
-       1 the two with their wishes ("मुझे 25 ब्लॉक्स चाहिए।"), the play button; 2 Bibi beside the wooden board - the child makes
-       her number with the − / + of BOTH columns (deck note: "Dono enable honge") and taps जाँचें; right: the blocks light,
-       Swiftee hands them to her, Johny takes her place; 3 the same for Johny; 4 the board of three rows - Bibi's, + Johny's,
-       कुल: the ones first (the ones column lights; only its − / + live), जाँचें, then the tens; "= 37" joins the "25 + 12";
-       5 the success line, the confetti, the अगली एक्टिविटी button. Wrong: 1 "फिर से कोशिश कीजिए।" 2 "ब्लॉक्स ध्यान से
-       गिनिए।" + the blocks to count light 3 "देखिए, सही ब्लॉक्स ये हैं।" + the right blocks are set by themselves.
-       data: { acts: [[a, b], ...], kids: [{who, name}, {who, name}] }. audio: introN, build_aN, ok_aN, build_bN, ok_bN,
-       add, onesN, tens, totalN, doneN, next, final, w1, w2, w3. */
+    /* the review deck's page 17 (MTG2A01_L03_S03_review.pptx, user 2026-10-29) - Rumi & Rohan on a plain lawn, no Swiftee;
+       four questions. 1 (25 + 12) and 2 (34 + 25) "make and add blocks": screen 1 the two behind a table, their blocks
+       lying on it, "रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं।" - then the camera rises and the table's top becomes the
+       दहाई | इकाई board; Rumi walks in and the child makes her number with − / + and जाँचें, she walks off and Rohan
+       walks in (1: "पहले रूमी के लिए 25 बनाइए।" / "शाबाश! अब रोहन के लिए 12 बनाइए।"; 2: its one line "…दोनों संख्याएँ
+       बनाइए।"); "अब दोनों के ब्लॉक्स जोड़िए।" - the three-row board, the child taps the ones, then the tens down into the
+       sum row (1: "पहले इकाइयाँ जोड़िए।", the digits go in by themselves; 2: the child then types them on the keypad);
+       "शाबाश! 25 और 12 जोड़ने पर 37 मिले।". 3 (41 + 30) and 4 (62 + 17) "direct vertical addition + keypad" - see keypad().
+       Wrong check while making: the wrong column's blocks wiggle and only its line is said ("इसमें इकाई कम है।"), its
+       helping button pulsing; from the 2nd only that button works until it is right.
+       data: { acts: [[a, b], ...], modes: ["blocks" | "blocks_type" | "keypad", ...], kids: [{who, name}, {who, name}], cues }.
+       QA: ?dev=1's game menu (or ?slide=N&gm=2.total) starts at a question's part - see pvGameJump. */
     mount(host, slide){
-      const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc);
+      const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {};
       state.ownsAudio = true; state.locked = false; setNavActive(false); $("navBtn").style.display = "none"; pvReplay(C);
       const { px, add, setXY, glide, wait } = K, [KA, KB] = d.kids;
       sc.classList.add("gm");
       add(sc, "div", "gm-bg");
-      const sw = add(sc, "img", "gm-sw"); sw.src = "assets/start_mascot.webp"; sw.alt = ""; setXY(sw, 1112, 470);
+      const BX = 330, BY = 56, BW = 800, BH = 450;                            // the board (user 2026-10-29: higher - room above the buttons)
       let screen = [];                                                        // what the current screen put up
       const put = e =>{ screen.push(e); return e; };
       const clear = async ()=>{ const old = screen; screen = []; old.forEach(e => e.classList.add("pv-gone")); await C.wait(420); old.forEach(e => e.remove()); };
-      const swHop = ()=>{ if(!K.reduce()) sw.animate([{ translate: "0 0" }, { translate: "0 -26px", offset: .4 }, { translate: "0 0", offset: .7 }, { translate: "0 -8px", offset: .85 }, { translate: "0 0" }], { duration: 700, easing: "ease-out" }); };
+      const drop = e =>{ if(!e) return; e.classList.add("pv-gone"); setTimeout(()=> e.remove(), 450); };
       const hop = e =>{ if(e && !K.reduce()) e.animate([{ translate: "0 0" }, { translate: "0 -22px", offset: .4 }, { translate: "0 0", offset: .7 }, { translate: "0 0" }], { duration: 620, iterations: 2, easing: "ease-out" }); };
-      const kid = (k, x, y, h)=>{ const e = put(add(sc, "img", "gm-kid")); e.src = pvChar(k.who, true) || pvChar(k.who); e.alt = ""; e.style.height = px(h); setXY(e, x, y - h); K.pop(e); return e; };
+      /* a wrong column's blocks wiggle (user 2026-10-29: the blocks, not the check button) */
+      const wig = e =>{ if(e && !K.reduce()) e.animate([{ rotate: "0deg" }, { rotate: "-10deg" }, { rotate: "10deg" }, { rotate: "-7deg" }, { rotate: "7deg" }, { rotate: "0deg" }], { duration: 560, easing: "ease-in-out" }); };
+      const kid = (k, x, y, h, pose, still)=>{ const e = put(add(sc, "img", "gm-kid")); e.src = pvChar(k.who, pose || true) || pvChar(k.who); e.alt = ""; e.style.height = px(h); e._h = h;
+        e._kid = k; setXY(e, x, y - h); if(!still) K.pop(e); return e; };
+      /* a kid walks to x in side view, as a cut-out puppet (user 2026-10-30: "the walking does not feel good"): its side
+         picture (char_<who>_side, facing right, legs apart) is three layers - the body, and each leg turning on the hip
+         (kids[].side, tools/make_walk.py) - the legs swing through each other step after step (easing at each end, as a
+         pendulum), the body rises a little as they pass, and the step is timed to the ground covered so the feet do not
+         slide; mirrored when walking left. There the child turns to the front (its standing picture). Resolves there. */
+      const walk = (e, x, ms)=> new Promise(r =>{ const dx = x - e._x, k = e._kid, S = k && k.side, src = k && pvChar(k.who, "side");
+        if(K.reduce() || !S || !src){ setXY(e, x, e._y); return r(); }
+        const H = e._h * S.h, W = H * S.ar, P = add(sc, "div", "gm-walk", "width:" + px(W) + ";height:" + px(H));
+        setXY(P, e._x - W / 2, e._y + e._h - H); P.style.scale = dx < 0 ? "-1 1" : "";
+        const bob = add(P, "div", "gm-walk-in"), hip = S.px * 100 + "% " + S.py * 100 + "%", c = S.cut * 100, t = c - 12, sp = S.split * 100;
+        const part = (css, turn)=>{ const im = add(bob, "img", "", "width:" + px(W) + ";height:" + px(H) + ";" + css + (turn ? ";transform-origin:" + hip : "")); im.src = src; im.alt = ""; return im; };
+        /* each leg reaches up under the body, narrowing to the middle of the hips there - a full-width top would swing out
+           past the body's outline as the leg turns */
+        const back = part("clip-path:polygon(" + (sp - 6) + "% " + t + "%," + sp + "% " + t + "%," + sp + "% 100%,0 100%,0 " + (c - 1) + "%)", true),
+              front = part("clip-path:polygon(" + sp + "% " + t + "%," + (sp + 6) + "% " + t + "%,100% " + (c - 1) + "%,100% 100%," + sp + "% 100%)", true);
+        /* the body over the legs' tops - its lower edge fades out across the hips (a straight cut showed as a seam) */
+        const fade = "linear-gradient(to bottom,#000 " + (c - 3) + "%,transparent " + (c + .5) + "%)";
+        part("-webkit-mask-image:" + fade + ";mask-image:" + fade);
+        e.style.visibility = "hidden";
+        const leg = (1 - S.py) * H, stride = 2 * leg * Math.sin(S.a * Math.PI / 360);   // (the feet's distance apart)
+        const T = Math.max(380, 2 * stride / (Math.abs(dx) / ms)), it = ms / T;      // one cycle = two steps over the ground they cover
+        front.animate([{ rotate: "0deg" }, { rotate: S.a + "deg" }, { rotate: "0deg" }], { duration: T, iterations: it, easing: "ease-in-out" });
+        back.animate([{ rotate: "0deg" }, { rotate: -S.a + "deg" }, { rotate: "0deg" }], { duration: T, iterations: it, easing: "ease-in-out" });
+        bob.animate([{ translate: "0 0" }, { translate: "0 " + (-S.bob * H) + "px" }, { translate: "0 0" }], { duration: T / 2, iterations: it * 2, easing: "ease-in-out" });
+        const a = P.animate([{ translate: "0 0" }, { translate: dx + "px 0" }], { duration: ms, easing: "linear" });
+        a.onfinish = a.oncancel = ()=>{ P.remove(); setXY(e, x, e._y); e.style.visibility = "";
+          if(e.isConnected) e.animate([{ scale: ".5 1" }, { scale: "1 1" }], { duration: 220, easing: "ease-out" });   // (the turn to the front)
+          r(); }; });
+      /* the screen's own left / right edge in stage px (the lawn goes on beyond the stage on a wide screen - the kids come
+         from out there: user 2026-10-30 "they should come from out of the screen") */
+      const edge = side =>{ const r = $("stage").getBoundingClientRect(), k = r.width / 1333 || 1, vw = window.innerWidth || r.right;
+        return side < 0 ? -r.left / k : 1333 + (vw - r.right) / k; };
+      const pace = d => Math.max(900, Math.abs(d) / .34);                    // (a child's pace: ~340 px a second)
+      const KX = 175, KF = 610, KH = 330;                                     // the make screen's kid: x, feet, height
+      const walkIn = async k =>{ const x0 = edge(-1) - KH * .45, e = kid(k, x0, KF, KH, true, true); await walk(e, KX, pace(KX - x0)); return e; };
       const badge = (k, n, x, y)=>{ const e = put(add(sc, "div", "gm-badge")); e.innerHTML = '<b>' + k.name + '</b><span>' + n + '</span><i>ब्लॉक्स</i>'; setXY(e, x, y); K.pop(e); return e; };
       /* a column of one kind of block, centred in its box (x0, y0, w, h); its blocks are scene elements */
       const col = (kind, x0, y0, w, h, G)=>{
-        const rH = G * K.ROD.ar, cH = G * K.CUBE.ar, gp = Math.max(4, G * .22), rg = Math.max(5, G * .3), Q = { kind, list: [] };
+        const rH = G * K.ROD.ar, cH = G * K.CUBE.ar, gp = Math.max(4, G * .22), rg = Math.max(5, G * .3), Q = { kind, list: [], G };
+        Q.size = kind === "t" ? rH : G;
         Q.at = (i, n)=>{ if(kind === "t") return { x: x0 + (w - (n * G + (n - 1) * rg)) / 2 + i * (G + rg), y: y0 + (h - rH) / 2 };
           const cols = Math.min(n, 5), rows = Math.ceil(n / 5), bw = cols * G + (cols - 1) * gp, bh = rows * cH + (rows - 1) * gp;
           return { x: x0 + (w - bw) / 2 + (i % 5) * (G + gp), y: y0 + (h - bh) / 2 + Math.floor(i / 5) * (cH + gp) }; };
         Q.lay = ms => Q.list.forEach((b, i)=> glide(b, Q.at(i, Q.list.length), ms == null ? 240 : ms, false));
-        Q.add = ()=>{ const n = Q.list.length + 1, p = Q.at(n - 1, n), b = put(K.block(sc, kind, p.x, p.y, kind === "t" ? rH : G));
+        Q.add = ()=>{ const n = Q.list.length + 1, p = Q.at(n - 1, n), b = put(K.block(sc, kind, p.x, p.y, Q.size));
           b.classList.add("gm-blk"); Q.list.push(b); K.pop(b); PVSFX.appear(); Q.lay(240); return b; };
-        Q.remove = ()=>{ const b = Q.list.pop(); if(!b) return; PVSFX.unpop(); b.classList.add("pv-gone"); setTimeout(()=> b.remove(), 450); Q.lay(240); };
-        Q.set = async (n, step)=>{ while(Q.list.length < n){ Q.add(); await wait(step || 150); } while(Q.list.length > n){ Q.remove(); await wait(step || 150); } };
+        Q.remove = ()=>{ const b = Q.list.pop(); if(!b) return; PVSFX.unpop(); drop(b); Q.lay(240); };
         Q.fill = async n =>{ for(let i = 0; i < n; i++){ Q.add(); await wait(70); } };
+        Q.empty = ()=>{ Q.list.splice(0).forEach(drop); };
         return Q;
       };
-      /* the wooden board: a frame, its दहाई | इकाई heads; label: a first column (the add board's names) */
-      const board = (x, y, w, h, label)=>{ const e = put(add(sc, "div", "gm-board", "width:" + px(w) + ";height:" + px(h))); setXY(e, x, y);
+      /* the wooden board: a frame, its दहाई | इकाई heads; label: a first column (the add board's pictures). still: no pop
+         (it is the table's top, already there - its heads fade in) */
+      const board = (x, y, w, h, label, still)=>{ const e = put(add(sc, "div", "gm-board", "width:" + px(w) + ";height:" + px(h))); setXY(e, x, y);
         const L = label || 0, cw = (w - 44 - L) / 2;
         e.innerHTML = '<div class="gm-in">' + (L ? '<div class="gm-hd gm-hd-l" style="width:' + px(L) + '"></div>' : "") +
           '<div class="gm-hd gm-hd-t" style="left:' + px(L) + ';width:' + px(cw) + '">दहाई</div><div class="gm-hd gm-hd-o" style="left:' + px(L + cw) + ';width:' + px(cw) + '">इकाई</div>' +
           '<i class="gm-vl" style="left:' + px(L + cw) + '"></i>' + (L ? '<i class="gm-vl" style="left:' + px(L) + '"></i>' : "") + '</div>';
-        K.pop(e); return { el: e, x0: x + 22 + L, y0: y + 22 + 54, cw, ih: h - 44 - 54, th: e.querySelector(".gm-hd-t"), oh: e.querySelector(".gm-hd-o") }; };
-      /* − n + (deck: "Child uses + / −"); its column fills / empties with it */
+        if(still){ if(!K.reduce()) [...e.querySelectorAll(".gm-hd, .gm-vl")].forEach(c => c.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, easing: "ease-out" })); }
+        else K.pop(e);
+        return { el: e, x0: x + 22 + L, y0: y + 22 + 54, cw, ih: h - 44 - 54, th: e.querySelector(".gm-hd-t"), oh: e.querySelector(".gm-hd-o") }; };
+      /* − n + (deck: "Child uses + / −"); its column fills / empties with it. Z.only: only that button works (2nd wrong check) */
       const counter = (Q, x, y)=>{ const e = put(add(sc, "div", "gm-ctr off")); setXY(e, x, y);
         e.innerHTML = '<button class="gm-pm" type="button" aria-label="कम करें">−</button><span class="gm-n">0</span><button class="gm-pm" type="button" aria-label="बढ़ाएँ">+</button>';
-        const [mi, pl] = e.querySelectorAll(".gm-pm"), n = e.querySelector(".gm-n"), Z = { el: e, Q };
+        const [mi, pl] = e.querySelectorAll(".gm-pm"), n = e.querySelector(".gm-n"), Z = { el: e, Q, n, only: null };
+        Z.btn = dir => dir > 0 ? pl : mi;
         Z.sync = ()=>{ n.textContent = String(Q.list.length); };
         Z.live = on =>{ e.classList.toggle("off", !on); };
-        pl.onclick = ()=>{ if(e.classList.contains("off") || !C.alive() || Q.list.length >= 9) return; stopNudge(); PVSFX.tap(); Q.add(); Z.sync(); Z.onTap && Z.onTap(); };
-        mi.onclick = ()=>{ if(e.classList.contains("off") || !C.alive() || !Q.list.length) return; stopNudge(); PVSFX.tap(); Q.remove(); Z.sync(); Z.onTap && Z.onTap(); };
-        Z.set = async v =>{ await Q.set(v); Z.sync(); };
+        Z.guide = dir =>{ Z.only = dir; mi.classList.toggle("dis", dir > 0); pl.classList.toggle("dis", dir < 0); };
+        Z.unguide = ()=>{ Z.only = null; mi.classList.remove("dis"); pl.classList.remove("dis"); };
+        const tap = dir =>{ if(e.classList.contains("off") || !C.alive()) return;
+          if(Z.only != null && dir !== Z.only) return;
+          if(dir > 0 ? Q.list.length >= 9 : !Q.list.length) return;
+          stopNudge(); PVSFX.tap(); dir > 0 ? Q.add() : Q.remove(); Z.sync(); Z.onTap && Z.onTap(); };
+        pl.onclick = ()=> tap(1); mi.onclick = ()=> tap(-1);
+        Z.reset = ()=>{ Q.empty(); Z.unguide(); Z.sync(); };
         return Z; };
-      const checkBtn = (x, y)=>{ const b = put(add(sc, "button", "gm-check")); b.type = "button"; b.textContent = "जाँचें"; setXY(b, x, y); K.pop(b); return b; };
+      const checkBtn = (x, y)=>{ const b = put(add(sc, "button", "gm-check off")); b.type = "button"; b.textContent = "जाँचें"; setXY(b, x, y); K.pop(b); return b; };
       let wrongs = 0;
-      /* the child sets the live counters and taps जाँचें until want; the help ladder on each wrong check (the deck's common
-         feedback). hint(): the blocks to count light (2nd); the 3rd wrong sets them right by itself. Resolves when right. */
-      const solve = (ctrs, want, chk, hint)=> new Promise(res =>{
+      /* the child sets the counters and taps जाँचें until want. A wrong check (user 2026-10-29): the wrong column's blocks
+         wiggle (its number, when it has none) and only that column's hint is said - "इसमें इकाई कम है।" - its helping button
+         pulsing; from the 2nd wrong check only that button works until the column is right (deck WA2). Resolves when right. */
+      const solve = (ctrs, want, chk)=> new Promise(res =>{
         let n = 0, busy = false, fin = false, idleT = 0;
         (C.waits = C.waits || []).push({ live: ()=> !fin, busy: ()=> busy });
-        const ok = ()=> ctrs.every((z, i)=> z.Q.list.length === want[i]);
-        const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin || busy) return;
-          const z = ctrs.find((z, i)=> z.Q.list.length !== want[i]); if(z) z.el.querySelectorAll(".gm-pm").forEach(b => K.repulse(b)); else K.repulse(chk); arm(); }, IDLE_MS); };
+        const need = i => Math.sign(want[i] - ctrs[i].Q.list.length);       // +1: too few, -1: too many
+        const ok = ()=> ctrs.every((z, i)=> !need(i));
+        const pulse = ()=>{ let any = false; ctrs.forEach((z, i)=>{ const dn = need(i); if(dn){ any = true; K.repulse(z.btn(dn)); } }); if(!any) K.repulse(chk); };
+        const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin || busy) return; pulse(); arm(); }, IDLE_MS); };
         ctrs.forEach((z, i)=>{ z.live(true); z.onTap = arm; z.el.dataset.want = want[i]; });   // (data-want: for the automated play-through)
-        const end = ()=>{ fin = true; clearTimeout(idleT); ctrs.forEach(z => z.live(false)); chk.onclick = null; chk.classList.add("off"); res(); };
+        const end = ()=>{ fin = true; clearTimeout(idleT); ctrs.forEach(z =>{ z.live(false); z.unguide(); z.onTap = null; }); chk.onclick = null; chk.classList.add("off"); res(); };
+        const guide = (z, w, dn)=> new Promise(r =>{ z.guide(dn); K.repulse(z.btn(dn));
+          z.onTap = ()=>{ if(z.Q.list.length === w){ z.unguide(); z.onTap = arm; r(); } else K.repulse(z.btn(dn)); }; });
         chk.classList.remove("off");
         chk.onclick = async ()=>{
           if(busy || fin || !C.alive()) return; stopNudge(); PVSFX.tap(); clearTimeout(idleT);
           const right = ok();
           GameBus.emit("game_check", { slide_id: slide.id, correct: right, attempt: n + 1 });
-          if(right){ sfxCorrect(); setSwMood("happy"); return end(); }
-          busy = true; n++; wrongs++; sfxWrongSoft(); setSwMood("tryagain"); K.shake(chk, 8);
-          if(n === 1) await C.say("w1");
-          else if(n === 2){ hint(); await C.say("w2"); }
-          else { await C.say("w3"); for(let i = 0; i < ctrs.length; i++) await ctrs[i].set(want[i]); await C.wait(400); busy = false; return end(); }
+          if(right){ sfxCorrect(); return end(); }
+          busy = true; n++; wrongs++; sfxWrongSoft();
+          ctrs.forEach((z, i)=>{ if(need(i)) (z.Q.list.length ? z.Q.list : [z.n]).forEach(wig); });
+          const others = ctrs.map(z => z.el.classList.contains("off"));
+          for(let i = 0; i < ctrs.length; i++){ const dn = need(i); if(!dn) continue;
+            const hint = ctrs[i].Q.kind + (dn > 0 ? "_less" : "_more");
+            if(n === 1){ await C.say(hint); K.repulse(ctrs[i].btn(dn)); continue; }
+            ctrs.forEach((z, j)=> z.live(j === i)); ctrs[i].guide(dn);          // (the other column waits; only the helping button)
+            await C.say(hint);
+            await guide(ctrs[i], want[i], dn); C.guard(); }
+          if(n > 1){ ctrs.forEach((z, j)=> z.live(!others[j])); K.repulse(chk); }
           busy = false; arm();
         };
         arm();
       });
       const shine = list =>{ list.forEach((b, i)=> setTimeout(()=>{ if(!b.isConnected) return; b.classList.remove("hl"); void b.offsetWidth; b.classList.add("hl"); }, i * 60)); };
-      /* 1 - the two with their wishes, the play button */
-      async function intro(i, a, b){
-        const ban = put(add(sc, "div", "gm-banner")); ban.textContent = "एक्टिविटी " + i + ": ब्लॉक्स बनाइए और जोड़िए"; setXY(ban, 666, 40); K.pop(ban);
-        const ka = kid(KA, 300, 640, 330), kb = kid(KB, 1030, 640, 330);
-        const bub = (t, x)=>{ const e = put(add(sc, "div", "gm-bubble pv-hide")); e.innerHTML = t; setXY(e, x, 150); return e; };
-        const ba = bub("मुझे <b>" + a + "</b> ब्लॉक्स चाहिए।", 300), bb = bub("मुझे <b>" + b + "</b> ब्लॉक्स चाहिए।", 1030);
-        /* the blocks Swiftee will hand out: a pile on the grass between them */
-        const pile = col("t", 430, 450, 150, 190, 22), pc = col("o", 760, 500, 150, 110, 26);
-        sw.classList.add("gm-sw-mid"); setXY(sw, 573, 360);
-        await C.cue("intro" + i, [[.3, ()=>{ K.show(ba); sfxPop(); hop(ka); }], [.55, ()=>{ K.show(bb); sfxPop(); hop(kb); }], [.15, ()=>{ pile.fill(4); pc.fill(6); swHop(); }]]);
-        const play = put(add(sc, "button", "gm-play")); play.type = "button"; play.innerHTML = '<img alt="" src="assets/btn-play-round.svg">'; setXY(play, 666, 618); K.pop(play);
-        await new Promise(r =>{ let fin = false; (C.waits = C.waits || []).push({ live: ()=> !fin, busy: ()=> false });
-          const t = setTimeout(()=>{ if(C.alive() && !fin) placeNudge(play); }, IDLE_MS);
-          play.onclick = ()=>{ if(fin) return; fin = true; clearTimeout(t); stopNudge(); PVSFX.tap(); r(); }; });
-        C.guard(); await clear(); sw.classList.remove("gm-sw-mid"); setXY(sw, 1112, 470);
+      /* screen 1 - the two of them behind a table, their blocks lying on it (side by side, none on another); then the camera
+         rises: the kids and the table's legs go out at the bottom and the top turns to face us - it is the board (returns it) */
+      async function meet(i, a, b){
+        const ban = put(add(sc, "div", "gm-banner")); ban.textContent = "एक्टिविटी " + i + ": ब्लॉक्स बनाइए और जोड़िए"; setXY(ban, 666, 30); K.pop(ban);
+        const ka = kid(KA, edge(-1) - 200, 580, 420, true, true), kb = kid(KB, edge(1) + 200, 580, 420, true, true);
+        const T3 = put(add(sc, "div", "gm-t3")), face = add(T3, "div", "gm-board gm-face", "width:" + px(BW) + ";height:" + px(BH));
+        setXY(face, BX, BY); face.innerHTML = '<div class="gm-in"></div>';
+        const TILT = "translateY(248px) rotateX(66deg) scale(.84)";
+        face.style.transform = TILT; face.classList.add("gm-3d");
+        /* the blocks lying on the table (user 2026-10-30: like the deck's picture - the rods flat, pointing away, side by
+           side; the cubes in a little grid): real 3D boxes on the table's top (CSS preserve-3d), so they have a top, a front
+           and sides and turn with the table */
+        const G = 30, blocks = [];
+        const box = (x, y, w, dd, kind)=>{ const e = add(face, "div", "gm-box gm-box-" + kind, "left:" + px(x) + ";top:" + px(y) + ";width:" + px(w) + ";height:" + px(dd) + ";--h:" + px(G) + ";--g:" + px(G));
+          e.innerHTML = '<i class="bx-t"></i><i class="bx-f"></i><i class="bx-l"></i><i class="bx-r"></i>'; blocks.push(e); return e; };
+        const lay = (n, cx)=>{ const { t, o } = pvSplit(n), oc = Math.min(o, 3), orows = Math.ceil(o / 3), rg = 12, cg = 9;
+          const w = t * (G + rg) - (t ? rg : 0) + (t && o ? 34 : 0) + (oc * (G + cg) - (oc ? cg : 0));
+          let x = cx - w / 2;
+          for(let j = 0; j < t; j++){ box(x, BH / 2 - 5 * G, G, 10 * G, "t"); x += G + rg; }
+          x += t ? 34 - rg : 0;
+          const oy = BH / 2 - (orows * (G + cg) - cg) / 2;
+          for(let j = 0; j < o; j++) box(x + (j % 3) * (G + cg), oy + Math.floor(j / 3) * (G + cg), G, G, "o"); };
+        lay(a, BW * .27); lay(b, BW * .73);
+        /* the table's front edge and two legs hang from its top (3D too: user 2026-10-30 "fix the edge of the table") */
+        const apron = add(face, "div", "gm-apron", "left:" + px(26) + ";top:" + px(BH - 2) + ";width:" + px(BW - 52));
+        const legs = [56, BW - 56 - 38].map(x => add(face, "div", "gm-leg", "left:" + px(x) + ";top:" + px(BH - 46)));
+        const ba = badge(KA, a, 190, 250), bb = badge(KB, b, 1143, 250); [ba, bb].forEach(e => e.classList.add("pv-hide"));
+        await Promise.all([walk(ka, 470, pace(470 - ka._x)), walk(kb, 866, pace(kb._x - 866))]); C.guard();   // (they walk up to the table)
+        const c = CU["intro" + i] || { a: .05, b: .45 };
+        await C.cue("intro" + i, [[c.a, ()=>{ hop(ka); K.show(ba); sfxPop(); }], [c.b, ()=>{ hop(kb); K.show(bb); sfxPop(); }]]);
+        await C.wait(600); C.guard();
+        const ms = K.reduce() ? 0 : 1600, out = { duration: ms * .62, easing: "ease-in", fill: "forwards" };
+        [ba, bb, ban].forEach(drop);
+        if(ms){ [ka, kb].forEach(e => e.animate([{ translate: "0 0", opacity: 1 }, { translate: "0 320px", opacity: 0 }], out));
+          [apron, ...legs].forEach(e => e.animate([{ opacity: 1 }, { opacity: 0 }], out));
+          setTimeout(()=> blocks.forEach(drop), ms * .5);                     // (they go as it turns: the child makes them now)
+          PVSFX.move();
+          await face.animate([{ transform: TILT }, { transform: "none" }], { duration: ms, easing: "cubic-bezier(.55,0,.25,1)", fill: "forwards" }).finished; }
+        face.style.transform = "none"; C.guard();
+        [ka, kb, apron, ...legs].forEach(e => e.remove()); blocks.forEach(e => e.remove());
+        screen = screen.filter(e => e !== T3);                               // (the top stays: the next screen's board takes its place)
+        return T3;
       }
-      /* 2, 3 - one child's number on the board; right: Swiftee hands the blocks to them */
-      async function build(k, n, role, okRole){
-        const kd = kid(k, 175, 610, 330), bd = badge(k, n, 175, 520);
-        const B = board(330, 96, 800, 470), G = 33;
+      /* screen 2 - Rumi's number, then (the board reset) Rohan's. table: the meet's table top (the board comes on it);
+         onlyB: start with Rohan (the QA menu). Activity 1 says "पहले रूमी के लिए 25 बनाइए।" / "शाबाश! अब रोहन के लिए 12
+         बनाइए।"; activity 2's one line came on screen 1 ("…दोनों संख्याएँ बनाइए।") - its kids just change over */
+      async function make(i, a, b, table, onlyB){
+        const B = board(BX, BY, BW, BH, 0, !!table), G = 33;
+        if(table) setTimeout(()=> table.remove(), 520);
         const qt = col("t", B.x0, B.y0, B.cw, B.ih, G), qo = col("o", B.x0 + B.cw, B.y0, B.cw, B.ih, G);
-        const ct = counter(qt, B.x0 + B.cw / 2, 548), co = counter(qo, B.x0 + B.cw * 1.5, 548), chk = checkBtn(B.x0 + B.cw, 640);
-        await C.say(role);
-        await solve([ct, co], [Math.floor(n / 10), n % 10], chk, ()=>{ K.beat([bd], 0);
-          [[ct, Math.floor(n / 10)], [co, n % 10]].forEach(([z, w])=>{ if(z.Q.list.length !== w){ shine(z.Q.list); z.el.querySelectorAll(".gm-pm").forEach(b => K.repulse(b)); } }); });
-        C.guard();
-        shine([...qt.list, ...qo.list]);
-        await C.say(okRole);
-        /* Swiftee hands them over: she hops, the blocks fly into the child's badge */
-        swHop(); PVSFX.move();
-        const to = { x: 175, y: 560 };
-        [...qt.list, ...qo.list].forEach((b, j)=> setTimeout(()=>{ if(!b.isConnected) return; b.style.zIndex = 30;
-          glide(b, { x: to.x - b._w / 2, y: to.y - b._h / 2 }, 560, true).then(()=> b.animate([{ scale: "1", opacity: 1 }, { scale: ".2", opacity: 0 }], { duration: 240, fill: "forwards" })); }, j * 70));
-        await C.wait(([...qt.list, ...qo.list].length) * 70 + 900); K.beat([bd, kd], 0);
-        await C.wait(300); await clear();
+        const cy = BY + BH + 22, ct = counter(qt, B.x0 + B.cw / 2, cy), co = counter(qo, B.x0 + B.cw * 1.5, cy), chk = checkBtn(B.x0 + B.cw, cy + 96);
+        let kd, bd;
+        if(!onlyB){
+          kd = await walkIn(KA); bd = badge(KA, a, KX, 520);
+          if(C.has("build_a" + i)) await C.say("build_a" + i);
+          await solve([ct, co], [Math.floor(a / 10), a % 10], chk); C.guard();
+          shine([...qt.list, ...qo.list]); K.beat([bd], 0); await C.wait(700);
+        }
+        /* Rumi walks off to the left, the board empties and Rohan walks in (activity 1: on "अब" of its line) */
+        let came = Promise.resolve();
+        const swap = ()=>{ const old = kd; drop(bd); ct.reset(); co.reset();
+          came = (old ? walk(old, edge(-1) - KH * .45, pace(old._x - edge(-1) + KH * .45)).then(()=> old.remove()) : Promise.resolve()).then(()=> C.alive() && walkIn(KB))
+            .then(e =>{ if(!e) return; kd = e; bd = badge(KB, b, KX, 520); }); };
+        if(C.has("ok_a" + i)) await C.cue("ok_a" + i, [[((CU["ok_a" + i]) || { swap: .3 }).swap, swap]]); else swap();
+        await came; C.guard();
+        await solve([ct, co], [Math.floor(b / 10), b % 10], chk); C.guard();
+        shine([...qt.list, ...qo.list]); K.beat([bd], 0); await C.wait(500);
+        await C.say("add");                                                   // "अब दोनों के ब्लॉक्स जोड़िए।"
+        await clear();
       }
-      /* 4 - the board of three rows: the ones, then the tens, into कुल */
-      async function total(i, a, b){
+      /* screen 3 - the board of three rows: the child taps the blocks down into the sum row, the ones, then the tens (no
+         − / +, no check - user 2026-10-29). Activity 1: "पहले इकाइयाँ जोड़िए।", each column's digit goes into the sum's
+         box when it is complete. typeIt (activity 2, deck: "Child enters 9 in the ones column and 5 in the tens column"):
+         no lines - the blocks pulse - and then the child types the sum into its boxes on the keypad (the ones first) */
+      async function total(i, a, b, typeIt){
         const s = a + b, A = pvSplit(a), Bn = pvSplit(b), S = pvSplit(s);
-        const ka = kid(KA, 120, 600, 280), kb = kid(KB, 230, 610, 280);
-        const act = put(add(sc, "div", "gm-act")); act.innerHTML = '<b>एक्टिविटी ' + i + '</b><span class="gm-eq">' + a + ' + ' + b + '<em class="pv-hide"> = ' + s + '</em></span>'; setXY(act, 175, 600); K.pop(act);
-        const LW = 190, B = board(360, 70, 820, 520, LW), rowH = (B.ih - 8) / 3, G = 16;
-        const lab = (k, n, r, plus)=>{ const e = put(add(sc, "div", "gm-lab")); setXY(e, 360 + 22, B.y0 + r * rowH); e.style.width = px(LW); e.style.height = px(rowH);
-          e.innerHTML = (plus ? '<i class="gm-plus">+</i>' : '') + (k ? '<img alt="" src="' + pvChar(k.who) + '">' : '') + '<span><b>' + (k ? k.name : 'कुल') + '</b> (' + n + ')</span>'; return e; };
-        lab(KA, a, 0); lab(KB, b, 1, true); const lt = lab(null, "?", 2);
-        const line = put(add(sc, "i", "gm-line")); setXY(line, 360 + 22, B.y0 + 2 * rowH - 2); line.style.width = px(820 - 44);
+        const ka = kid(KA, 110, 600, 270), kb = kid(KB, 240, 610, 270);
+        const act = put(add(sc, "div", "gm-act")); act.innerHTML = '<b>एक्टिविटी ' + i + '</b><span class="gm-eq">' + a + ' + ' + b + '<em class="pv-hide"> = ' + s + '</em></span>'; setXY(act, 175, 610); K.pop(act);
+        const LX = 360, LW = 180, B = board(LX, 40, 820, 640, LW), rowH = (B.ih - 8) / 3, G = 19;
+        const lab = (k, n, r, plus)=>{ const e = put(add(sc, "div", "gm-lab")); setXY(e, LX + 22, B.y0 + r * rowH); e.style.width = px(LW); e.style.height = px(rowH);
+          e.innerHTML = (plus ? '<i class="gm-plus">+</i>' : '') + (k ? '<img alt="" src="' + pvChar(k.who) + '"><span class="gm-num">' + n + '</span>'
+            : '<span class="gm-sum"><b class="gm-d gm-dt">?</b><b class="gm-d gm-do">?</b></span>'); return e; };
+        lab(KA, a, 0); lab(KB, b, 1, true); const ls = lab(null, 0, 2);
+        const fillD = (kind, v)=>{ const e = ls.querySelector(kind === "t" ? ".gm-dt" : ".gm-do"); e.textContent = String(v); e.classList.add("on"); K.pop(e); sfxPop(); };
+        const line = put(add(sc, "i", "gm-line")); setXY(line, LX + 22, B.y0 + 2 * rowH - 2); line.style.width = px(820 - 44);
         const cols = [0, 1, 2].map(r => ({ t: col("t", B.x0, B.y0 + r * rowH, B.cw, rowH, G), o: col("o", B.x0 + B.cw, B.y0 + r * rowH, B.cw, rowH, G) }));
         await Promise.all([cols[0].t.fill(A.t), cols[0].o.fill(A.o), cols[1].t.fill(Bn.t), cols[1].o.fill(Bn.o)]);
-        const ct = counter(cols[2].t, B.x0 + B.cw / 2, 560), co = counter(cols[2].o, B.x0 + B.cw * 1.5, 560), chk = checkBtn(B.x0 + B.cw, 648);
-        chk.classList.add("off");
-        sw.classList.add("gm-sw-lead"); swHop();                               // Swiftee leads the total
-        await C.cue("add", [[.6, ()=>{ B.oh.classList.add("on"); K.beat([...cols[0].o.list, ...cols[1].o.list], 50); }]]);
-        await C.cue("ones" + i, [[.1, ()=> K.beat(cols[0].o.list, 50)], [.45, ()=> K.beat(cols[1].o.list, 50)]]);
-        await solve([co], [S.o], chk, ()=> shine([...cols[0].o.list, ...cols[1].o.list])); C.guard();
-        shine(cols[2].o.list); B.oh.classList.remove("on"); B.th.classList.add("on");
-        await C.say("tens");
-        await solve([ct], [S.t], chk, ()=> shine([...cols[0].t.list, ...cols[1].t.list])); C.guard();
+        const left = kind => [...cols[0][kind].list, ...cols[1][kind].list].filter(e => !e._moved);
+        let kind = "o", saying = false, fin = false, idleT = 0, step = null;
+        (C.waits = C.waits || []).push({ live: ()=> !fin, busy: ()=> saying });
+        const mark = ()=> ["t", "o"].forEach(k => left(k).forEach(e => e.classList.toggle("gm-tap", !fin && k === kind)));
+        const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin || saying) return; left(kind).forEach(e => K.repulse(e)); arm(); }, IDLE_MS); };
+        [...left("t"), ...left("o")].forEach(e =>{ e.onclick = ()=>{
+          if(!C.alive() || fin || e._moved) return;
+          if(e._kind !== kind){                                                // the tens before the ones: "पहले इकाइयाँ जोड़िए।"
+            if(saying) return; saying = true; stopNudge(); PVSFX.tap(); wig(e); left("o").forEach(x => K.repulse(x));
+            C.say("ones").finally(()=>{ saying = false; arm(); }); return; }
+          stopNudge(); PVSFX.tap(); arm();
+          e._moved = true; e.classList.remove("gm-tap", "pulse");
+          const gh = put(K.block(sc, e._kind, e._x, e._y, e._kind === "t" ? e._h : e._w)); gh.classList.add("gm-ghost");   // its grey copy stays
+          const Q = cols[2][e._kind], p = Q.at(Q.list.length, S[e._kind]); Q.list.push(e);
+          glide(e, p, 560, true).then(()=>{ K.knock(); if(Q.list.length === S[e._kind] && step){ const f = step; step = null; f(); } }); }; });
+        const column = k => new Promise(r =>{ kind = k; step = r; mark(); left(k).forEach(e => e.classList.add("pulse")); arm(); });
+        B.oh.classList.add("on"); K.beat([...cols[0].o.list, ...cols[1].o.list], 50);
+        if(!typeIt) await C.say("ones");
+        await column("o"); C.guard();
+        B.oh.classList.remove("on"); shine(cols[2].o.list); if(!typeIt) fillD("o", S.o); await C.wait(500);
+        B.th.classList.add("on"); K.beat([...cols[0].t.list, ...cols[1].t.list], 80);
+        if(!typeIt){ saying = true; await C.say("tens"); saying = false; }
+        await column("t"); C.guard();
+        fin = true; clearTimeout(idleT); mark();
         B.th.classList.remove("on"); shine([...cols[2].t.list, ...cols[2].o.list]);
-        [chk, ct.el, co.el].forEach(e => e.classList.add("pv-gone"));             // (the answer is in: the buttons go)
-        await C.cue("total" + i, [[.3, ()=> shine(cols[2].t.list)], [.5, ()=> shine(cols[2].o.list)],
-                                  [.75, ()=>{ lt.querySelector("span").innerHTML = '<b>कुल</b> (' + s + ')'; K.pop(lt); K.show(act.querySelector("em")); sfxPop(); }]]);
-        try{ confettiCannon(); }catch(e){} sfxCorrect(); hop(ka); hop(kb); swHop(); setSwMood("happy");
-        await C.say("done" + i);
-        sw.classList.remove("gm-sw-lead");
-        return { ka, kb };
+        const done = ()=>{ K.show(act.querySelector("em")); try{ confettiCannon(); }catch(e){} hop(ka); hop(kb); };
+        if(!typeIt){ fillD("t", S.t); done(); await C.say("done" + i); return; }
+        /* the child types the sum into the two boxes: the keypad stands where the kids were (they step aside meanwhile) */
+        const T = ls.querySelector(".gm-sum"); T._boxes = ()=> [...T.querySelectorAll(".gm-d")];
+        T.dataset.want = s;                                                   // (for the automated play-through)
+        [ka, kb, act].forEach(e => e.classList.add("pv-hide"));
+        await C.wait(300);
+        wrongs += await K.numpad(C, { answer: s, x: 175, y: 600, reask: "-", target: T, padAt: { x: 24, y: 236 }, keep: true,
+          onReady: P =>{ P.open(); P.ready(); },
+          onRight: ()=>{ T._boxes().forEach((e, j)=>{ e.textContent = String(j ? S.o : S.t); e.classList.add("on"); });
+            [ka, kb, act].forEach(e =>{ e.classList.remove("pv-hide"); K.pop(e); }); done(); },
+          sayCorrect: ()=> C.say("done" + i),
+          ladder: async (k, P)=>{ if(k >= 3){ P.guideKeys(); return; }
+            if(k === 2) K.beat([...cols[2].t.list, ...cols[2].o.list], 60);   // the sum row's blocks, counted again
+            await C.say("rewrite"); } }) || 0;
+        sc.querySelectorAll(".pv-pad").forEach(e => put(e));                  // (the keypad goes with the screen)
+      }
+      /* activities 3-4 (deck: "Add Vertically" - no blocks): the sum one under the other, two empty boxes under its line;
+         a tap on them opens the keypad (the ones box first). Wrong: 1 the boxes wiggle, "फिर से लिखिए।"; 2 the boxes wiggle
+         and the two numbers are added with blocks beside the sum - the total's blocks stay; 3 only the right key works.
+         Right: "शाबाश! 41 और 30 का जोड़ 71 होता है।" - after a wrong answer the same without "शाबाश!" */
+      async function keypad(i, a, b){
+        const s = a + b, ban = put(add(sc, "div", "gm-banner")); ban.textContent = "एक्टिविटी " + i + ": जोड़िए और सही उत्तर टाइप करिए"; setXY(ban, 666, 30); K.pop(ban);
+        const YS = [214, 330, 466], CX = 690, W = K.vcards(sc, a, b, CX, YS, 100); W.all().forEach(e =>{ put(e); K.pop(e); }); sfxPop();
+        W.q.dataset.want = s;                                                 // (for the automated play-through)
+        let shown = false;
+        /* the 2nd help (user 2026-10-30: "show it in the table"): the three-row दहाई | इकाई board comes in at the left and
+           the written sum glides beside its rows; a's blocks fill the first row, b's the second, then they all go down
+           into the sum's row (the ones, then the tens), leaving grey copies - the total's blocks stay */
+        const blocks = async ()=>{ if(shown) return; shown = true;
+          const B = board(50, 112, 520, 545), rowH = (B.ih - 8) / 3, G = 16, S = pvSplit(s);
+          const ys = [0, 1, 2].map(r => B.y0 + r * rowH + rowH / 2);
+          const line = put(add(sc, "i", "gm-line")); setXY(line, 50 + 22, B.y0 + 2 * rowH - 2); line.style.width = px(520 - 44); K.pop(line);
+          await W.place(745, ys, 92, 520); C.guard();
+          const cols = [0, 1, 2].map(r => ({ t: col("t", B.x0, B.y0 + r * rowH, B.cw, rowH, G), o: col("o", B.x0 + B.cw, B.y0 + r * rowH, B.cw, rowH, G) }));
+          const A = pvSplit(a), Bn = pvSplit(b);
+          await Promise.all([cols[0].t.fill(A.t), cols[0].o.fill(A.o)]); await C.wait(250);
+          await Promise.all([cols[1].t.fill(Bn.t), cols[1].o.fill(Bn.o)]); await C.wait(500);
+          for(const k of ["o", "t"]){ B[k === "o" ? "oh" : "th"].classList.add("on");
+            for(const e of [...cols[0][k].list, ...cols[1][k].list]){ const Q = cols[2][k], p = Q.at(Q.list.length, S[k]); Q.list.push(e);
+              const gh = put(K.block(sc, k, e._x, e._y, k === "t" ? e._h : e._w)); gh.classList.add("gm-ghost");
+              glide(e, p, 520, true).then(()=> K.knock()); await C.wait(150); }
+            await C.wait(550); B[k === "o" ? "oh" : "th"].classList.remove("on"); }
+          shine([...cols[2].t.list, ...cols[2].o.list]); C.guard(); };
+        await C.wait(300);
+        await C.say("type" + i);
+        wrongs += await K.numpad(C, { answer: s, x: CX, y: 600, reask: "type" + i, target: W.q, padAt: { x: 880, y: 168 }, keep: true,
+          onReady: P => P.ready(),
+          onRight: ()=> W.fill(s),
+          sayCorrect: ()=> C.say((C.late ? "late" : "done") + i),
+          ladder: async (k, P)=>{ if(k === 1) await C.say("rewrite"); else if(k === 2) await blocks(); else P.guideKeys(); } }) || 0;
+        sc.querySelectorAll(".pv-pad").forEach(e => put(e));
       }
       K.run(C, async ()=>{
         await C.wait(300);
-        for(let i = 1; i <= d.acts.length; i++){
-          const [a, b] = d.acts[i - 1];
-          await intro(i, a, b);
-          await build(KA, a, "build_a" + i, "ok_a" + i);
-          await build(KB, b, "build_b" + i, "ok_b" + i);
-          const { ka, kb } = await total(i, a, b);
-          if(i < d.acts.length){
-            const nx = put(add(sc, "button", "gm-next")); nx.type = "button"; nx.textContent = "अगली एक्टिविटी"; setXY(nx, 770, 660); K.pop(nx);
-            await new Promise(r =>{ let fin = false; (C.waits = C.waits || []).push({ live: ()=> !fin, busy: ()=> false });
-              const t = setTimeout(()=>{ if(C.alive() && !fin) K.repulse(nx); }, IDLE_MS);
-              nx.onclick = ()=>{ if(fin) return; fin = true; clearTimeout(t); PVSFX.tap(); r(); }; });
-            C.guard(); await C.say("next"); await clear();
-          } else {
-            /* the final screen: both celebrate */
-            await clear();
-            const fa = kid(KA, 470, 640, 360), fb = kid(KB, 860, 640, 360);
-            sw.classList.add("gm-sw-mid"); setXY(sw, 590, 400);
-            try{ confettiCannon(); }catch(e){} hop(fa); hop(fb); swHop();
-            await C.say("final");
+        const n = d.acts.length, PARTS = ["meet", "make", "make_b", "total"], J = pvGameJump();
+        const mode = i => (d.modes || [])[i - 1] || "blocks";
+        let i0 = 1, p0 = 0;
+        if(J){ if(J.part === "final") i0 = n + 1; else { i0 = Math.max(1, Math.min(n, J.i)); p0 = Math.max(0, PARTS.indexOf(J.part)); } }
+        for(let i = i0; i <= n; i++){
+          const [a, b] = d.acts[i - 1], from = i === i0 ? p0 : 0;
+          if(mode(i) === "keypad") await keypad(i, a, b);
+          else {
+            const table = from === 0 ? await meet(i, a, b) : null;
+            if(from <= 2) await make(i, a, b, table, from === 2);
+            await total(i, a, b, mode(i) === "blocks_type");
           }
+          if(i < n){ await C.wait(900); await clear(); }                      // (deck: "Move to the next screen.")
         }
+        /* the final screen: both cheer */
+        await clear();
+        const fa = kid(KA, 500, 660, 470, "cheer"), fb = kid(KB, 840, 660, 470, "cheer");
+        try{ confettiCannon(); }catch(e){} hop(fa); hop(fb);
+        await C.say("final");
         recordResult(slide, wrongs === 0);
         await C.wait(600); completeSlide(wrongs === 0);
       });
@@ -3207,7 +3398,7 @@ const PVLanding = {
       '<i class="sgp-bshd" style="left:' + (bx0 - 6) + 'px;width:' + (bx1 - bx0 + 12) + 'px;top:' + (foot - 7) + 'px"></i>' +
       pieces + kid(h.people[0], 0) + kid(h.people[1], 1) +
       (kind === "addv" ? '<div class="sgp-vsum"><span class="vs-n">' + [...String(h.a)].map(c => '<b>' + c + '</b>').join("") + '</span><span class="vs-n"><i>+</i>' +
-        [...String(h.b)].map(c => '<b>' + c + '</b>').join("") + '</span><i class="vs-line"></i><span class="vs-n vs-q">?</span></div>' : "") +   // (each digit its own box - user 2026-10-29)
+        [...String(h.b)].map(c => '<b>' + c + '</b>').join("") + '</span><i class="vs-line"></i><span class="vs-n vs-q"><b>?</b><b>?</b></span></div>' : "") +   // (each digit its own box; the answer two "?" boxes - user 2026-10-29)
       '</div>';
   },
   intro(){
@@ -3902,10 +4093,6 @@ const ASSET_SIZES = {
   "assets/char_akash_cheer_blink.webp": 35698,
   "assets/char_akash_full.webp": 33154,
   "assets/char_akash_full_blink.webp": 31960,
-  "assets/char_bibi.webp": 17236,
-  "assets/char_bibi_full.webp": 50702,
-  "assets/char_johny.webp": 14372,
-  "assets/char_johny_full.webp": 46560,
   "assets/char_madhav.webp": 18212,
   "assets/char_madhav_blink.webp": 17086,
   "assets/char_madhav_cheer.webp": 36746,
@@ -3922,11 +4109,25 @@ const ASSET_SIZES = {
   "assets/char_myra_blink.webp": 15808,
   "assets/char_pari.webp": 17236,
   "assets/char_pari_full.webp": 50702,
+  "assets/char_rohan.webp": 19818,
+  "assets/char_rohan_blink.webp": 17330,
+  "assets/char_rohan_cheer.webp": 36794,
+  "assets/char_rohan_cheer_blink.webp": 34898,
+  "assets/char_rohan_full.webp": 35060,
+  "assets/char_rohan_full_blink.webp": 33100,
+  "assets/char_rohan_side.webp": 34152,
+  "assets/char_rumi.webp": 17878,
+  "assets/char_rumi_blink.webp": 15714,
+  "assets/char_rumi_cheer.webp": 32732,
+  "assets/char_rumi_cheer_blink.webp": 31278,
+  "assets/char_rumi_full.webp": 32072,
+  "assets/char_rumi_full_blink.webp": 30892,
+  "assets/char_rumi_side.webp": 31772,
   "assets/end_screen.webp": 33634,
   "assets/fonts/baloo2-600.woff2": 87020,
   "assets/fonts/baloo2-700.woff2": 86108,
   "assets/fonts/baloo2-800.woff2": 74512,
-  "assets/game_garden.webp": 31226,
+  "assets/game_meadow.webp": 10722,
   "assets/gif/loader.webp": 137428,
   "assets/gif/new_landing_swiftee_anim.webp": 641710,
   "assets/gif/peeking_talk_up.webp": 1561680,
@@ -3986,45 +4187,27 @@ const ASSET_SIZES = {
   "assets/voiceover/vo_g4_correct_late.ogg": 13114,
   "assets/voiceover/vo_g4_h2.ogg": 15211,
   "assets/voiceover/vo_g4_prompt.ogg": 16963,
-  "assets/voiceover/vo_gm1_build_a.ogg": 20122,
-  "assets/voiceover/vo_gm1_build_b.ogg": 17231,
-  "assets/voiceover/vo_gm1_done.ogg": 19659,
-  "assets/voiceover/vo_gm1_intro.ogg": 27462,
-  "assets/voiceover/vo_gm1_ok_a.ogg": 13218,
-  "assets/voiceover/vo_gm1_ok_b.ogg": 13094,
-  "assets/voiceover/vo_gm1_ones.ogg": 10522,
-  "assets/voiceover/vo_gm1_total.ogg": 19552,
-  "assets/voiceover/vo_gm2_build_a.ogg": 21081,
-  "assets/voiceover/vo_gm2_build_b.ogg": 19202,
-  "assets/voiceover/vo_gm2_done.ogg": 21232,
-  "assets/voiceover/vo_gm2_intro.ogg": 22017,
-  "assets/voiceover/vo_gm2_ok_a.ogg": 14557,
-  "assets/voiceover/vo_gm2_ok_b.ogg": 13992,
-  "assets/voiceover/vo_gm2_ones.ogg": 11390,
-  "assets/voiceover/vo_gm2_total.ogg": 19567,
-  "assets/voiceover/vo_gm3_build_a.ogg": 18812,
-  "assets/voiceover/vo_gm3_build_b.ogg": 15490,
-  "assets/voiceover/vo_gm3_done.ogg": 19937,
-  "assets/voiceover/vo_gm3_intro.ogg": 22357,
-  "assets/voiceover/vo_gm3_ok_a.ogg": 15096,
-  "assets/voiceover/vo_gm3_ok_b.ogg": 15795,
-  "assets/voiceover/vo_gm3_ones.ogg": 10147,
-  "assets/voiceover/vo_gm3_total.ogg": 22213,
-  "assets/voiceover/vo_gm4_build_a.ogg": 18470,
-  "assets/voiceover/vo_gm4_build_b.ogg": 20669,
-  "assets/voiceover/vo_gm4_done.ogg": 19278,
-  "assets/voiceover/vo_gm4_intro.ogg": 22361,
-  "assets/voiceover/vo_gm4_ok_a.ogg": 14320,
-  "assets/voiceover/vo_gm4_ok_b.ogg": 15819,
-  "assets/voiceover/vo_gm4_ones.ogg": 9409,
-  "assets/voiceover/vo_gm4_total.ogg": 22031,
-  "assets/voiceover/vo_gm_add.ogg": 16032,
-  "assets/voiceover/vo_gm_final.ogg": 19499,
-  "assets/voiceover/vo_gm_next.ogg": 7070,
+  "assets/voiceover/vo_gm1_make_a2.ogg": 13993,
+  "assets/voiceover/vo_gm1_make_b2.ogg": 14676,
+  "assets/voiceover/vo_gm1_meet.ogg": 14359,
+  "assets/voiceover/vo_gm1_sum.ogg": 16803,
+  "assets/voiceover/vo_gm2_meet2.ogg": 21187,
+  "assets/voiceover/vo_gm2_sum2.ogg": 18464,
+  "assets/voiceover/vo_gm3_sum2.ogg": 16636,
+  "assets/voiceover/vo_gm3_sum_late.ogg": 14784,
+  "assets/voiceover/vo_gm3_type2.ogg": 21278,
+  "assets/voiceover/vo_gm4_sum2.ogg": 19785,
+  "assets/voiceover/vo_gm4_sum_late.ogg": 13317,
+  "assets/voiceover/vo_gm4_type2.ogg": 17319,
+  "assets/voiceover/vo_gm_add3.ogg": 8863,
+  "assets/voiceover/vo_gm_final2.ogg": 18129,
+  "assets/voiceover/vo_gm_o_less.ogg": 7521,
+  "assets/voiceover/vo_gm_o_more.ogg": 7743,
+  "assets/voiceover/vo_gm_ones_first.ogg": 7246,
+  "assets/voiceover/vo_gm_rewrite.ogg": 5726,
+  "assets/voiceover/vo_gm_t_less.ogg": 7102,
+  "assets/voiceover/vo_gm_t_more.ogg": 7330,
   "assets/voiceover/vo_gm_tens.ogg": 10883,
-  "assets/voiceover/vo_gm_w1.ogg": 5941,
-  "assets/voiceover/vo_gm_w2.ogg": 7247,
-  "assets/voiceover/vo_gm_w3.ogg": 9659,
   "assets/voiceover/vo_h1_pick.ogg": 11299,
   "assets/voiceover/vo_h1_type.ogg": 11584,
   "assets/voiceover/vo_idle_build_o.ogg": 6470,
@@ -4157,6 +4340,7 @@ const Assets = (function(){
     if(s.type !== "CELEBRATION"){ img("pv_rod11"); img("pv_cube10"); out.push("assets/nudge_hand_new.svg"); }
     [].concat(...(d.people || []).map(p => p.who), ...(d.total ? [d.total.who] : [])).forEach(w => out.push(pvChar(w)));
     (d.count_clips || []).forEach(id => out.push(vo(id)));
+    if(s.type === "ADD_GAME"){ img("game_meadow"); (d.kids || []).forEach(k => [pvChar(k.who), pvChar(k.who, true), pvChar(k.who, "cheer"), pvChar(k.who, "side")].forEach(f => f && out.push(f))); }
     if(s.type === "CELEBRATION"){ img("end_screen"); img("last_swifty_still"); img("last_swifty_end"); out.push(vo("sfx_celebrate")); }
     if(s.phase === "tutorial" && s.type !== "CELEBRATION") img("start_mascot");      // the tutorial card's Swiftie
     return out;
@@ -5297,7 +5481,19 @@ function buildDevNav(){
   land.onclick = ()=>{ const sg = $("startGate"); if(sg){ sg.classList.remove("hidden"); document.body.classList.add("is-start"); } };
   first.onclick = ()=> go(0); prev.onclick = ()=> go(cur() - 1); next.onclick = ()=> go(cur() + 1); last.onclick = ()=> go(CARD.slides.length - 1);
   sel.onchange = ()=> go(parseInt(sel.value, 10));
+  /* the game's parts (pvGameJump): start the game at any activity's table / building / adding, or its last screen */
+  const gsel = document.createElement("select"); gsel.className = "dev-nav-sel dev-nav-game"; gsel.title = "game: start at a part";
+  const gi = CARD.slides.findIndex(s => s.type === "ADD_GAME");
+  if(gi >= 0){ const gd = CARD.slides[gi].data || {}, [ka, kb] = (gd.kids || []).map(k => k.name);
+    gsel.add(new Option("खेल · भाग चुनें…", ""));
+    (gd.acts || []).forEach((ab, k)=> ((gd.modes || [])[k] === "keypad" ? [["type", "टाइप करिए"]]
+      : [["meet", "मेज़"], ["make", ka + " के ब्लॉक्स"], ["make_b", kb + " के ब्लॉक्स"], ["total", "जोड़िए"]])
+      .forEach(([p, t])=> gsel.add(new Option("एक्टिविटी " + (k + 1) + " (" + ab[0] + " + " + ab[1] + ") · " + t, (k + 1) + "." + p))));
+    gsel.add(new Option("अंतिम स्क्रीन", "final"));
+    gsel.onchange = ()=>{ const v = gsel.value; if(!v) return; const [a, p] = v.split(".");
+      window.PV_GAME_JUMP = a === "final" ? { part: "final" } : { i: +a, part: p }; gsel.value = ""; go(gi); }; }
   bar.append(land, first, prev, sel, lbl, next, last);
+  if(gi >= 0) bar.append(gsel);
   document.body.appendChild(bar);
   setInterval(sync, 300); sync();
 }

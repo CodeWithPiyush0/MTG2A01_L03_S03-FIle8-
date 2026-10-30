@@ -2413,7 +2413,7 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 .sgp.still .sgp-vsum,.sgp.still .sgp-vsum .vs-n,.sgp.still .sgp-vsum .vs-line{opacity:1;scale:1;}
 
 /* ==================== [pv add] the game (deck slide 17): Bibi & Johny in the garden ==================== */
-.pv-stage.gm .gm-bg{left:0;top:0;width:1333px;height:750px;background:url("assets/game_garden.webp") center/cover no-repeat;z-index:0;pointer-events:none !important;}
+.pv-stage.gm .gm-bg{left:0;top:0;width:1333px;height:750px;background:url("assets/game_meadow.webp") center/cover no-repeat;z-index:0;pointer-events:none !important;}
 .gm-sw{height:270px;width:auto;z-index:8;pointer-events:none !important;filter:drop-shadow(0 6px 8px rgba(0,47,118,.22));transition:left .6s,top .6s,height .6s;}
 .gm-sw.gm-sw-mid{height:250px;}
 .gm-sw.gm-sw-lead{filter:drop-shadow(0 0 10px rgba(255,214,60,.9)) drop-shadow(0 6px 8px rgba(0,47,118,.22));}
@@ -2448,6 +2448,7 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 .gm-pm{width:58px;height:58px;padding:0;border-radius:50%;border:3px solid #fff;background:linear-gradient(#8A47F0,#6A2BD9);color:#fff;font-family:var(--font-hi);
   font-weight:800;font-size:40px;line-height:1;cursor:pointer;box-shadow:0 4px 0 #4B1A9E;display:flex;align-items:center;justify-content:center;}
 .gm-pm:active{translate:0 3px;box-shadow:0 1px 0 #4B1A9E;}
+.gm-pm.dis{opacity:.3;filter:grayscale(.8);pointer-events:none;}
 .gm-pm.pulse{animation:pvBtnPulse 1.15s cubic-bezier(.34,.62,.3,1) 2;}
 .gm-n{min-width:46px;text-align:center;font-family:var(--font-hi);font-weight:800;font-size:40px;color:#3A2370;}
 .gm-check,.gm-next{transform:translateX(-50%);height:68px;padding:0 46px;border-radius:34px;border:4px solid #fff;background:linear-gradient(#8A47F0,#6A2BD9);color:#fff;
@@ -2459,9 +2460,14 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 .gm-play img{width:100%;height:100%;display:block;}
 /* the add board's first column and the activity badge */
 .gm-lab{box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 10px 0 34px;z-index:6;pointer-events:none !important;font-family:var(--font-hi);color:#3A2370;}
-.gm-lab img{width:54px;height:54px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(60,20,120,.25);background:#fff;}
-.gm-lab span{font-size:24px;font-weight:700;line-height:1.1;}
-.gm-lab span b{display:block;font-size:24px;font-weight:800;}
+.gm-lab{gap:12px;}
+.gm-lab img{width:66px;height:66px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(60,20,120,.25);background:#fff;}
+.gm-lab .gm-num{font-size:46px;font-weight:800;line-height:1;color:#3A2370;}
+/* the sum's two boxes, tens and ones: a "?" each until that column is added (user 2026-10-29) */
+.gm-lab .gm-sum{display:flex;gap:8px;margin-left:8px;}
+.gm-lab .gm-d{display:flex;align-items:center;justify-content:center;width:52px;height:66px;box-sizing:border-box;border-radius:14px;border:3px dashed #B9A2EE;
+  background:#F7F2FF;color:#7C5BC9;font-size:42px;font-weight:800;}
+.gm-lab .gm-d.on{border:4px solid #00B132;background:#EFFBF2;color:#3A2370;box-shadow:0 3px 0 #A8E3B9;}
 .gm-lab .gm-plus{position:absolute;left:4px;font-style:normal;font-size:40px;font-weight:800;color:#6A2BD9;}
 .gm-line{height:5px;border-radius:3px;background:#6A2BD9;z-index:6;pointer-events:none !important;}
 .gm-act{transform:translateX(-50%);width:230px;padding:10px 0 14px;border-radius:50% / 44%;background:#FFF9E6;border:8px solid #6FBF3A;box-shadow:0 0 0 4px #fff,0 8px 18px rgba(30,80,10,.25);
@@ -2473,12 +2479,17 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 .stage.no-head .header-row,.stage.no-head .mascot-wrap{display:none !important;}
 
 /* each digit of the written sum in its own box, tens over tens and ones over ones (user 2026-10-29: "2 3 / + 1 4"):
-   the card itself goes (no frame), its digits (.pv-d, numHTML) become the boxes. The "?" stays one box until the answer
-   fills it; then its digits are boxes too, green */
-.pv-num.pv-vc:not(.pv-q),.pv-num.pv-vc.pv-q.filled{background:none;border:none;box-shadow:none;padding:0;gap:.12em;}
-.pv-vc:not(.pv-q) .pv-d,.pv-vc.pv-q.filled .pv-d{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:1.08em;height:1.4em;
+   the card itself goes (no frame), its digits (.pv-d, numHTML) become the boxes. The answer is two empty boxes with a "?"
+   (user 2026-10-29), each turning green as its digit comes in (.pv-df) */
+.pv-num.pv-vc{background:none !important;border:none !important;box-shadow:none !important;padding:0;gap:.12em;}
+.pv-vc .pv-d{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:1.08em;height:1.4em;
   border-radius:.28em;background:#fff;border:3px solid #D5D8DF;box-shadow:0 4px 0 #D9D9D9;}
-.pv-vc.pv-q.filled .pv-d{border:4px solid #00B132;background:#EFFBF2;box-shadow:0 4px 0 #A8E3B9,0 0 6px #00B132;}
+.pv-vc .pv-d.pv-qd{border:3px dashed #8DB8E8;background:#F4F9FF;color:#5A7CAD;box-shadow:none;}
+.pv-vc.pv-q.filled .pv-d,.pv-vc .pv-d.pv-df{border:4px solid #00B132;background:#EFFBF2;color:#012F76;box-shadow:0 4px 0 #A8E3B9,0 0 6px #00B132;}
+.pv-vc.pv-q.pv-typein.open .pv-d.pv-cur{border:3px solid #1987FC;background:#fff;}
+.pv-vc.pv-q.pv-typein .pv-d .pv-caret{margin:0;}
+.pv-vc.pv-q.pulse{animation:none;}
+.pv-vc.pv-q.pulse .pv-d{animation:pvQ 1.2s ease-in-out 3;}
 .pv-vc .pv-d.hl-t{scale:1.1;color:#2E7D0F;background:#E7F6DC;border-color:#3E9B16;text-shadow:none;}
 .pv-vc .pv-d.hl-o{scale:1.1;color:#E07800;background:#FFF1D8;border-color:#F08A00;text-shadow:none;}
 .pv-vc.pv-say{animation:none;}
@@ -2487,4 +2498,53 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 .sgp-vsum .vs-n{letter-spacing:0;gap:6px;}
 .sgp-vsum .vs-n b{display:flex;align-items:center;justify-content:center;width:40px;height:48px;box-sizing:border-box;border-radius:11px;background:#fff;
   border:2.5px solid #D5D8DF;box-shadow:0 3px 0 #D9D9D9;font-weight:800;}
-.sgp-vsum .vs-q{min-width:86px;height:48px;box-sizing:border-box;}
+.sgp-vsum .vs-q{min-width:0;height:auto;border:none;background:none;padding:0;}
+.sgp-vsum .vs-q b{border:2.5px dashed #8DB8E8;background:#F4F9FF;color:#5A7CAD;box-shadow:none;}
+
+/* ---- the game, user 2026-10-29 ----
+   the garden is the stage's own backdrop, so the bands beside the stage carry it on (Screen.bleed) - no white bars */
+.stage[data-bg="meadow"]{background:#CFE6C2 url("assets/game_meadow.webp") center/cover no-repeat;}
+/* screen 1's table: its top in perspective (the board, tilted away - app.js meet), its front edge and two legs */
+.pv-stage.gm .gm-t3{left:0;top:0;width:1333px;height:750px;perspective:1000px;z-index:5;pointer-events:none !important;}
+.gm-t3 > *{position:absolute;}
+.gm-t3 .gm-face{transform-origin:50% 50%;}
+.gm-face .pv-blk{position:absolute;}
+.gm-apron{height:30px;border-radius:0 0 12px 12px;background:linear-gradient(#B06C33,#7E4519);box-shadow:0 10px 16px rgba(60,30,10,.22);}
+.gm-leg{width:38px;border-radius:0 0 10px 10px;background:linear-gradient(90deg,#7E4519,#B5733A 45%,#7E4519);z-index:-1;}
+/* screen 3: a block to tap down into the sum row; the grey copy it leaves */
+.gm-blk.gm-tap{cursor:pointer;}
+.gm-ghost{opacity:.3;filter:grayscale(.7);pointer-events:none !important;z-index:4;}
+.dev-nav-game{max-width:230px;}
+
+/* question 2: the child types the sum into the board's two boxes (the keypad's target - app.js total) */
+.gm-lab .gm-sum.pv-typein{pointer-events:auto;cursor:pointer;}
+.gm-lab .gm-sum.pv-typein .gm-d:not(.pv-qd){border:3px solid #B9A2EE;background:#fff;color:#3A2370;}
+.gm-lab .gm-sum .gm-d.pv-cur{border:4px solid #2F80ED;background:#fff;}
+.gm-lab .gm-sum.ok .gm-d,.gm-lab .gm-sum .gm-d.on{border:4px solid #00B132;background:#EFFBF2;color:#3A2370;box-shadow:0 3px 0 #A8E3B9;}
+.gm-lab .gm-sum.wrong .gm-d{border-color:#E5282E;}
+/* the meet's table in 3D (user 2026-10-30): its top keeps its children in 3D - the blocks are boxes (a top, a front and two
+   sides, --h high), the front edge and the legs hang from it */
+.gm-t3 .gm-face.gm-3d{transform-style:preserve-3d;}
+.gm-box{position:absolute;transform-style:preserve-3d;}
+.gm-box > i{position:absolute;box-sizing:border-box;}
+.gm-box .bx-t{left:0;top:0;width:100%;height:100%;transform:translateZ(var(--h));border-radius:3px;}
+.gm-box .bx-f{left:0;top:100%;width:100%;height:var(--h);transform-origin:50% 0;transform:rotateX(90deg);border-radius:2px;}
+.gm-box .bx-l,.gm-box .bx-r{top:0;width:var(--h);height:100%;transform-origin:0 50%;transform:rotateY(-90deg);}
+.gm-box .bx-l{left:0;}
+.gm-box .bx-r{left:100%;}
+.gm-box-t .bx-t{background:repeating-linear-gradient(to bottom,#86E24E 0,#72D43C calc(var(--g) - 2px),#3F9C1F calc(var(--g) - 2px),#3F9C1F var(--g));border:1px solid #3F9C1F;}
+.gm-box-t .bx-f{background:#4DB12A;border:1px solid #3A8F1C;}
+.gm-box-t .bx-l,.gm-box-t .bx-r{background:repeating-linear-gradient(to bottom,#5CC232 0,#52B52C calc(var(--g) - 2px),#357F18 calc(var(--g) - 2px),#357F18 var(--g));}
+.gm-box-o .bx-t{background:linear-gradient(135deg,#FFE97A,#FFD23A);border:1px solid #D99A0E;}
+.gm-box-o .bx-f{background:linear-gradient(#F7BE26,#E9A912);border:1px solid #C98A0A;}
+.gm-box-o .bx-l,.gm-box-o .bx-r{background:#E2A010;}
+.gm-t3 .gm-apron{height:30px;transform-origin:50% 0;transform:rotateX(-90deg);border-radius:0 0 10px 10px;box-shadow:none;}
+.gm-t3 .gm-leg{width:38px;height:420px;transform-origin:50% 0;transform:rotateX(-90deg);z-index:auto;}
+/* the game lets its kids walk in from beyond the stage, over the lawn the side bands carry on (user 2026-10-30: "they
+   should come from out of the screen") - the stage does not clip while the game is up */
+.stage[data-bg="meadow"],.stage[data-bg="meadow"] .slide-stage{overflow:visible;}
+.gm-t3 .gm-apron,.gm-t3 .gm-leg{position:absolute;}
+/* a kid walking: the side picture as a cut-out puppet - the body and the two legs (app.js walk) */
+.gm-walk{z-index:4;transform-origin:50% 50%;pointer-events:none !important;filter:drop-shadow(0 6px 6px rgba(0,47,118,.18));}
+.gm-walk-in{position:absolute;left:0;top:0;width:100%;height:100%;}
+.gm-walk img{position:absolute;left:0;top:0;}

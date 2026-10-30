@@ -89,45 +89,27 @@
    "vo_g4_correct_late": "assets/voiceover/vo_g4_correct_late.ogg",
    "vo_g4_h2": "assets/voiceover/vo_g4_h2.ogg",
    "vo_g4_prompt": "assets/voiceover/vo_g4_prompt.ogg",
-   "vo_gm1_build_a": "assets/voiceover/vo_gm1_build_a.ogg",
-   "vo_gm1_build_b": "assets/voiceover/vo_gm1_build_b.ogg",
-   "vo_gm1_done": "assets/voiceover/vo_gm1_done.ogg",
-   "vo_gm1_intro": "assets/voiceover/vo_gm1_intro.ogg",
-   "vo_gm1_ok_a": "assets/voiceover/vo_gm1_ok_a.ogg",
-   "vo_gm1_ok_b": "assets/voiceover/vo_gm1_ok_b.ogg",
-   "vo_gm1_ones": "assets/voiceover/vo_gm1_ones.ogg",
-   "vo_gm1_total": "assets/voiceover/vo_gm1_total.ogg",
-   "vo_gm2_build_a": "assets/voiceover/vo_gm2_build_a.ogg",
-   "vo_gm2_build_b": "assets/voiceover/vo_gm2_build_b.ogg",
-   "vo_gm2_done": "assets/voiceover/vo_gm2_done.ogg",
-   "vo_gm2_intro": "assets/voiceover/vo_gm2_intro.ogg",
-   "vo_gm2_ok_a": "assets/voiceover/vo_gm2_ok_a.ogg",
-   "vo_gm2_ok_b": "assets/voiceover/vo_gm2_ok_b.ogg",
-   "vo_gm2_ones": "assets/voiceover/vo_gm2_ones.ogg",
-   "vo_gm2_total": "assets/voiceover/vo_gm2_total.ogg",
-   "vo_gm3_build_a": "assets/voiceover/vo_gm3_build_a.ogg",
-   "vo_gm3_build_b": "assets/voiceover/vo_gm3_build_b.ogg",
-   "vo_gm3_done": "assets/voiceover/vo_gm3_done.ogg",
-   "vo_gm3_intro": "assets/voiceover/vo_gm3_intro.ogg",
-   "vo_gm3_ok_a": "assets/voiceover/vo_gm3_ok_a.ogg",
-   "vo_gm3_ok_b": "assets/voiceover/vo_gm3_ok_b.ogg",
-   "vo_gm3_ones": "assets/voiceover/vo_gm3_ones.ogg",
-   "vo_gm3_total": "assets/voiceover/vo_gm3_total.ogg",
-   "vo_gm4_build_a": "assets/voiceover/vo_gm4_build_a.ogg",
-   "vo_gm4_build_b": "assets/voiceover/vo_gm4_build_b.ogg",
-   "vo_gm4_done": "assets/voiceover/vo_gm4_done.ogg",
-   "vo_gm4_intro": "assets/voiceover/vo_gm4_intro.ogg",
-   "vo_gm4_ok_a": "assets/voiceover/vo_gm4_ok_a.ogg",
-   "vo_gm4_ok_b": "assets/voiceover/vo_gm4_ok_b.ogg",
-   "vo_gm4_ones": "assets/voiceover/vo_gm4_ones.ogg",
-   "vo_gm4_total": "assets/voiceover/vo_gm4_total.ogg",
-   "vo_gm_add": "assets/voiceover/vo_gm_add.ogg",
-   "vo_gm_final": "assets/voiceover/vo_gm_final.ogg",
-   "vo_gm_next": "assets/voiceover/vo_gm_next.ogg",
+   "vo_gm1_make_a2": "assets/voiceover/vo_gm1_make_a2.ogg",
+   "vo_gm1_make_b2": "assets/voiceover/vo_gm1_make_b2.ogg",
+   "vo_gm1_meet": "assets/voiceover/vo_gm1_meet.ogg",
+   "vo_gm1_sum": "assets/voiceover/vo_gm1_sum.ogg",
+   "vo_gm2_meet2": "assets/voiceover/vo_gm2_meet2.ogg",
+   "vo_gm2_sum2": "assets/voiceover/vo_gm2_sum2.ogg",
+   "vo_gm3_sum2": "assets/voiceover/vo_gm3_sum2.ogg",
+   "vo_gm3_sum_late": "assets/voiceover/vo_gm3_sum_late.ogg",
+   "vo_gm3_type2": "assets/voiceover/vo_gm3_type2.ogg",
+   "vo_gm4_sum2": "assets/voiceover/vo_gm4_sum2.ogg",
+   "vo_gm4_sum_late": "assets/voiceover/vo_gm4_sum_late.ogg",
+   "vo_gm4_type2": "assets/voiceover/vo_gm4_type2.ogg",
+   "vo_gm_add3": "assets/voiceover/vo_gm_add3.ogg",
+   "vo_gm_final2": "assets/voiceover/vo_gm_final2.ogg",
+   "vo_gm_o_less": "assets/voiceover/vo_gm_o_less.ogg",
+   "vo_gm_o_more": "assets/voiceover/vo_gm_o_more.ogg",
+   "vo_gm_ones_first": "assets/voiceover/vo_gm_ones_first.ogg",
+   "vo_gm_rewrite": "assets/voiceover/vo_gm_rewrite.ogg",
+   "vo_gm_t_less": "assets/voiceover/vo_gm_t_less.ogg",
+   "vo_gm_t_more": "assets/voiceover/vo_gm_t_more.ogg",
    "vo_gm_tens": "assets/voiceover/vo_gm_tens.ogg",
-   "vo_gm_w1": "assets/voiceover/vo_gm_w1.ogg",
-   "vo_gm_w2": "assets/voiceover/vo_gm_w2.ogg",
-   "vo_gm_w3": "assets/voiceover/vo_gm_w3.ogg",
    "vo_h1_pick": "assets/voiceover/vo_h1_pick.ogg",
    "vo_h1_type": "assets/voiceover/vo_h1_type.ogg",
    "vo_idle_build_o": "assets/voiceover/vo_idle_build_o.ogg",
@@ -194,45 +176,27 @@
    "vo_g4_correct_late": "47 और 21 का जोड़ 68 है।",
    "vo_g4_h2": "ध्यान से देखिए, कुल 6 दहाइयाँ और 8 इकाइयाँ हैं।",
    "vo_g4_prompt": "47 और 21 को जोड़िए और सही जोड़ टाइप करिए।",
-   "vo_gm1_build_a": "पहले बीबी के लिए 2 दहाई और 5 इकाई बनाइए।",
-   "vo_gm1_build_b": "अब जॉनी के लिए 1 दहाई और 2 इकाई बनाइए।",
-   "vo_gm1_done": "वाह! 37 ब्लॉक्स से बीबी और जॉनी की पहली एक्टिविटी पूरी हो गई!",
-   "vo_gm1_intro": "बीबी और जॉनी ब्लॉक्स से एक्टिविटी कर रहे हैं। बीबी को 25 और जॉनी को 12 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
-   "vo_gm1_ok_a": "शाबाश! बीबी के 25 ब्लॉक्स तैयार हैं।",
-   "vo_gm1_ok_b": "बहुत बढ़िया! जॉनी के 12 ब्लॉक्स भी तैयार हैं।",
-   "vo_gm1_ones": "5 इकाई और 2 इकाई जोड़िए।",
-   "vo_gm1_total": "बहुत बढ़िया! 3 दहाई और 7 इकाई, यानी 37 ब्लॉक्स।",
-   "vo_gm2_build_a": "पहले बीबी के लिए 1 दहाई और 3 इकाई बनाइए।",
-   "vo_gm2_build_b": "अब जॉनी के लिए 5 दहाई और 5 इकाई बनाइए।",
-   "vo_gm2_done": "वाह! 68 ब्लॉक्स से बीबी और जॉनी की दूसरी एक्टिविटी पूरी हो गई!",
-   "vo_gm2_intro": "अब बीबी को 13 और जॉनी को 55 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
-   "vo_gm2_ok_a": "शाबाश! बीबी के 13 ब्लॉक्स तैयार हैं।",
-   "vo_gm2_ok_b": "बहुत बढ़िया! जॉनी के 55 ब्लॉक्स भी तैयार हैं।",
-   "vo_gm2_ones": "3 इकाई और 5 इकाई जोड़िए।",
-   "vo_gm2_total": "बहुत बढ़िया! 6 दहाई और 8 इकाई, यानी 68 ब्लॉक्स।",
-   "vo_gm3_build_a": "पहले बीबी के लिए 3 दहाई और 1 इकाई बनाइए।",
-   "vo_gm3_build_b": "अब जॉनी के लिए 4 दहाई और 5 इकाई बनाइए।",
-   "vo_gm3_done": "वाह! 76 ब्लॉक्स से बीबी और जॉनी की तीसरी एक्टिविटी पूरी हो गई!",
-   "vo_gm3_intro": "अब बीबी को 31 और जॉनी को 45 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
-   "vo_gm3_ok_a": "शाबाश! बीबी के 31 ब्लॉक्स तैयार हैं।",
-   "vo_gm3_ok_b": "बहुत बढ़िया! जॉनी के 45 ब्लॉक्स भी तैयार हैं।",
-   "vo_gm3_ones": "1 इकाई और 5 इकाई जोड़िए।",
-   "vo_gm3_total": "बहुत बढ़िया! 7 दहाई और 6 इकाई, यानी 76 ब्लॉक्स।",
-   "vo_gm4_build_a": "पहले बीबी के लिए 4 दहाई और 2 इकाई बनाइए।",
-   "vo_gm4_build_b": "अब जॉनी के लिए 4 दहाई और 6 इकाई बनाइए।",
-   "vo_gm4_done": "वाह! 88 ब्लॉक्स से बीबी और जॉनी की चौथी एक्टिविटी पूरी हो गई!",
-   "vo_gm4_intro": "अब बीबी को 42 और जॉनी को 46 ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!",
-   "vo_gm4_ok_a": "शाबाश! बीबी के 42 ब्लॉक्स तैयार हैं।",
-   "vo_gm4_ok_b": "बहुत बढ़िया! जॉनी के 46 ब्लॉक्स भी तैयार हैं।",
-   "vo_gm4_ones": "2 इकाई और 6 इकाई जोड़िए।",
-   "vo_gm4_total": "बहुत बढ़िया! 8 दहाई और 8 इकाई, यानी 88 ब्लॉक्स।",
-   "vo_gm_add": "अब दोनों के ब्लॉक्स को जोड़ते हैं। पहले इकाई जोड़िए।",
-   "vo_gm_final": "शाबाश! आपने बीबी और जॉनी की सभी एक्टिविटी पूरी कर दीं!",
-   "vo_gm_next": "अब अगली एक्टिविटी शुरू करें!",
+   "vo_gm1_make_a2": "पहले रूमी के लिए 25 बनाइए।",
+   "vo_gm1_make_b2": "शाबाश! अब रोहन के लिए 12 बनाइए।",
+   "vo_gm1_meet": "रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं।",
+   "vo_gm1_sum": "शाबाश! 25 और 12 जोड़ने पर 37 मिले।",
+   "vo_gm2_meet2": "रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। दोनों संख्याएँ बनाइए।",
+   "vo_gm2_sum2": "बहुत बढ़िया! 34 और 25 जोड़ने पर 59 मिले।",
+   "vo_gm3_sum2": "शाबाश! 41 और 30 का जोड़ 71 होता है।",
+   "vo_gm3_sum_late": "41 और 30 का जोड़ 71 होता है।",
+   "vo_gm3_type2": "अब बिना ब्लॉक्स के जोड़िए। 41 और 30 को जोड़कर सही उत्तर टाइप करिए।",
+   "vo_gm4_sum2": "बहुत अच्छे! 62 और 17 का जोड़ 79 होता है।",
+   "vo_gm4_sum_late": "62 और 17 का जोड़ 79 होता है।",
+   "vo_gm4_type2": "अब 62 और 17 को जोड़िए। सही उत्तर टाइप करिए।",
+   "vo_gm_add3": "अब दोनों के ब्लॉक्स जोड़िए।",
+   "vo_gm_final2": "शाबाश! आपने रूमी और रोहन की सभी एक्टिविटी पूरी कर दीं!",
+   "vo_gm_o_less": "इसमें इकाई कम है।",
+   "vo_gm_o_more": "इसमें इकाई ज़्यादा है।",
+   "vo_gm_ones_first": "पहले इकाइयाँ जोड़िए।",
+   "vo_gm_rewrite": "फिर से लिखिए।",
+   "vo_gm_t_less": "इसमें दहाई कम है।",
+   "vo_gm_t_more": "इसमें दहाई ज़्यादा है।",
    "vo_gm_tens": "शाबाश! अब दहाइयाँ जोड़िए।",
-   "vo_gm_w1": "फिर से कोशिश कीजिए।",
-   "vo_gm_w2": "ब्लॉक्स ध्यान से गिनिए।",
-   "vo_gm_w3": "देखिए, सही ब्लॉक्स ये हैं।",
    "vo_h1_pick": "ब्लॉक्स को गिनिए और सही जोड़ चुनिए।",
    "vo_h1_type": "ब्लॉक्स को गिनिए और सही जोड़ टाइप करिए।",
    "vo_idle_build_o": "अब इकाई बनाइए।",
@@ -330,7 +294,8 @@
       "bld": 0.436
      },
      "ask": {
-      "q": 0.617
+      "p": 0.352,
+      "q": 0.524
      }
     }
    }
@@ -369,6 +334,10 @@
      "r2": {
       "t": 0.455,
       "o": 0.667
+     },
+     "go": {
+      "p": 0.376,
+      "s": 0.689
      },
      "o_sum": {
       "a": 0.069,
@@ -475,6 +444,10 @@
       "t": 0.191,
       "o": 0.333
      },
+     "go": {
+      "p": 0.376,
+      "s": 0.687
+     },
      "o_sum": {
       "a": 0.07,
       "b": 0.294,
@@ -525,6 +498,9 @@
      14
     ],
     "cues": {
+     "prompt": {
+      "p": 0.662
+     },
      "correct": {
       "a": 0.209,
       "b": 0.409,
@@ -569,6 +545,9 @@
      17
     ],
     "cues": {
+     "prompt": {
+      "p": 0.653
+     },
      "correct": {
       "a": 0.212,
       "b": 0.409,
@@ -607,6 +586,9 @@
     "answer": "numpad",
     "prompt2": "सही जोड़ टाइप करिए।",
     "cues": {
+     "prompt": {
+      "p": 0.425
+     },
      "correct": {
       "a": 0.208,
       "b": 0.409,
@@ -750,76 +732,98 @@
    "type": "ADD_GAME",
    "prompt_hi": "",
    "audio": {
-    "w1": "vo_gm_w1",
-    "w2": "vo_gm_w2",
-    "w3": "vo_gm_w3",
-    "next": "vo_gm_next",
-    "add": "vo_gm_add",
+    "t_more": "vo_gm_t_more",
+    "t_less": "vo_gm_t_less",
+    "o_more": "vo_gm_o_more",
+    "o_less": "vo_gm_o_less",
+    "add": "vo_gm_add3",
+    "ones": "vo_gm_ones_first",
     "tens": "vo_gm_tens",
-    "final": "vo_gm_final",
-    "intro1": "vo_gm1_intro",
-    "build_a1": "vo_gm1_build_a",
-    "ok_a1": "vo_gm1_ok_a",
-    "build_b1": "vo_gm1_build_b",
-    "ok_b1": "vo_gm1_ok_b",
-    "ones1": "vo_gm1_ones",
-    "total1": "vo_gm1_total",
-    "done1": "vo_gm1_done",
-    "intro2": "vo_gm2_intro",
-    "build_a2": "vo_gm2_build_a",
-    "ok_a2": "vo_gm2_ok_a",
-    "build_b2": "vo_gm2_build_b",
-    "ok_b2": "vo_gm2_ok_b",
-    "ones2": "vo_gm2_ones",
-    "total2": "vo_gm2_total",
-    "done2": "vo_gm2_done",
-    "intro3": "vo_gm3_intro",
-    "build_a3": "vo_gm3_build_a",
-    "ok_a3": "vo_gm3_ok_a",
-    "build_b3": "vo_gm3_build_b",
-    "ok_b3": "vo_gm3_ok_b",
-    "ones3": "vo_gm3_ones",
-    "total3": "vo_gm3_total",
-    "done3": "vo_gm3_done",
-    "intro4": "vo_gm4_intro",
-    "build_a4": "vo_gm4_build_a",
-    "ok_a4": "vo_gm4_ok_a",
-    "build_b4": "vo_gm4_build_b",
-    "ok_b4": "vo_gm4_ok_b",
-    "ones4": "vo_gm4_ones",
-    "total4": "vo_gm4_total",
-    "done4": "vo_gm4_done"
+    "rewrite": "vo_gm_rewrite",
+    "final": "vo_gm_final2",
+    "intro1": "vo_gm1_meet",
+    "build_a1": "vo_gm1_make_a2",
+    "ok_a1": "vo_gm1_make_b2",
+    "done1": "vo_gm1_sum",
+    "intro2": "vo_gm2_meet2",
+    "done2": "vo_gm2_sum2",
+    "type3": "vo_gm3_type2",
+    "done3": "vo_gm3_sum2",
+    "late3": "vo_gm3_sum_late",
+    "type4": "vo_gm4_type2",
+    "done4": "vo_gm4_sum2",
+    "late4": "vo_gm4_sum_late"
    },
    "data": {
     "no_head": true,
+    "bg": "meadow",
     "acts": [
      [
       25,
       12
      ],
      [
-      13,
-      55
+      34,
+      25
      ],
      [
-      31,
-      45
+      41,
+      30
      ],
      [
-      42,
-      46
+      62,
+      17
      ]
+    ],
+    "modes": [
+     "blocks",
+     "blocks",
+     "keypad",
+     "keypad"
     ],
     "kids": [
      {
-      "who": "bibi",
-      "name": "बीबी"
+      "who": "rumi",
+      "name": "रूमी",
+      "side": {
+       "h": 0.975,
+       "ar": 0.508,
+       "cut": 0.721,
+       "split": 0.4935,
+       "px": 0.4935,
+       "py": 0.686,
+       "a": 51.6,
+       "bob": 0.0339
+      }
      },
      {
-      "who": "johny",
-      "name": "जॉनी"
+      "who": "rohan",
+      "name": "रोहन",
+      "side": {
+       "h": 0.9766,
+       "ar": 0.44,
+       "cut": 0.7574,
+       "split": 0.4639,
+       "px": 0.4639,
+       "py": 0.7224,
+       "a": 52.3,
+       "bob": 0.0308
+      }
      }
-    ]
+    ],
+    "cues": {
+     "intro1": {
+      "a": 0.075,
+      "b": 0.372
+     },
+     "ok_a1": {
+      "swap": 0.249
+     },
+     "intro2": {
+      "a": 0.053,
+      "b": 0.273
+     }
+    }
    }
   },
   {

@@ -144,33 +144,44 @@ slides.append(mental("P2", 76, 22, "numpad"))                  # deck page 10
 slides.append(mental("P3", 37, 60, "numpad"))                  # deck page 11
 # deck pages 12-13: deleted
 
-# deck slide 17 - the game: Bibi & Johny, four activities. Swiftee hands the blocks out, then leads the total (user 2026-10-28)
-ORD = {1: "पहली", 2: "दूसरी", 3: "तीसरी", 4: "चौथी"}
-ACTS = [(25, 12), (13, 55), (31, 45), (42, 46)]
-game_audio = {"w1": vo("vo_gm_w1", "फिर से कोशिश कीजिए।"),
-              "w2": vo("vo_gm_w2", "ब्लॉक्स ध्यान से गिनिए।"),
-              "w3": vo("vo_gm_w3", "देखिए, सही ब्लॉक्स ये हैं।"),
-              "next": vo("vo_gm_next", "अब अगली एक्टिविटी शुरू करें!"),
-              "add": vo("vo_gm_add", "अब दोनों के ब्लॉक्स को जोड़ते हैं। पहले इकाई जोड़िए।"),
+# the review deck's page 17 (MTG2A01_L03_S03_review.pptx from the user, 2026-10-29) - the game: Rumi & Rohan on a plain
+# lawn, no Swiftee. Its question summary: 1 25 + 12 and 2 34 + 25 "make and add blocks" (2: the child types the sum),
+# 3 41 + 30 and 4 62 + 17 "direct vertical addition + keypad". The lines are the deck's own; its "बहुत अच्छे! 61 और 17 का
+# जोड़ 79 होता है।" says 62 (the sum on the screen is 62 + 17). Kept from the earlier rounds: the column's own line on a
+# wrong check, "शाबाश! अब दहाइयाँ जोड़िए।" before question 1's tens, the closing screen with both cheering.
+ACTS = [(25, 12), (34, 25), (41, 30), (62, 17)]
+MODES = ["blocks", "blocks", "keypad", "keypad"]   # (Q2: no keypad - user 2026-10-30)
+game_audio = {"t_more": vo("vo_gm_t_more", "इसमें दहाई ज़्यादा है।"),             # a wrong check: only the wrong column's line
+              "t_less": vo("vo_gm_t_less", "इसमें दहाई कम है।"),
+              "o_more": vo("vo_gm_o_more", "इसमें इकाई ज़्यादा है।"),
+              "o_less": vo("vo_gm_o_less", "इसमें इकाई कम है।"),
+              "add": vo("vo_gm_add3", "अब दोनों के ब्लॉक्स जोड़िए।"),
+              "ones": vo("vo_gm_ones_first", "पहले इकाइयाँ जोड़िए।"),             # (also when the tens are tapped first)
               "tens": vo("vo_gm_tens", "शाबाश! अब दहाइयाँ जोड़िए।"),
-              "final": vo("vo_gm_final", "शाबाश! आपने बीबी और जॉनी की सभी एक्टिविटी पूरी कर दीं!")}
-for i, (a, b) in enumerate(ACTS, 1):
-    s = a + b; (at, ao), (bt, bo), (st, so) = split(a), split(b), split(s)
-    game_audio[f"intro{i}"] = vo(f"vo_gm{i}_intro",
-        f"बीबी और जॉनी ब्लॉक्स से एक्टिविटी कर रहे हैं। बीबी को {a} और जॉनी को {b} ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!" if i == 1
-        else f"अब बीबी को {a} और जॉनी को {b} ब्लॉक्स चाहिए। चलिए, उनकी मदद करें!")
-    game_audio[f"build_a{i}"] = vo(f"vo_gm{i}_build_a", f"पहले बीबी के लिए {at} दहाई और {ao} इकाई बनाइए।")
-    game_audio[f"ok_a{i}"] = vo(f"vo_gm{i}_ok_a", f"शाबाश! बीबी के {a} ब्लॉक्स तैयार हैं।")
-    game_audio[f"build_b{i}"] = vo(f"vo_gm{i}_build_b", f"अब जॉनी के लिए {bt} दहाई और {bo} इकाई बनाइए।")
-    game_audio[f"ok_b{i}"] = vo(f"vo_gm{i}_ok_b", f"बहुत बढ़िया! जॉनी के {b} ब्लॉक्स भी तैयार हैं।")
-    game_audio[f"ones{i}"] = vo(f"vo_gm{i}_ones", f"{ao} इकाई और {bo} इकाई जोड़िए।")
-    game_audio[f"total{i}"] = vo(f"vo_gm{i}_total", f"बहुत बढ़िया! {st} दहाई और {so} इकाई, यानी {s} ब्लॉक्स।")
-    game_audio[f"done{i}"] = vo(f"vo_gm{i}_done", f"वाह! {s} ब्लॉक्स से बीबी और जॉनी की {ORD[i]} एक्टिविटी पूरी हो गई!")
+              "rewrite": vo("vo_gm_rewrite", "फिर से लिखिए।"),
+              "final": vo("vo_gm_final2", "शाबाश! आपने रूमी और रोहन की सभी एक्टिविटी पूरी कर दीं!"),
+              # question 1
+              "intro1": vo("vo_gm1_meet", "रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं।"),
+              "build_a1": vo("vo_gm1_make_a2", "पहले रूमी के लिए 25 बनाइए।"),
+              "ok_a1": vo("vo_gm1_make_b2", "शाबाश! अब रोहन के लिए 12 बनाइए।"),
+              "done1": vo("vo_gm1_sum", "शाबाश! 25 और 12 जोड़ने पर 37 मिले।"),
+              # question 2
+              "intro2": vo("vo_gm2_meet2", "रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। दोनों संख्याएँ बनाइए।"),
+              "done2": vo("vo_gm2_sum2", "बहुत बढ़िया! 34 और 25 जोड़ने पर 59 मिले।"),
+              # questions 3-4 ("late": after a wrong answer)
+              "type3": vo("vo_gm3_type2", "अब बिना ब्लॉक्स के जोड़िए। 41 और 30 को जोड़कर सही उत्तर टाइप करिए।"),
+              "done3": vo("vo_gm3_sum2", "शाबाश! 41 और 30 का जोड़ 71 होता है।"),
+              "late3": vo("vo_gm3_sum_late", "41 और 30 का जोड़ 71 होता है।"),
+              "type4": vo("vo_gm4_type2", "अब 62 और 17 को जोड़िए। सही उत्तर टाइप करिए।"),
+              "done4": vo("vo_gm4_sum2", "बहुत अच्छे! 62 और 17 का जोड़ 79 होता है।"),
+              "late4": vo("vo_gm4_sum_late", "62 और 17 का जोड़ 79 होता है।")}
 slides.append({
     "id": "GAME", "phase": "practice", "eis": "enactive", "type": "ADD_GAME", "prompt_hi": "",
     "audio": game_audio,
-    "data": {"no_head": True, "acts": [list(x) for x in ACTS],
-             "kids": [{"who": "bibi", "name": "बीबी"}, {"who": "johny", "name": "जॉनी"}]}})
+    "data": {"no_head": True, "bg": "meadow", "acts": [list(x) for x in ACTS], "modes": MODES,
+             # side: each child's side-view walking puppet (printed by tools/make_walk.py - see its notes)
+             "kids": [{"who": "rumi", "name": "रूमी", "side": {"h": 0.975, "ar": 0.508, "cut": 0.721, "split": 0.4935, "px": 0.4935, "py": 0.686, "a": 51.6, "bob": 0.0339}},
+                      {"who": "rohan", "name": "रोहन", "side": {"h": 0.9766, "ar": 0.44, "cut": 0.7574, "split": 0.4639, "px": 0.4639, "py": 0.7224, "a": 52.3, "bob": 0.0308}}]}})
 
 # deck page 14 - the end (no change asked: the draft's own line)
 slides.append({"id": "CEL", "phase": "practice", "eis": "enactive", "type": "CELEBRATION", "prompt_hi": "",
@@ -244,7 +255,7 @@ for sl in slides:
         if "b" in au:
             cues["b"] = {"a": frac(au["b"], str(a)), "b": frac(au["b"], str(b))}
             cues["a"] = {"bld": frac(au["a"], "ये सारे")}
-            cues["ask"] = {"q": frac(au["ask"], "कुल")}
+            cues["ask"] = {"p": frac(au["ask"], "दोनों"), "q": frac(au["ask"], "मिलाकर")}   # the "+", then the line and the "?" boxes
         if "eq" in au:
             cues["eq"] = {"a": frac(au["eq"], str(a)), "op": frac(au["eq"], "जोड़"), "b": frac(au["eq"], str(b)),
                           "eq": frac(au["eq"], "बराबर"), "n": frac(au["eq"], str(s), after="बराबर")}
@@ -253,6 +264,10 @@ for sl in slides:
         if "r1" in au:
             cues["r1"] = {"t": frac(au["r1"], f"{at} दहाई"), "o": frac(au["r1"], f"{ao} इकाई")}
             cues["r2"] = {"t": frac(au["r2"], f"{bt} दहाई"), "o": frac(au["r2"], f"{bo} इकाई")}
+        if "go" in au:      # "अब दोनों संख्याओं को जोड़ते हैं।": the "+" on "दोनों", the sum row on "जोड़ते"
+            cues["go"] = {"p": frac(au["go"], "दोनों"), "s": frac(au["go"], "जोड़ते")}
+        elif "prompt" in au:   # "42 और 35 को जोड़िए।": the "+" on "जोड़िए"
+            cues["prompt"] = {"p": frac(au["prompt"], "जोड़िए")}
         if "o_sum" in au:
             cues["o_sum"] = {"a": frac(au["o_sum"], f"{ao} इकाई"), "b": frac(au["o_sum"], f"{bo} इकाई", after="और"),
                              "s": frac(au["o_sum"], f"{so} इकाई", after="मिलाकर")}
@@ -276,6 +291,19 @@ for sl in slides:
                               "n": frac(au[role], str(s), after=str(b))}
     if cues:
         d["cues"] = cues
+
+# the game: in "रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं।" each child hops (and their number shows) as named; in "शाबाश! अब
+# रोहन के लिए…" the table resets and Rohan takes Rumi's place on "अब"
+for sl in slides:
+    if sl["type"] != "ADD_GAME":
+        continue
+    au, gc = sl["audio"], {}
+    for i, (a, b) in enumerate(sl["data"]["acts"], 1):
+        if f"intro{i}" in au:
+            gc[f"intro{i}"] = {"a": frac(au[f"intro{i}"], "रूमी"), "b": frac(au[f"intro{i}"], "रोहन")}
+        if f"ok_a{i}" in au:
+            gc[f"ok_a{i}"] = {"swap": frac(au[f"ok_a{i}"], "अब")}
+    sl["data"]["cues"] = gc
 
 # the landing follows the greeting word by word: the times (s) of its words in vo_landing (estimated from the clip's
 # length, re-made on every build): glide = "नमस्ते दोस्त", drop = "मैं हूँ स्विफ्टी" (the blocks), a = "आज हम" (23),

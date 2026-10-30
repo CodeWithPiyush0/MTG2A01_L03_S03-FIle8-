@@ -12,13 +12,14 @@ the three phase screens, confetti, the nudge hand, the place-value table and its
 engine) is kept in `_archive_v1/`.
 
 What this skill adds (`app.js` `[pv add]`, `style.css` `[pv add]`):
-- **the stacked table** (`PVK.vtable`): one दहाई | इकाई head over three rows — the first number, "+" the second, a thick
-  line, the sum (shaded). Each row is a table to the rest of File7's kit, so the + buttons, `childBuild`, `transfer`
+- **the stacked table** (`PVK.vtable`): one दहाई | इकाई head over three rows — the first number, the second, a thick
+  line, the sum (shaded); no "+" beside it. Each row is a table to the rest of File7's kit, so the + buttons, `childBuild`, `transfer`
   (a tapped block flies down, its grey copy stays) and the beats work on it unchanged.
-- **the written sum beside it** (`PVK.vcards`): 23 / + 14 / a line / ?, each card level with its row.
+- **the written sum beside it** (`PVK.vcards`): 23 / + 14 / a line / two "?" boxes, each level with its row; every digit its own
+  box; the "+" comes in when the VO says to add, each answer digit as the VO says it.
 - `moveKind` (the child moves the ones, then the tens — the other kind dimmed), `autoMove`, `soloSum` (the sum row alone,
   moved to the middle: deck "replacing the first two PV tables").
-- the garden game `ADD_GAME` (deck slide 17) and the cover's "addv" build (Akash and Moni with their 23 and 14, the
+- the garden game `ADD_GAME` (file6 deck page 17) and the cover's "addv" build (Akash and Moni with their 23 and 14, the
   written sum appearing word by word with the greeting).
 
 ## The lesson
@@ -35,13 +36,15 @@ What this skill adds (`app.js` `[pv add]`, `style.css` `[pv add]`):
 | P1 | p9 | MENTAL_ADD mcq | 61 / + 20 / ? (80 / 18 / 81); help: digits → blocks → the blocks merged, the right card lit |
 | P2 | p10 | MENTAL_ADD numpad | 76 + 22 → 98 typed into the "?" |
 | P3 | p11 | MENTAL_ADD numpad | 37 + 60 → 97 |
-| GAME | slide 17 | ADD_GAME | Bibi & Johny, 4 activities (25+12, 13+55, 31+45, 42+46) in the garden |
+| GAME | review deck p17 | ADD_GAME | Rumi & Rohan (new art), no Swiftee, a plain lawn. Q1 25+12 and Q2 34+25: the two behind a 3D table with their blocks → the camera turns to the top and the table becomes the board → Rumi's then Rohan's number (they walk in / off) → the three-row board, the child taps the ones, then the tens down into the sum Q3 41+30 and Q4 62+17: the written sum and the keypad only (help: "फिर से लिखिए।" → the sum shown with blocks in a table → only the right key). QA: `?dev=1` has a game-part list |
 | CEL | p14 | CELEBRATION | "शाबाश! अब आप ऊपर-नीचे लिखकर जोड़ सकते हैं। याद रखिए — जोड़ हमेशा इकाई से शुरू होता है।" |
 
 Deleted (deck): pages 5, 12, 13. No sum needs regrouping (`tools/lessons.py` asserts it).
 
-Art: Akash / Moni / Johny / Bibi are the existing portraits under new names (Madhav, Aanya, Aaru, Pari — user
-2026-10-28); `assets/game_garden.webp` was generated (`tools/gen_image.py`, Gemini).
+Art: Akash / Moni are the existing portraits under new names (Madhav, Aanya — user 2026-10-28). The game's Rumi and
+Rohan (`char_rumi*`, `char_rohan*`) and its lawn (`assets/game_meadow.webp`) were generated (`tools/gen_image.py`, Gemini;
+cut with `make_poses.py` / `make_portrait.py`); they are 7–8-year-olds drawn after the review deck's mockup children; their side-view walking puppet
+(`char_<who>_side.webp` + the card's `kids[].side`) is cut with `tools/make_walk.py`.
 
 ## Rebuilding
 ```

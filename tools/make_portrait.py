@@ -1,7 +1,7 @@
 """make_portrait.py <src.png> <blink.png> <out_base> <disc r,g,b> - S01's round portrait (400px: white ring, coloured disc,
 the head and shoulders inside), from a Gemini picture on a flat magenta-ish background; the blink copy gets the very same
 placement. Prints the eyes-open / eyes-shut silhouette overlap (alignment check)."""
-import sys
+import os, sys
 import numpy as np
 from PIL import Image, ImageDraw
 src, blink, out, disc = sys.argv[1], sys.argv[2], sys.argv[3], tuple(int(v) for v in sys.argv[4].split(","))
@@ -15,7 +15,7 @@ def key(path):
     border = np.concatenate([a[:6].reshape(-1, 3), a[-6:].reshape(-1, 3), a[:, :6].reshape(-1, 3), a[:, -6:].reshape(-1, 3)])
     bg = np.median(border, axis=0)
     d = np.sqrt(((a - bg) ** 2).sum(-1))
-    near = Image.fromarray(np.where(d < 75, 255, 0).astype(np.uint8), "L").copy()   # (copy: an array-backed image is read-only - the fill did nothing)
+    near = Image.fromarray(np.where(d < float(os.environ.get("KEY_NEAR", 75)), 255, 0).astype(np.uint8), "L").copy()   # (copy: an array-backed image is read-only - the fill did nothing)
     h, w = d.shape
     for x in range(0, w, 8):
         for y in (6, h - 7):

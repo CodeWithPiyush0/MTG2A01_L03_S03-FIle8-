@@ -22,7 +22,7 @@ def key(path):
     border = np.concatenate([a[6:12].reshape(-1, 3), a[-12:-6].reshape(-1, 3), a[:, 6:12].reshape(-1, 3), a[:, -12:-6].reshape(-1, 3)])
     bg = np.median(border, axis=0)
     d = np.sqrt(((a - bg) ** 2).sum(-1))
-    near = Image.fromarray(np.where(d < 75, 255, 0).astype(np.uint8), "L").copy()   # (copy: an array-backed image is read-only)
+    near = Image.fromarray(np.where(d < float(os.environ.get("KEY_NEAR", 75)), 255, 0).astype(np.uint8), "L").copy()   # (copy: an array-backed image is read-only)
     h, w = d.shape
     for x in range(6, w - 6, 8):
         for y in (6, h - 7):
@@ -31,7 +31,7 @@ def key(path):
         for x in (6, w - 7):
             if near.getpixel((x, y)) == 255: ImageDraw.floodfill(near, (x, y), 128)
     bgm = np.asarray(near) == 128
-    bgm |= d < 50
+    bgm |= d < float(os.environ.get("KEY_POCKET", 50))            # (KEY_NEAR / KEY_POCKET: tighter for a very even background, so white shoes stay)
     bgm[:6] = bgm[-6:] = True; bgm[:, :6] = bgm[:, -6:] = True
     al = np.asarray(Image.fromarray(np.where(bgm, 0, 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(1.0))).astype(np.float32) / 255
     grown = np.asarray(Image.fromarray((bgm * 255).astype(np.uint8), "L").filter(ImageFilter.MaxFilter(7))) > 0
