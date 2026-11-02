@@ -3336,10 +3336,10 @@ const PVModules = {
     }
   },
   CELEBRATION: {
-    /* HI02H11_L02_S02's end screen (user 2026-10-23: "exact same"): no text, the sunburst and the star burst, the
-       celebration sound, the arrow there from the start; Swifty is the celebration kit's (below): she jumps and cheers
-       first, then says the line, lip-synced. Our line ("शाबाश! अब आप संख्याएँ घटाना सीख गए हैं।") and the arrow's
-       hand-off to the host stay. */
+    /* the end screen of File4 (MTG2A04_L01_S01, user 2026-11-02 "use the same end screen swifty animation, buttons"):
+       no text, the sunburst and the star burst, the celebration sound, the arrow there from the start (one hintPop);
+       Swiftee is the celebration kit's (below - the stock gif/sw_lg_celebrating_anim.webp it replaces, as there): she
+       jumps and cheers first, then says the line, lip-synced, then idles. Our line and the arrow's hand-off stay. */
     mount(host, slide){
       playSfx(slide.audio && slide.audio.sfx ? slide.audio.sfx : "sfx_celebrate");
       const et = $("endTitle"); if(et) et.textContent = "";
@@ -3916,6 +3916,7 @@ function mountSlideNow(idx){
   state.hintUsed = false; state.nudgeUsed = false; state.scaffoldLevel = 0; state.hintActive = false;
   state.audioReplays = 0; state.gateNavUntilAudio = false; state.endBtnPending = false;
   state.speakerLive = undefined; state.seqTalk = false; state.slideDone = false;   // [QA BUG_09/07] the speaker, per page
+  document.body.classList.remove("spk-done");
   state.replayAudio = null;   // a module may set a slide-specific replay (e.g. teach slides whose
                               // audio roles aren't in the autoPlayChain order); else the chip replays the chain
   state.ownsAudio = false;    // a module that drives its OWN audio sequence sets this → skip autoPlayChain
@@ -4017,7 +4018,7 @@ function afterConfetti(fn){
 /* onscreen headline per gate (display only; distinct from any narration). Eligibility = phase IN this map. */
 const PHASE_GATE_TITLE = { tutorial:"चलिए, शुरू करें!", guided:"चलिए, साथ में करें!", practice:"अब आपकी बारी!" };   // HI02H11_L02_S02's headlines (user 2026-10-23: "exact same")   // QA checklist 2026-10-05: the headlines are exactly the lines Swiftie speaks (each VO is now that line alone), so the text appears only as she says it
 const PHASE_GATE_VO    = { tutorial:"vo_pt_tutorial", guided:"vo_pt_guided", practice:"vo_pt_practice" };
-const ANIM_ASSETS = ["loader.webp", "new_landing_swiftee_anim.webp", "peeking_talk_up.webp", "sw_head_celebrate_anim.webp", "sw_head_hint_anim.webp", "sw_head_tryagain_anim.webp"];
+const ANIM_ASSETS = ["loader.webp", "new_landing_swiftee_anim.webp", "peeking_talk_up.webp", "sw_head_celebrate_anim.webp", "sw_head_hint_anim.webp", "sw_head_tryagain_anim.webp", "sw_lg_celebrating_anim.webp"];
 /* [gate] THE THREE TRANSITION SCREENS OF HI02H11_L02_S02 (its r142 - Hindi-game-gender-identify's screen), user 2026-10-23:
    "extract the same all three transition". Rule for rule:
    - Swifty is peeking_talk_up.webp (900x900, already up and talking), bottom-anchored, square, 52.8% of the window's
@@ -4131,6 +4132,7 @@ function phaseBlurTransition(cb, toPhase){
 
 function completeSlide(success){
   state.slideDone = true; state.speakerLive = false; state.seqTalk = false;   // [QA BUG_07] answered: the speaker takes no tap
+  document.body.classList.add("spk-done");                                       // (and looks it - File4's body.spk-done)
   const slide = CARD.slides[state.idx];
   GameBus.emit("slide_completed", {
     slide_id: slide.id, phase: slide.phase, success: !!success,
@@ -4303,8 +4305,7 @@ const ASSET_SIZES = {
   "assets/gif/sw_head_celebrate_anim.webp": 293618,
   "assets/gif/sw_head_hint_anim.webp": 316076,
   "assets/gif/sw_head_tryagain_anim.webp": 313414,
-  "assets/last_swifty_end.webp": 1779506,
-  "assets/last_swifty_still.webp": 26456,
+  "assets/gif/sw_lg_celebrating_anim.webp": 681982,
   "assets/mascot.webp": 8006,
   "assets/nudge_fx_ring_inner.svg": 786,
   "assets/nudge_fx_ring_outer.svg": 769,
@@ -4525,7 +4526,7 @@ const Assets = (function(){
     [].concat(...(d.people || []).map(p => p.who), ...(d.total ? [d.total.who] : [])).forEach(w => out.push(pvChar(w)));
     (d.count_clips || []).forEach(id => out.push(vo(id)));
     if(s.type === "ADD_GAME"){ img("game_meadow"); (d.kids || []).forEach(k => [pvChar(k.who), pvChar(k.who, true), pvChar(k.who, "cheer"), pvChar(k.who, "side")].forEach(f => f && out.push(f))); }
-    if(s.type === "CELEBRATION"){ img("end_screen"); img("last_swifty_still"); img("last_swifty_end"); out.push(vo("sfx_celebrate")); }
+    if(s.type === "CELEBRATION"){ img("end_screen"); out.push(art("sw_lg_celebrating_anim.webp")); out.push(vo("sfx_celebrate")); }
     if(s.phase === "tutorial" && s.type !== "CELEBRATION") img("start_mascot");      // the tutorial card's Swiftie
     return out;
   }
@@ -5969,7 +5970,7 @@ PVLanding.intro();   // [landing pv] the picture comes in with the greeting
       /* the stock mascot's OWN layout height, measured before it is hidden: 330 px wide at its
          516x476 art is 357.72 px, not the kit's 358 - and 0.28 px is a whole screen pixel of arrow
          movement at 1920x1080. Falls back to the kit's 358 if the stock art never loaded. */
-      const h = 357.72;   // (HI02H11's stock mascot box: 330px wide at its 516x476 art - ours has other art, so its number is taken)
+      const h = (img.naturalWidth && img.offsetWidth) ? img.offsetWidth * img.naturalHeight / img.naturalWidth : 358;   // (File4's: the stock mascot's own layout height)
       box.style.cssText = "width:300px;height:" + h + "px;position:relative;z-index:2";
       img.parentNode.insertBefore(box, img); }
     if(!box) return r;

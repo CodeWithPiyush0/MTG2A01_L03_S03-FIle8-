@@ -317,3 +317,25 @@ Audit (muted browser runs + the code; no changes then): all points met but those
 | Q4 | End screen: a standard Swiftee end line | ✅ DONE | `vo_cel2` "बहुत बढ़िया, दोस्त! तुमने कमाल कर दिया!" (transcription checked); the end animation's lip-sync re-measured from it; the old `vo_cel` moved to `_archive_v1/end_line/` |
 Open (for discussion): the game has no own music track; G4 has 2 help layers (as the SME asked); P1–P3 are question screens in the practice section; the Play button comes ~1–1.5 s after the greeting (after the children's cheer).
 Cache `v=20261102h`. Verified (muted): the speaker is 70 px, disabled for the greeting and enabled at its end; three pops .12 s apart as G2's options come in; the end screen says the new line.
+
+## HI02H11_L02_S02 (File3 DEV_HANDOFF) - transition / end screen / buttons - 2026-11-02
+Compared side by side (muted runs of both builds, same moments):
+| Part | Status | How |
+|---|---|---|
+| Transition screens ("चलिए, शुरू करें!" …) | ✅ already the same | the peeking Swiftee, the blur, the magenta headline wiping in on its word, the sink out - identical (copied from it on 2026-10-23) |
+| Buttons (Play, Next pill, speaker chips) | ✅ already the same | same art, colour, size (Next 142×52 vs 137×50 px), pulse; the title speaker stays 70 px (QA checklist Q1) |
+| End-screen Swiftee | ✅ DONE | its big cheering Swiftee (`assets/gif/sw_lg_celebrating_anim.webp`, copied from the handoff), at its size (330 px), restarted from its first frame as the screen opens and preloaded with the end screen (it appeared ~9 s late in the handoff build: lazy). The lip-synced celebration kit is off (no `end_anim` in the card); its sheets and `last_swifty_*` moved to `_archive_v1/end_screen_kit/` |
+Cache `v=20261102i`. Verified (muted): the end screen shows the cheering Swiftee at once, the line plays, 0 console errors.
+| End screen (2) - "the button and the swifty gif do not match my file3" | ✅ DONE | compared style by style against the HI02H11 build: Swiftee lacked its soft blue drop-shadow (an older `filter:none !important` override - removed) and the arrow pulsed forever (`pvBtnPop` + `pvBtnPulse`) where HI02H11's pops in once (`hintPop`) and stays - now the same; the button is empty with `aria-label="आगे बढ़ें"`, its arrow drawn by `::after` 52px, as there. Pixel check of Swiftee + button after both have loaded: 0 pixels differ (beyond the random background stars). Note: with HI02H11's drop-shadow comes its faint pale rectangle behind Swiftee, as in File3. Cache `v=20261102j` |
+
+## File4 (MTG2A04_L01_S01) - transition / end screen / buttons - 2026-11-02 (replaces the File3 end screen above)
+Compared side by side (muted runs of both; File4's end screen reached through its own navigation - `?slide=` skips its kit):
+| Part | Status | How |
+|---|---|---|
+| Transition screens | ✅ already the same | the same peeking Swiftee, headline wipe, timing |
+| Next button | ✅ already the same | the yellow pill, `ltNavPulse`, ~140×52 |
+| End screen Swiftee | ✅ DONE | File4's celebration kit again (identical sheets - same checksums -, player, styles and meta): she jumps first (silent), then says the line lip-synced, then idles - the same sequence and place as File4 (box 538,113 vs 538,112). `card.end_anim` restored (lip-sync measured from `vo_cel2`), `assets/celebration/` back; the stock picture under it is File4's `sw_lg_celebrating_anim.webp` |
+| End screen arrow | ✅ same | one `hintPop`, no pulse |
+| Speaker buttons | ✅ DONE | File4's: every speaker (title, card, header chip) disabled while any clip plays - opacity .45, `grayscale(.75)`, no taps - and once the page is solved (`body.spk-done`) until the next page |
+| Title Play button | ✅ DONE | File4's: pops in (`ltPlayIn`) when the greeting ends and pulses while it waits (`ltPlayPulse`, ×1.09 / 1.3 s, no ring) |
+Cache `v=20261102k`. Verified (muted): the end-screen sequence, speakers greyed during every line (title, G2) and after solving, Play's animation; the game → end screen played through: `lesson_completed`, 0 console errors.

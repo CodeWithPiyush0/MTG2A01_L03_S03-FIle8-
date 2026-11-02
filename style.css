@@ -338,7 +338,8 @@ body.is-end .stage-inner{visibility:hidden;}
 /* [end swifty] as hindi-game-gender-identify: 330 px, and no shadow ([H11-193]: his open arms reach the picture's edges,
    so a drop-shadow was cut by its box and showed as a faint rectangle behind him) */
 .end-mascot,.end-screen .end-mascot{width:330px !important;}
-.end-screen .end-mascot{filter:none !important;}
+/* (user 2026-11-02 "does not match my file3": HI02H11_L02_S02's own drop-shadow under the cheering Swiftee is back -
+   .end-mascot's filter, as there; the earlier filter:none override removed) */
 .end-screen.show{display:flex;}
 .end-title{z-index:3;font-family:var(--font-hi);font-weight:800;font-size:44px;color:#0B3D8C;text-align:center;max-width:78%;line-height:1.25;text-shadow:0 2px 0 rgba(255,255,255,.7);animation:endPop .5s cubic-bezier(.34,1.5,.6,1);}
 .end-title:empty{display:none;}
@@ -2073,8 +2074,8 @@ body.is-start .sg-sky{
 @keyframes pvBtnPop{0%{scale:1;}35%{scale:1.2;}60%{scale:.93;}80%{scale:1.05;}100%{scale:1;}}
 .pv-src.pv-pop,.pv-make.pv-pop{animation:pvBtnPop .6s cubic-bezier(.34,1.3,.5,1) both;}
 .pv-src.pulse,.pv-make.pulse,
-.nav-btn.active,.stage .nav-btn.active,
-.end-btn.show{animation:pvBtnPop .6s cubic-bezier(.34,1.3,.5,1) both,pvBtnPulse 1.15s cubic-bezier(.34,.62,.3,1) .6s infinite;}
+.nav-btn.active,.stage .nav-btn.active{animation:pvBtnPop .6s cubic-bezier(.34,1.3,.5,1) both,pvBtnPulse 1.15s cubic-bezier(.34,.62,.3,1) .6s infinite;}
+/* (the end screen's arrow: HI02H11_L02_S02's - one hintPop as it comes, no pulse after - user 2026-11-02) */
 .nav-btn.active:active,.stage .nav-btn.active:active{animation:none;}
 @media (prefers-reduced-motion:reduce){
   .pv-src.pv-pop,.pv-make.pv-pop,.pv-src.pulse,.pv-make.pulse,.nav-btn.active,.stage .nav-btn.active,.end-btn.show{animation:none;scale:1;}
@@ -2577,4 +2578,17 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 /* QA checklist (user 2026-11-02): the title screen's standard speaker button - 70px (its middle where the 58px one's was),
    and DISABLED while the greeting speaks: greyish, not tappable; itself again when the line ends (.playing: setPlaying) */
 .sg-vo{width:70px;height:70px;left:90px;bottom:-22px;}
-.sg-vo.playing{pointer-events:none;cursor:default;filter:grayscale(.85) brightness(1.05);opacity:.6;}
+/* File4 (MTG2A04_L01_S01, user 2026-11-02 "use the same ... buttons"):
+   - THE SPEAKER BUTTONS are disabled while a clip plays, and look it (its r73 / round 20): the title screen's, the card's
+     and the header's - and once the page is solved (body.spk-done), until the next page
+   - THE COVER'S PLAY BUTTON: once the greeting is over it pops in (ltPlayIn) and pulses as long as it waits (ltPlayPulse -
+     a plain scale, no ring, no glow) - its r98-r103 */
+body.vo-busy .audio-chip,body.vo-busy .tut-audio,body.vo-busy .sg-vo,
+body.spk-done .audio-chip,body.spk-done .tut-audio,body.spk-done .sg-vo{pointer-events:none !important;opacity:.45;filter:grayscale(.75);}
+.audio-chip,.tut-audio,.sg-vo{transition:opacity .25s ease,filter .25s ease;}
+@keyframes ltPlayPulse{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.09);}}
+@keyframes ltPlayIn{0%{opacity:0;transform:translateX(-50%) scale(.4);}70%{opacity:1;transform:translateX(-50%) scale(1.06);}100%{opacity:1;transform:translateX(-50%) scale(1);}}
+.sg-btn.sg-btn--play:not(.sg-waiting),.sg-btn.sg-btn--play.sg-pop:not(.sg-waiting),.sg-btn.sg-btn--play.idle-pulse:not(.sg-waiting){
+  animation:ltPlayIn .45s cubic-bezier(.34,1.4,.6,1) both,ltPlayPulse 1.3s ease-in-out .45s infinite;}
+.sg-btn.sg-btn--play:not(.sg-waiting):active{animation:none;}
+@media (prefers-reduced-motion:reduce){ .sg-btn.sg-btn--play{animation:none !important;} }

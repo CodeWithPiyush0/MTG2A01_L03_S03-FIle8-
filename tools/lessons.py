@@ -364,7 +364,8 @@ card = {
     "slides": slides,
 }
 
-# the celebration Swiftie (File7's kit): the lip-sync track measured from OUR celebration line (re-measured on every build)
+# the celebration Swiftie - File4's (MTG2A04_L01_S01, user 2026-11-02): the kit's sheets, lip-synced to OUR line (the
+# track re-measured on every build)
 import importlib.util as _ilu
 _spec = _ilu.spec_from_file_location("make_lipsync", os.path.join(HERE, "make_lipsync.py")); _ml = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ml)
 _cel = os.path.join(ROOT, "assets", "voiceover", CEL_VO + ".ogg")
