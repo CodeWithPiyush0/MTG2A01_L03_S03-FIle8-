@@ -2548,3 +2548,19 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 .gm-walk{z-index:4;transform-origin:50% 50%;pointer-events:none !important;filter:drop-shadow(0 6px 6px rgba(0,47,118,.18));}
 .gm-walk-in{position:absolute;left:0;top:0;width:100%;height:100%;}
 .gm-walk img{position:absolute;left:0;top:0;}
+/* the game's 2nd wrong check (SME 2026-10-30): a column made right - its buttons off */
+.gm-ctr.done .gm-pm{opacity:.35;filter:grayscale(.8);}
+/* user 2026-11-02 - the sum screen: no portraits in the rows, the numbers bigger (and the sum's boxes with them) */
+.gm-lab .gm-num.gm-num-big{font-size:68px;letter-spacing:2px;}
+.gm-lab .gm-sum .gm-d{width:60px;height:78px;font-size:52px;}
+/* the completion line names a number: it pulses with a glow */
+.gm-lab .gm-say{animation:gmSay .8s ease-in-out 1;}
+@keyframes gmSay{0%,100%{scale:1;}45%{scale:1.22;text-shadow:0 0 14px rgba(255,190,40,.95);filter:drop-shadow(0 0 8px rgba(255,190,40,.8));}}
+/* the tens disabled after the 3rd tap before the ones (until the ones are down) */
+.gm-blk.gm-off{opacity:.45;filter:grayscale(.6);cursor:default;}
+/* user 2026-11-02: the numbers and the "+" a little right - the "+" touched the board's edge */
+.gm-lab{padding-left:56px;}
+.gm-lab .gm-plus{left:18px;}
+/* user 2026-11-02: the sum's two boxes in the middle of their column */
+.gm-lab.gm-lab-sum{justify-content:center;padding:0;}
+.gm-lab.gm-lab-sum .gm-sum{margin-left:0;}

@@ -221,3 +221,74 @@ Verified: the whole game played through (one wrong answer per step) to the celeb
 | H1 | Change the kids — use the kids from the PPT as the reference | ✅ DONE | new Rumi and Rohan drawn from the review deck's mockup children (`ppt image24/25`), 7–8 years old, in the deck's cartoon style: Rumi — ponytail bun, pink polka-dot headband, yellow t-shirt, blue denim dungarees, pink sneakers; Rohan — blue cap with a yellow front, orange hoodie, blue jeans, white sneakers (their lower halves are not in the deck - chosen to match). Standing, cheering, blink copies, round portraits. Drawn on flat grey and keyed tighter (`KEY_NEAR=24 KEY_POCKET=12` for `make_poses.py` / `make_portrait.py`, so the white shoes stay); the floor shadow cleared. The previous set: `_archive_v1/kids_young_v2/` |
 | H2 | The walking does not feel good | ✅ DONE | replaced the two-picture flip (F2) with a cut-out puppet: one side-view stride picture (`char_<who>_side.webp`, `tools/make_walk.py` measures the crotch, the hip and the legs' angle → `kids[].side` in the card) in three layers — the body, and each leg turning on the hip so the legs swing through each other step after step (eased like a pendulum), the body rising as they pass, the step timed to the ground covered (no sliding feet); the body's lower edge fades over the hips so no seam shows. Mirrored when walking left; the child turns to the front on stopping |
 Verified: each child's walk checked frame by frame through a stride (animation paused); the whole game played through to the celebration, 0 console errors; captures on a wide window.
+
+## SME review — 2026-10-30 (Google Doc "SkillCode_Feedback Doc", tab "MTG2A01_L03_S03_Vertical addition")
+The doc's other tabs are other skills (MTG2A04_L03_S01, MTG2A01_L04_S01, MTG2A01_L06_S01) - not this lesson. The screenshots match this build.
+| # | Doc | Where | Ask (verbatim / summarised) | Status |
+|---|---|---|---|---|
+| S1 | Global | T2, G1–G4 (moving the blocks), game total | Inactivity 7 s: "इकाई पर टैप करके जोड़िए।" / "दहाई पर टैप करके जोड़िए।" by the pending step | ✅ DONE |
+| S2 | Row 1 | T2 | The same 7 s VO; "3 इकाई और 4 इकाई … 7 इकाई" - the numbers glow in sync; the same for the tens | ✅ DONE |
+| S3 | Row 2 | G1 | The glow stops when "…4 इकाई हैं" ends (the 4 stayed lit into the next sentence); the same for the tens | ✅ DONE |
+| S4 | Row 3 | G1 | The 7 s VO; "4 इकाई और 5 इकाई … 9 इकाई" - the numbers glow in sync, off when it ends | ✅ DONE |
+| S5 | Row 4 | G2 (+G3) | 3rd wrong: "सही जोड़ वाली संख्या यह है।" is not played; change the screen - the written sum stays beside the sum row | ✅ DONE |
+| S6 | Row 5 | G4 | After the ones are moved: the hand on the ones box + "अब इस डिब्बे पर टैप करके इसमें कुल इकाई की संख्या टाइप करिए।" (again after 7 s); WA1 wiggle + "कुल इकाई फिर से गिनिए।"; WA2 wiggle + "कुल 8 इकाई हैं, तो सही संख्या यह है।"; the same for the tens | ✅ DONE |
+| S7 | Row 6 | P1 | WA1 as is; WA2 wiggle + the addition animated (the last row with numbers only); WA3 wiggle + distractors disabled + "सही संख्या यह है।" | ✅ DONE |
+| S8 | Row 6 | P2, P3 | WA1 as is; WA2 wiggle + the addition animated (the last row with numbers only); WA3 wiggle + "कुल इकाई # हैं, तो सही संख्या यह है।" / "कुल दहाई # हैं, …" | ✅ DONE |
+| S9 | Game | building a number | WA1: "फिर से करिए।" and the board resets; WA2: "इसमें दहाई/इकाई ज़्यादा है।" and only the needed button shows (−, or + when short); once the column is right its buttons go off | ✅ DONE |
+| S10 | User (chat) | Game Q1 | VO1 "रूमी और रोहन को ब्लॉक्स से कुछ चीज़ें बनानी हैं। तो रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं। पता करते हैं, दोनों के पास कुल कितने ब्लॉक्स हैं? पहले रूमी के लिए 25 बनाइए।" | ✅ DONE |
+| S11 | User (chat) | Game Q2 | VO2 "अब रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। पहले दोनों संख्याएँ बनाइए, फिर कुल पता करते हैं।" | ✅ DONE |
+Notes: the doc quotes S2/S4's lines in other words ("…जोड़ने पर हमें मिलती है…", "…मिलकर होते हैं…"); the recorded lines are the deck's own, so they are kept and only the glow is added. "यह हैं" recorded as "यह है"; S10/S11's spellings normalised (ब्लॉकस → ब्लॉक्स, चीज़े → चीज़ें, फर → फिर, करते है → करते हैं).
+How:
+- **S1**: the blocks-to-tap step (`tapAcross`, and the game's sum step) says `tap_o` / `tap_t` after 7 s idle, then again every 7 s while nothing is tapped.
+- **S2/S4**: `pvAddSumLine` lights the first number's digit, then the second's, then the answer's (filled) as they are named, and turns them off when the clip ends.
+- **S3**: G1's `r1`/`r2` carry an `x` cue (the start of the second sentence) that switches the glow off.
+- **S5**: `soloSum(…, keep)` leaves the written sum beside the one-row table (cards 62 px, the "?" level with the row); the 3rd wrong locks the cards and says `vo_reveal_sum`. G3 is the same.
+- **S6**: G4 moves the ones, then types the ones box (the keypad opens on a tap; hand + `vo_type_o`), then does the same for the tens. WA1 `vo_again_*`; WA2 `vo_is_*` plus only the right key; then the completion line. The answer box under the table is gone.
+- **S7/S8**: the 2nd help adds the line and the sum row; the ones beat and their total comes in as a number, then the tens (P1's table is shorter so the cards fit under it). P1 3rd: the others fade, `vo_reveal_n`. P2/P3 3rd: the wrong column's `vo_is_*` line(s), only the right keys.
+- **S9**: the 1st wrong check says `vo_gm_again` and empties the board. From the 2nd, column by column: the line, only the needed button (the other hidden), and the column's buttons greyed once it is right.
+- **S10/S11**: `vo_gm1_meet3` (the last sentence is the existing `vo_gm1_make_a2` on the build screen) and `vo_gm2_meet3`; the badges come on the numbers.
+
+New VO (15, checked by transcription; `vo_gm_again`, `vo_again_t`, `vo_tap_t` re-rendered once): `vo_tap_o/t`, `vo_reveal_sum`, `vo_reveal_n`, `vo_type_o/t`, `vo_again_o/t`, `vo_is_o7/o8/t6/t9`, `vo_gm_again`, `vo_gm1_meet3`, `vo_gm2_meet3`. Cache `v=20261030d`.
+
+Verified:
+- The whole lesson played T2 → CEL (one wrong per step), `lesson_completed`, 0 console errors.
+- G2/P1/P2 with three wrong, G4 with two, the game build with two (Rohan's 12).
+- The idle lines with no taps (G2, the game's sum step).
+- G1's glow frame by frame.
+
+## Review — 2026-11-02 (user)
+| # | Ask | Status | How |
+|---|---|---|---|
+| U1 | G4: the idle hand should be on the ones or the tens box, not elsewhere | ✅ DONE | `numpad` takes `cfg.nudge` (the hand's place on the 7 s idle); G4 passes the column's box |
+| U2 | P1/P2: the 2nd help shows numbers in the sum row - it should have blocks; only the sum row stays and the number comes under the table (as File6/File7) | ✅ DONE | the table's two rows fill, the sum row comes, the blocks move down into it (ones, then tens); the first two rows go (`soloSum`, the written sum stays beside it); the sum's digits come under its columns; then "ब्लॉक्स को गिनिए…". P1's cards go under the digits. P3 is the same |
+| U3 | P2/P3: "कुल इकाई # हैं…" / "कुल दहाई # हैं…" one by one, not at once - if the ones were right, only the tens line; idle then: "सही संख्या यह है।" | ✅ DONE | 3rd wrong: only the right keys work, the ones first. A wrong ones digit: its line now, and the tens line when the tens are to be typed (`P.onGuide`). A right ones digit stays typed (`P.prefill`) and only the tens line plays. The 7 s re-ask becomes `vo_reveal_n` (`P.reask`) |
+| U4 | Game: remove the heading | ✅ DONE | the "एक्टिविटी i: …" banners are gone (screen 1 and the keypad activities) |
+| U5 | Game: the legs and the kids fade away when the camera turns - fix | ✅ DONE | no fades. The legs and the front edge hang under the top in 3D and turn with it, so from above they are hidden under it. The kids walk off as the camera rises (Rumi left, Rohan right) |
+| U6 | Game: on "इसमें दहाई ज़्यादा है।" disable the other button, do not remove it | ✅ DONE | the other button is dimmed and disabled (`dis`), not hidden |
+| U7 | Game sum screen: no "Activity X" box; no portraits in the rows; numbers bigger; the idle hand on the blocks (gone on a tap) | ✅ DONE | box and portraits removed; the numbers 68 px, the sum's boxes 60×78. The 7 s idle shows the hand on a block to tap with "इकाई पर टैप करके जोड़िए।"; a tap removes it |
+| U8 | Game: "X और Y जोड़ने पर Z मिले" - highlight the numbers and the blocks in the sum | ✅ DONE | on "25": its number glows and its blocks in the sum row shine; the same on "12"; on "37": the sum's digits and all its blocks (cues `done1/2` from the build). Keypad activities: the written numbers pulse on their names |
+| U9 | Game: tens tapped first - after two tries the hand on a ones block; at the third the tens disabled | ✅ DONE | each early tens tap wiggles it and says "पहले इकाइयाँ जोड़िए।". From the 2nd, the hand is on a ones block. At the 3rd the tens are greyed and disabled until the ones are down |
+Cache `v=20261102a`.
+
+Verified (all browser tests muted):
+- The game played start to end with two wrong checks: `lesson_completed`, 0 console errors.
+- P1 with two wrong answers, and P2 with three.
+- P3 with the ones right and the tens wrong three times: the ones kept, only the 9 key lit, only the tens line played, then "सही संख्या यह है।" on idle.
+- G4's idle hand measured on the ones box.
+- The camera turn checked frame by frame.
+- On the sum screen: three early tens taps, the idle hand, and the completion-line highlight checked.
+
+## Review — 2026-11-02 (2)
+| # | Ask | Status | How |
+|---|---|---|---|
+| V1 | The numbers under the table do not look like File6/File7 | ✅ DONE | they are now File6/File7's round badges (`pv-dig`: green for tens, orange for ones) just under each column of the sum row |
+| V2 | P2: "कुल इकाई # हैं…" plays but "कुल दहाई # हैं…" does not | ✅ DONE | 3rd wrong: the ones line, then the tens line as soon as the ones key is typed, always (it played only when the typed tens digit had been wrong). The ones-kept prefill is removed; idle still says "सही संख्या यह है।" |
+| V3 | Game: the number and the "+" a little right - the "+" touches the table's border | ✅ DONE | the row labels padded 56 px, the "+" at 18 px |
+| V4 | Game: stuck at the 2nd wrong - 3 tens for 25, the − stays on even down to 0 | ✅ DONE | a tap during the hint line ("इसमें दहाई ज़्यादा है।") reached 2 before the column was watched, so it never locked. Now it is watched before the line plays (and locks at once if already right): it locks at 2, further taps do nothing, the check pulses |
+Cache `v=20261102b`.
+
+Verified (muted):
+- The stuck case rebuilt (3 tens, − tapped during the line): it locked at 2.
+- P2 typed 97 three times: the ones line, then the tens line after the ones key, then accepted.
+- The game played start to end with two wrong checks: `lesson_completed`, 0 console errors.
+| V5 | Game sum screen: the sum's box in the centre | ✅ DONE | the sum row's label (`gm-lab-sum`) centres its two boxes in the number column (measured: column 431–575 px, boxes 451–553 px). Cache `v=20261102c` |

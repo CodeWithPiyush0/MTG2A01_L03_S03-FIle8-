@@ -63,6 +63,8 @@
   "img_ext": "webp",
   "audio": {
    "sfx_celebrate": "assets/voiceover/sfx_celebrate.ogg",
+   "vo_again_o": "assets/voiceover/vo_again_o.ogg",
+   "vo_again_t": "assets/voiceover/vo_again_t.ogg",
    "vo_ask_pick": "assets/voiceover/vo_ask_pick.ogg",
    "vo_ask_pick2": "assets/voiceover/vo_ask_pick2.ogg",
    "vo_ask_type": "assets/voiceover/vo_ask_type.ogg",
@@ -91,9 +93,9 @@
    "vo_g4_prompt": "assets/voiceover/vo_g4_prompt.ogg",
    "vo_gm1_make_a2": "assets/voiceover/vo_gm1_make_a2.ogg",
    "vo_gm1_make_b2": "assets/voiceover/vo_gm1_make_b2.ogg",
-   "vo_gm1_meet": "assets/voiceover/vo_gm1_meet.ogg",
+   "vo_gm1_meet3": "assets/voiceover/vo_gm1_meet3.ogg",
    "vo_gm1_sum": "assets/voiceover/vo_gm1_sum.ogg",
-   "vo_gm2_meet2": "assets/voiceover/vo_gm2_meet2.ogg",
+   "vo_gm2_meet3": "assets/voiceover/vo_gm2_meet3.ogg",
    "vo_gm2_sum2": "assets/voiceover/vo_gm2_sum2.ogg",
    "vo_gm3_sum2": "assets/voiceover/vo_gm3_sum2.ogg",
    "vo_gm3_sum_late": "assets/voiceover/vo_gm3_sum_late.ogg",
@@ -102,6 +104,7 @@
    "vo_gm4_sum_late": "assets/voiceover/vo_gm4_sum_late.ogg",
    "vo_gm4_type2": "assets/voiceover/vo_gm4_type2.ogg",
    "vo_gm_add3": "assets/voiceover/vo_gm_add3.ogg",
+   "vo_gm_again": "assets/voiceover/vo_gm_again.ogg",
    "vo_gm_final2": "assets/voiceover/vo_gm_final2.ogg",
    "vo_gm_o_less": "assets/voiceover/vo_gm_o_less.ogg",
    "vo_gm_o_more": "assets/voiceover/vo_gm_o_more.ogg",
@@ -114,6 +117,10 @@
    "vo_h1_type": "assets/voiceover/vo_h1_type.ogg",
    "vo_idle_build_o": "assets/voiceover/vo_idle_build_o.ogg",
    "vo_idle_build_t": "assets/voiceover/vo_idle_build_t.ogg",
+   "vo_is_o7": "assets/voiceover/vo_is_o7.ogg",
+   "vo_is_o8": "assets/voiceover/vo_is_o8.ogg",
+   "vo_is_t6": "assets/voiceover/vo_is_t6.ogg",
+   "vo_is_t9": "assets/voiceover/vo_is_t9.ogg",
    "vo_landing": "assets/voiceover/vo_landing.ogg",
    "vo_p1_correct": "assets/voiceover/vo_p1_correct.ogg",
    "vo_p1_correct_late": "assets/voiceover/vo_p1_correct_late.ogg",
@@ -129,6 +136,8 @@
    "vo_pt_guided": "assets/voiceover/vo_pt_guided.ogg",
    "vo_pt_practice": "assets/voiceover/vo_pt_practice.ogg",
    "vo_pt_tutorial": "assets/voiceover/vo_pt_tutorial.ogg",
+   "vo_reveal_n": "assets/voiceover/vo_reveal_n.ogg",
+   "vo_reveal_sum": "assets/voiceover/vo_reveal_sum.ogg",
    "vo_t1_a": "assets/voiceover/vo_t1_a.ogg",
    "vo_t1_ask": "assets/voiceover/vo_t1_ask.ogg",
    "vo_t1_b": "assets/voiceover/vo_t1_b.ogg",
@@ -147,9 +156,15 @@
    "vo_t2_tens": "assets/voiceover/vo_t2_tens.ogg",
    "vo_t2_total": "assets/voiceover/vo_t2_total.ogg",
    "vo_t3_eq": "assets/voiceover/vo_t3_eq.ogg",
-   "vo_t3_tot": "assets/voiceover/vo_t3_tot.ogg"
+   "vo_t3_tot": "assets/voiceover/vo_t3_tot.ogg",
+   "vo_tap_o": "assets/voiceover/vo_tap_o.ogg",
+   "vo_tap_t": "assets/voiceover/vo_tap_t.ogg",
+   "vo_type_o": "assets/voiceover/vo_type_o.ogg",
+   "vo_type_t": "assets/voiceover/vo_type_t.ogg"
   },
   "audio_text": {
+   "vo_again_o": "कुल इकाई फिर से गिनिए।",
+   "vo_again_t": "कुल दहाई फिर से गिनिए।",
    "vo_ask_pick": "सही जोड़ चुनिए।",
    "vo_ask_pick2": "बहुत बढ़िया! अब सही जोड़ चुनिए।",
    "vo_ask_type": "सही जोड़ टाइप करिए।",
@@ -178,9 +193,9 @@
    "vo_g4_prompt": "47 और 21 को जोड़िए और सही जोड़ टाइप करिए।",
    "vo_gm1_make_a2": "पहले रूमी के लिए 25 बनाइए।",
    "vo_gm1_make_b2": "शाबाश! अब रोहन के लिए 12 बनाइए।",
-   "vo_gm1_meet": "रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं।",
+   "vo_gm1_meet3": "रूमी और रोहन को ब्लॉक्स से कुछ चीज़ें बनानी हैं। तो रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं। पता करते हैं, दोनों के पास कुल कितने ब्लॉक्स हैं?",
    "vo_gm1_sum": "शाबाश! 25 और 12 जोड़ने पर 37 मिले।",
-   "vo_gm2_meet2": "रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। दोनों संख्याएँ बनाइए।",
+   "vo_gm2_meet3": "अब रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। पहले दोनों संख्याएँ बनाइए, फिर कुल पता करते हैं।",
    "vo_gm2_sum2": "बहुत बढ़िया! 34 और 25 जोड़ने पर 59 मिले।",
    "vo_gm3_sum2": "शाबाश! 41 और 30 का जोड़ 71 होता है।",
    "vo_gm3_sum_late": "41 और 30 का जोड़ 71 होता है।",
@@ -189,6 +204,7 @@
    "vo_gm4_sum_late": "62 और 17 का जोड़ 79 होता है।",
    "vo_gm4_type2": "अब 62 और 17 को जोड़िए। सही उत्तर टाइप करिए।",
    "vo_gm_add3": "अब दोनों के ब्लॉक्स जोड़िए।",
+   "vo_gm_again": "फिर से करिए।",
    "vo_gm_final2": "शाबाश! आपने रूमी और रोहन की सभी एक्टिविटी पूरी कर दीं!",
    "vo_gm_o_less": "इसमें इकाई कम है।",
    "vo_gm_o_more": "इसमें इकाई ज़्यादा है।",
@@ -201,6 +217,10 @@
    "vo_h1_type": "ब्लॉक्स को गिनिए और सही जोड़ टाइप करिए।",
    "vo_idle_build_o": "अब इकाई बनाइए।",
    "vo_idle_build_t": "अब दहाई बनाइए।",
+   "vo_is_o7": "कुल 7 इकाई हैं, तो सही संख्या यह है।",
+   "vo_is_o8": "कुल 8 इकाई हैं, तो सही संख्या यह है।",
+   "vo_is_t6": "कुल 6 दहाई हैं, तो सही संख्या यह है।",
+   "vo_is_t9": "कुल 9 दहाई हैं, तो सही संख्या यह है।",
    "vo_landing": "नमस्ते दोस्त! मैं हूँ स्विफ्टी! आज हम संख्याओं को जोड़ना सीखेंगे।",
    "vo_p1_correct": "शाबाश! 61 और 20 का जोड़ 81 है।",
    "vo_p1_correct_late": "61 और 20 का जोड़ 81 है।",
@@ -216,6 +236,8 @@
    "vo_pt_guided": "बहुत बढ़िया! अब हम साथ मिलकर शुरू करते हैं। चलिए, साथ में करें!",
    "vo_pt_practice": "वाह! अब आपकी बारी।",
    "vo_pt_tutorial": "ध्यान से देखिए और मेरे साथ जानिए। चलिए, शुरू करें!",
+   "vo_reveal_n": "सही संख्या यह है।",
+   "vo_reveal_sum": "सही जोड़ वाली संख्या यह है।",
    "vo_t1_a": "आकाश और मोनी ब्लॉक्स से खेल रहे हैं, और ये सारे ब्लॉक्स मिलाकर एक ऊँची बिल्डिंग बना रहे हैं।",
    "vo_t1_ask": "चलिए, पता करते हैं, दोनों के पास मिलाकर कुल कितने ब्लॉक्स हैं?",
    "vo_t1_b": "आकाश के पास 23 ब्लॉक्स हैं और मोनी के पास 14 ब्लॉक्स हैं।",
@@ -234,7 +256,11 @@
    "vo_t2_tens": "पहले 2 दहाई के लिए 2 बंडल रखते हैं।",
    "vo_t2_total": "अब हमारे पास कुल 3 दहाइयाँ और 7 इकाइयाँ हैं, यानी 37",
    "vo_t3_eq": "23 जोड़ 14 बराबर 37",
-   "vo_t3_tot": "आकाश और मोनी के पास कुल मिलाकर 37 ब्लॉक्स हैं।"
+   "vo_t3_tot": "आकाश और मोनी के पास कुल मिलाकर 37 ब्लॉक्स हैं।",
+   "vo_tap_o": "इकाई पर टैप करके जोड़िए।",
+   "vo_tap_t": "दहाई पर टैप करके जोड़िए।",
+   "vo_type_o": "अब इस डिब्बे पर टैप करके इसमें कुल इकाई की संख्या टाइप करिए।",
+   "vo_type_t": "अब इस डिब्बे पर टैप करके इसमें कुल दहाई की संख्या टाइप करिए।"
   }
  },
  "slides": [
@@ -320,7 +346,9 @@
     "t_add": "vo_t2_t_add",
     "t_sum": "vo_t2_t_sum",
     "total": "vo_t2_total",
-    "done": "vo_t2_done"
+    "done": "vo_t2_done",
+    "tap_o": "vo_tap_o",
+    "tap_t": "vo_tap_t"
    },
    "data": {
     "a": 23,
@@ -428,7 +456,9 @@
     "t_add": "vo_g1_t_add",
     "t_sum": "vo_g1_t_sum",
     "total": "vo_g1_total",
-    "correct": "vo_g1_correct"
+    "correct": "vo_g1_correct",
+    "tap_o": "vo_tap_o",
+    "tap_t": "vo_tap_t"
    },
    "data": {
     "a": 34,
@@ -438,11 +468,13 @@
     "cues": {
      "r1": {
       "t": 0.186,
-      "o": 0.331
+      "o": 0.331,
+      "x": 0.512
      },
      "r2": {
       "t": 0.191,
-      "o": 0.333
+      "o": 0.333,
+      "x": 0.511
      },
      "go": {
       "p": 0.376,
@@ -483,7 +515,10 @@
     "h2": "vo_g2_h2",
     "correct": "vo_g2_correct",
     "reask": "vo_ask_pick",
+    "tap_o": "vo_tap_o",
+    "tap_t": "vo_tap_t",
     "ask": "vo_ask_pick2",
+    "reveal": "vo_reveal_sum",
     "correct_late": "vo_g2_correct_late"
    },
    "data": {
@@ -530,7 +565,10 @@
     "h2": "vo_g3_h2",
     "correct": "vo_g3_correct",
     "reask": "vo_ask_pick",
+    "tap_o": "vo_tap_o",
+    "tap_t": "vo_tap_t",
     "ask": "vo_ask_pick2",
+    "reveal": "vo_reveal_sum",
     "correct_late": "vo_g3_correct_late"
    },
    "data": {
@@ -577,6 +615,14 @@
     "h2": "vo_g4_h2",
     "correct": "vo_g4_correct",
     "reask": "vo_ask_type",
+    "tap_o": "vo_tap_o",
+    "tap_t": "vo_tap_t",
+    "type_o": "vo_type_o",
+    "again_o": "vo_again_o",
+    "is_o": "vo_is_o8",
+    "type_t": "vo_type_t",
+    "again_t": "vo_again_t",
+    "is_t": "vo_is_t6",
     "correct_late": "vo_g4_correct_late"
    },
    "data": {
@@ -618,6 +664,7 @@
     "h2": "vo_h1_pick",
     "correct": "vo_p1_correct",
     "reask": "vo_ask_pick",
+    "reveal": "vo_reveal_n",
     "correct_late": "vo_p1_correct_late"
    },
    "data": {
@@ -661,6 +708,9 @@
     "h2": "vo_h1_type",
     "correct": "vo_p2_correct",
     "reask": "vo_ask_type",
+    "reveal": "vo_reveal_n",
+    "is_o": "vo_is_o8",
+    "is_t": "vo_is_t9",
     "correct_late": "vo_p2_correct_late"
    },
    "data": {
@@ -699,6 +749,9 @@
     "h2": "vo_h1_type",
     "correct": "vo_p3_correct",
     "reask": "vo_ask_type",
+    "reveal": "vo_reveal_n",
+    "is_o": "vo_is_o7",
+    "is_t": "vo_is_t9",
     "correct_late": "vo_p3_correct_late"
    },
    "data": {
@@ -740,12 +793,15 @@
     "ones": "vo_gm_ones_first",
     "tens": "vo_gm_tens",
     "rewrite": "vo_gm_rewrite",
+    "again": "vo_gm_again",
+    "tap_o": "vo_tap_o",
+    "tap_t": "vo_tap_t",
     "final": "vo_gm_final2",
-    "intro1": "vo_gm1_meet",
+    "intro1": "vo_gm1_meet3",
     "build_a1": "vo_gm1_make_a2",
     "ok_a1": "vo_gm1_make_b2",
     "done1": "vo_gm1_sum",
-    "intro2": "vo_gm2_meet2",
+    "intro2": "vo_gm2_meet3",
     "done2": "vo_gm2_sum2",
     "type3": "vo_gm3_type2",
     "done3": "vo_gm3_sum2",
@@ -813,15 +869,45 @@
     ],
     "cues": {
      "intro1": {
-      "a": 0.075,
-      "b": 0.372
+      "a": 0.39,
+      "b": 0.502
      },
      "ok_a1": {
       "swap": 0.249
      },
+     "done1": {
+      "a": 0.199,
+      "b": 0.382,
+      "n": 0.682
+     },
      "intro2": {
-      "a": 0.053,
-      "b": 0.273
+      "a": 0.13,
+      "b": 0.293
+     },
+     "done2": {
+      "a": 0.272,
+      "b": 0.438,
+      "n": 0.711
+     },
+     "done3": {
+      "a": 0.196,
+      "b": 0.376,
+      "n": 0.638
+     },
+     "late3": {
+      "a": 0.073,
+      "b": 0.281,
+      "n": 0.584
+     },
+     "done4": {
+      "a": 0.254,
+      "b": 0.423,
+      "n": 0.668
+     },
+     "late4": {
+      "a": 0.081,
+      "b": 0.285,
+      "n": 0.581
      }
     }
    }

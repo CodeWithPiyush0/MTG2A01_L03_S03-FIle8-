@@ -34,6 +34,8 @@ vo("vo_pt_practice", "वाह! अब आपकी बारी।")
 vo("vo_idle_build_t", "अब दहाई बनाइए।"); vo("vo_idle_build_o", "अब इकाई बनाइए।")               # (File7's 7s build reminders)
 ASK_PICK = vo("vo_ask_pick", "सही जोड़ चुनिए।")                                                  # deck page 9's VO (also the 7s re-ask)
 ASK_TYPE = vo("vo_ask_type", "सही जोड़ टाइप करिए।")                                              # deck pages 10-11's VO (also the 7s re-ask)
+# SME review 2026-10-30 (Global): 7s idle while the blocks are to be tapped down - the pending kind's line
+TAP = {"tap_o": vo("vo_tap_o", "इकाई पर टैप करके जोड़िए।"), "tap_t": vo("vo_tap_t", "दहाई पर टैप करके जोड़िए।")}
 
 CAST = {"आकाश": "akash", "मोनी": "moni"}
 PEOPLE = [{"who": "akash", "name": "आकाश"}, {"who": "moni", "name": "मोनी"}]
@@ -70,7 +72,7 @@ slides.append({
               "t_add": vo("vo_t2_t_add", "अब दहाइयों को जोड़ते हैं।"),
               "t_sum": vo("vo_t2_t_sum", "2 दहाई और 1 दहाई मिलाकर हुई, 3 दहाई।"),
               "total": vo("vo_t2_total", "अब हमारे पास कुल 3 दहाइयाँ और 7 इकाइयाँ हैं, यानी 37"),
-              "done": vo("vo_t2_done", "इसलिए, 23 और 14 को जोड़ने पर 37 मिलता है।")},
+              "done": vo("vo_t2_done", "इसलिए, 23 और 14 को जोड़ने पर 37 मिलता है।"), **TAP},
     "data": {"a": 23, "b": 14, "demo": True}})
 
 # deck page 4 - replaced: "कुल कितने ब्लॉक्स?" again - their blocks come together, 23 / + 14 / 37
@@ -94,7 +96,7 @@ slides.append({
               "t_add": vo("vo_g1_t_add", "अब दहाइयों को जोड़ते हैं।"),
               "t_sum": vo("vo_g1_t_sum", "3 दहाई और 2 दहाई मिलाकर हुईं, 5 दहाई।"),
               "total": vo("vo_g1_total", "अब हमारे पास कुल 5 दहाइयाँ और 9 इकाइयाँ हैं, यानी 59"),
-              "correct": vo("vo_g1_correct", "शाबाश! 34 और 25 को जोड़ने पर 59 मिलता है।")},   # (deck: "52" - a slip, 34 + 25 = 59)
+              "correct": vo("vo_g1_correct", "शाबाश! 34 और 25 को जोड़ने पर 59 मिलता है।"), **TAP},   # (deck: "52" - a slip, 34 + 25 = 59)
     "data": {"a": 34, "b": 25, "build": True, "answer": "none"}})
 
 
@@ -109,8 +111,16 @@ def pv_add(sid, a, b, answer, options=None):
           "h2": vo(f"vo_{low}_h2", f"ध्यान से देखिए, कुल {st} दहाइयाँ और {so} इकाइयाँ हैं।"),
           "correct": vo(f"vo_{low}_correct", f"शाबाश! {a} और {b} का जोड़ {s} है।"),
           "reask": ASK_PICK if pick else ASK_TYPE}
+    au.update(TAP)
     if pick:
         au["ask"] = vo("vo_ask_pick2", "बहुत बढ़िया! अब सही जोड़ चुनिए।")
+        au["reveal"] = vo("vo_reveal_sum", "सही जोड़ वाली संख्या यह है।")       # 3rd wrong (SME 2026-10-30: it was not said)
+    else:
+        # SME 2026-10-30: each column typed when its blocks are down - the hand on its box; WA1 / WA2 lines
+        for k, name, v in (("o", "इकाई", so), ("t", "दहाई", st)):
+            au["type_" + k] = vo(f"vo_type_{k}", f"अब इस डिब्बे पर टैप करके इसमें कुल {name} की संख्या टाइप करिए।")
+            au["again_" + k] = vo(f"vo_again_{k}", f"कुल {name} फिर से गिनिए।")
+            au["is_" + k] = vo(f"vo_is_{k}{v}", f"कुल {v} {name} हैं, तो सही संख्या यह है।")
     d = {"a": a, "b": b, "build": False, "answer": answer, "prompt2": "सही जोड़ चुनिए।" if pick else "सही जोड़ टाइप करिए।"}
     if options:
         d["options"] = options
@@ -132,6 +142,10 @@ def mental(sid, a, b, answer, options=None):
                    "ब्लॉक्स को गिनिए और सही जोड़ चुनिए।" if pick else "ब्लॉक्स को गिनिए और सही जोड़ टाइप करिए।"),
           "correct": vo(f"vo_{low}_correct", f"शाबाश! {a} और {b} का जोड़ {s} है।"),
           "reask": ASK_PICK if pick else ASK_TYPE}
+    au["reveal"] = vo("vo_reveal_n", "सही संख्या यह है।")                       # WA3 (SME 2026-10-30); keypad: the 7s re-ask then (user 2026-11-02)
+    if not pick:
+        for k, name, v in (("o", "इकाई", s % 10), ("t", "दहाई", s // 10)):     # WA3: the wrong column's line (SME 2026-10-30)
+            au["is_" + k] = vo(f"vo_is_{k}{v}", f"कुल {v} {name} हैं, तो सही संख्या यह है।")
     d = {"a": a, "b": b, "answer": answer}
     if options:
         d["options"] = options
@@ -159,14 +173,17 @@ game_audio = {"t_more": vo("vo_gm_t_more", "इसमें दहाई ज़�
               "ones": vo("vo_gm_ones_first", "पहले इकाइयाँ जोड़िए।"),             # (also when the tens are tapped first)
               "tens": vo("vo_gm_tens", "शाबाश! अब दहाइयाँ जोड़िए।"),
               "rewrite": vo("vo_gm_rewrite", "फिर से लिखिए।"),
+              "again": vo("vo_gm_again", "फिर से करिए।"),                     # a wrong check, the 1st time: the board resets (SME 2026-10-30)
+              **TAP,
               "final": vo("vo_gm_final2", "शाबाश! आपने रूमी और रोहन की सभी एक्टिविटी पूरी कर दीं!"),
               # question 1
-              "intro1": vo("vo_gm1_meet", "रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं।"),
+              # (user 2026-10-30: VO1 - said as two clips: its last sentence is build_a1, on the build screen)
+              "intro1": vo("vo_gm1_meet3", "रूमी और रोहन को ब्लॉक्स से कुछ चीज़ें बनानी हैं। तो रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं। पता करते हैं, दोनों के पास कुल कितने ब्लॉक्स हैं?"),
               "build_a1": vo("vo_gm1_make_a2", "पहले रूमी के लिए 25 बनाइए।"),
               "ok_a1": vo("vo_gm1_make_b2", "शाबाश! अब रोहन के लिए 12 बनाइए।"),
               "done1": vo("vo_gm1_sum", "शाबाश! 25 और 12 जोड़ने पर 37 मिले।"),
               # question 2
-              "intro2": vo("vo_gm2_meet2", "रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। दोनों संख्याएँ बनाइए।"),
+              "intro2": vo("vo_gm2_meet3", "अब रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। पहले दोनों संख्याएँ बनाइए, फिर कुल पता करते हैं।"),   # (user 2026-10-30: VO2)
               "done2": vo("vo_gm2_sum2", "बहुत बढ़िया! 34 और 25 जोड़ने पर 59 मिले।"),
               # questions 3-4 ("late": after a wrong answer)
               "type3": vo("vo_gm3_type2", "अब बिना ब्लॉक्स के जोड़िए। 41 और 30 को जोड़कर सही उत्तर टाइप करिए।"),
@@ -264,6 +281,9 @@ for sl in slides:
         if "r1" in au:
             cues["r1"] = {"t": frac(au["r1"], f"{at} दहाई"), "o": frac(au["r1"], f"{ao} इकाई")}
             cues["r2"] = {"t": frac(au["r2"], f"{bt} दहाई"), "o": frac(au["r2"], f"{bo} इकाई")}
+            for r_ in ("r1", "r2"):                # "…4 इकाई हैं। ब्लॉक्स की सहायता से…": the glow off as the sentence ends (SME 2026-10-30)
+                if "।" in VO[au[r_]].rstrip("।"):
+                    cues[r_]["x"] = frac(au[r_], VO[au[r_]].split("।")[1].strip().split()[0])
         if "go" in au:      # "अब दोनों संख्याओं को जोड़ते हैं।": the "+" on "दोनों", the sum row on "जोड़ते"
             cues["go"] = {"p": frac(au["go"], "दोनों"), "s": frac(au["go"], "जोड़ते")}
         elif "prompt" in au:   # "42 और 35 को जोड़िए।": the "+" on "जोड़िए"
@@ -300,9 +320,12 @@ for sl in slides:
     au, gc = sl["audio"], {}
     for i, (a, b) in enumerate(sl["data"]["acts"], 1):
         if f"intro{i}" in au:
-            gc[f"intro{i}"] = {"a": frac(au[f"intro{i}"], "रूमी"), "b": frac(au[f"intro{i}"], "रोहन")}
+            gc[f"intro{i}"] = {"a": frac(au[f"intro{i}"], str(a)), "b": frac(au[f"intro{i}"], str(b), after=str(a))}   # (on their numbers)
         if f"ok_a{i}" in au:
             gc[f"ok_a{i}"] = {"swap": frac(au[f"ok_a{i}"], "अब")}
+        for role in (f"done{i}", f"late{i}"):     # "25 और 12 जोड़ने पर 37 मिले।": the numbers (and their blocks) light as said (user 2026-11-02)
+            if role in au:
+                gc[role] = {"a": frac(au[role], str(a)), "b": frac(au[role], str(b), after=str(a)), "n": frac(au[role], str(a + b), after=str(b))}
     sl["data"]["cues"] = gc
 
 # the landing follows the greeting word by word: the times (s) of its words in vo_landing (estimated from the clip's
