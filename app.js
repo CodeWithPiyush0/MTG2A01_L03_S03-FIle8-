@@ -266,6 +266,7 @@ function setPlaying(on){
   const src = on && currentAudio ? srcOf(currentAudio) : null;
   const from = on ? chipFor(src) : null;
   document.querySelectorAll(".audio-chip, .tut-audio, .sg-vo").forEach(c => c.classList.toggle("playing", c === from));
+  const sgv = document.getElementById("sgVo"); if(sgv) sgv.setAttribute("aria-disabled", String(sgv === from));   // (QA checklist: disabled while the greeting speaks - .sg-vo.playing)
   if(typeof pvChipPaint === "function" && state && state.seqTalk) pvChipPaint();   // (the page still talking: the chip's pulse stays on)
   swApplyPose();   // freeze/unfreeze Swiftie's mouth: animate only while a clip is sounding
 }
@@ -1513,7 +1514,7 @@ Object.assign(PVK, (function(){
       let wrong = 0, busy = true, idleT = 0, layer3 = false, over = false;
       (C.waits = C.waits || []).push({ live: ()=> !over, busy: ()=> busy });
       const M = { box, els, right,
-        open(){ box.classList.add("in"); },
+        open(){ box.classList.add("in"); els.forEach((o, i)=> setTimeout(()=>{ if(C.alive()) sfxPop(); }, i * 120)); },   // (each option's pop as it comes in - .12s apart, as the styles - QA checklist, user 2026-11-02)
         hide(on){ box.classList.toggle("pv-hide", on !== false); },
         moveTo(y){ box.style.top = px(y); },
         ready(){ busy = false; arm(); },
@@ -4334,7 +4335,7 @@ const ASSET_SIZES = {
   "assets/voiceover/vo_ask_pick.ogg": 5845,
   "assets/voiceover/vo_ask_pick2.ogg": 10196,
   "assets/voiceover/vo_ask_type.ogg": 7473,
-  "assets/voiceover/vo_cel.ogg": 29104,
+  "assets/voiceover/vo_cel2.ogg": 12335,
   "assets/voiceover/vo_g1_correct.ogg": 22683,
   "assets/voiceover/vo_g1_go.ogg": 12765,
   "assets/voiceover/vo_g1_intro.ogg": 14643,

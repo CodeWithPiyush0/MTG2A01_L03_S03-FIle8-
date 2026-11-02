@@ -200,9 +200,10 @@ slides.append({
              "kids": [{"who": "rumi", "name": "रूमी", "side": {"h": 0.975, "ar": 0.508, "cut": 0.721, "split": 0.4935, "px": 0.4935, "py": 0.686, "a": 51.6, "bob": 0.0339}},
                       {"who": "rohan", "name": "रोहन", "side": {"h": 0.9766, "ar": 0.44, "cut": 0.7574, "split": 0.4639, "px": 0.4639, "py": 0.7224, "a": 52.3, "bob": 0.0308}}]}})
 
-# deck page 14 - the end (no change asked: the draft's own line)
+# deck page 14 - the end: one of the standard Swiftee end-screen lines (QA checklist, user 2026-11-02)
+CEL_VO = vo("vo_cel2", "बहुत बढ़िया, दोस्त! तुमने कमाल कर दिया!")
 slides.append({"id": "CEL", "phase": "practice", "eis": "enactive", "type": "CELEBRATION", "prompt_hi": "",
-               "audio": {"prompt": vo("vo_cel", "शाबाश! अब आप ऊपर-नीचे लिखकर जोड़ सकते हैं। याद रखिए — जोड़ हमेशा इकाई से शुरू होता है।")},
+               "audio": {"prompt": CEL_VO},
                "data": {}})
 
 # ---- checks: every sum is the sum it claims to be, and none needs regrouping (this skill: WITHOUT regrouping) ----
@@ -366,9 +367,9 @@ card = {
 # the celebration Swiftie (File7's kit): the lip-sync track measured from OUR celebration line (re-measured on every build)
 import importlib.util as _ilu
 _spec = _ilu.spec_from_file_location("make_lipsync", os.path.join(HERE, "make_lipsync.py")); _ml = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_ml)
-_cel = os.path.join(ROOT, "assets", "voiceover", "vo_cel.ogg")
+_cel = os.path.join(ROOT, "assets", "voiceover", CEL_VO + ".ogg")
 _bits, _ms = _ml.lipsync(_cel) if os.path.exists(_cel) else ("0", 25)
-card["end_anim"] = {"base": "assets/celebration/", "vo": "vo_cel",
+card["end_anim"] = {"base": "assets/celebration/", "vo": CEL_VO,
     "meta": {"cols": 6, "frames": 36, "fw": 329, "fh": 440,
              "shabaash": {"src": "cel_shabaash.webp", "pre": [0, 1, 2, 3, 4, 5], "word": list(range(6, 30)), "post": list(range(30, 36))},
              "talk": {"src": "cel_talk.webp", "open": [0, 1, 2, 4, 5, 6, 8, 9, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32]},
