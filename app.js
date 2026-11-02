@@ -2117,6 +2117,34 @@ function pvGameJump(){
     if(q){ const [a, p] = q.split("."); j = a === "final" ? { part: "final" } : { i: parseInt(a, 10) || 1, part: p || "meet" }; } }
   return j || null;
 }
+/* a child walking in side view, as a cut-out puppet (user 2026-10-30: "the walking does not feel good") - the game's
+   walks and the cover's (user 2026-11-02). Its side picture (char_<who>_side, facing right, legs apart) is three layers:
+   the body, and each leg turning on the hip (S = the card's kids[].side, tools/make_walk.py) - the legs swing through each
+   other step after step (easing at each end, as a pendulum), the body rises a little as they pass, and the step is timed
+   to the ground covered so the feet do not slide; mirrored when walking left. H its height, (x, foot) its foot point, dx
+   the way it walks in ms; dress(bob, W, H): adds what the child carries (it bobs with them - the cover's blocks). Resolves
+   when there (the puppet gone). */
+function pvWalk(parent, cls, src, S, H, x, foot, dx, ms, dress){
+  const { add, px, setXY } = PVK, W = H * S.ar, P = add(parent, "div", cls, "width:" + px(W) + ";height:" + px(H));
+  setXY(P, x - W / 2, foot - H); P.style.scale = dx < 0 ? "-1 1" : "";
+  const bob = add(P, "div", "gm-walk-in"), hip = S.px * 100 + "% " + S.py * 100 + "%", c = S.cut * 100, t = c - 12, sp = S.split * 100;
+  const part = (css, turn)=>{ const im = add(bob, "img", "", "width:" + px(W) + ";height:" + px(H) + ";" + css + (turn ? ";transform-origin:" + hip : "")); im.src = src; im.alt = ""; return im; };
+  /* each leg reaches up under the body, narrowing to the middle of the hips there - a full-width top would swing out
+     past the body's outline as the leg turns */
+  const back = part("clip-path:polygon(" + (sp - 6) + "% " + t + "%," + sp + "% " + t + "%," + sp + "% 100%,0 100%,0 " + (c - 1) + "%)", true),
+        front = part("clip-path:polygon(" + sp + "% " + t + "%," + (sp + 6) + "% " + t + "%,100% " + (c - 1) + "%,100% 100%," + sp + "% 100%)", true);
+  /* the body over the legs' tops - its lower edge fades out across the hips (a straight cut showed as a seam) */
+  const fade = "linear-gradient(to bottom,#000 " + (c - 3) + "%,transparent " + (c + .5) + "%)";
+  part("-webkit-mask-image:" + fade + ";mask-image:" + fade);
+  if(dress) dress(bob, W, H);
+  const leg = (1 - S.py) * H, stride = 2 * leg * Math.sin(S.a * Math.PI / 360);   // (the feet's distance apart)
+  const T = Math.max(380, 2 * stride / (Math.abs(dx) / ms)), it = ms / T;      // one cycle = two steps over the ground they cover
+  front.animate([{ rotate: "0deg" }, { rotate: S.a + "deg" }, { rotate: "0deg" }], { duration: T, iterations: it, easing: "ease-in-out" });
+  back.animate([{ rotate: "0deg" }, { rotate: -S.a + "deg" }, { rotate: "0deg" }], { duration: T, iterations: it, easing: "ease-in-out" });
+  bob.animate([{ translate: "0 0" }, { translate: "0 " + (-S.bob * H) + "px" }, { translate: "0 0" }], { duration: T / 2, iterations: it * 2, easing: "ease-in-out" });
+  const a = P.animate([{ translate: "0 0" }, { translate: dx + "px 0" }], { duration: ms, easing: "linear" });
+  return new Promise(r =>{ a.onfinish = a.oncancel = ()=>{ P.remove(); r(); }; });
+}
 const PV_ADD_LAY = {
   tut:  { cx: 560, y: 118, G: 19, rowH: 136, head: 42, cardX: 970, cardH: 72 },   // (T2 has no heading - user 2026-10-29: the table grows into its room; bottom 586, clear of the → button)
   main: { cx: 500, y: 156, G: 18, rowH: 136, head: 44, cardX: 890, cardH: 74 }
@@ -2997,34 +3025,13 @@ const PVModules = {
       const wig = e =>{ if(e && !K.reduce()) e.animate([{ rotate: "0deg" }, { rotate: "-10deg" }, { rotate: "10deg" }, { rotate: "-7deg" }, { rotate: "7deg" }, { rotate: "0deg" }], { duration: 560, easing: "ease-in-out" }); };
       const kid = (k, x, y, h, pose, still)=>{ const e = put(add(sc, "img", "gm-kid")); e.src = pvChar(k.who, pose || true) || pvChar(k.who); e.alt = ""; e.style.height = px(h); e._h = h;
         e._kid = k; setXY(e, x, y - h); if(!still) K.pop(e); return e; };
-      /* a kid walks to x in side view, as a cut-out puppet (user 2026-10-30: "the walking does not feel good"): its side
-         picture (char_<who>_side, facing right, legs apart) is three layers - the body, and each leg turning on the hip
-         (kids[].side, tools/make_walk.py) - the legs swing through each other step after step (easing at each end, as a
-         pendulum), the body rises a little as they pass, and the step is timed to the ground covered so the feet do not
-         slide; mirrored when walking left. There the child turns to the front (its standing picture). Resolves there. */
+      /* a kid walks to x in side view (pvWalk); there the child turns to the front (its standing picture). Resolves there. */
       const walk = (e, x, ms)=> new Promise(r =>{ const dx = x - e._x, k = e._kid, S = k && k.side, src = k && pvChar(k.who, "side");
         if(K.reduce() || !S || !src){ setXY(e, x, e._y); return r(); }
-        const H = e._h * S.h, W = H * S.ar, P = add(sc, "div", "gm-walk", "width:" + px(W) + ";height:" + px(H));
-        setXY(P, e._x - W / 2, e._y + e._h - H); P.style.scale = dx < 0 ? "-1 1" : "";
-        const bob = add(P, "div", "gm-walk-in"), hip = S.px * 100 + "% " + S.py * 100 + "%", c = S.cut * 100, t = c - 12, sp = S.split * 100;
-        const part = (css, turn)=>{ const im = add(bob, "img", "", "width:" + px(W) + ";height:" + px(H) + ";" + css + (turn ? ";transform-origin:" + hip : "")); im.src = src; im.alt = ""; return im; };
-        /* each leg reaches up under the body, narrowing to the middle of the hips there - a full-width top would swing out
-           past the body's outline as the leg turns */
-        const back = part("clip-path:polygon(" + (sp - 6) + "% " + t + "%," + sp + "% " + t + "%," + sp + "% 100%,0 100%,0 " + (c - 1) + "%)", true),
-              front = part("clip-path:polygon(" + sp + "% " + t + "%," + (sp + 6) + "% " + t + "%,100% " + (c - 1) + "%,100% 100%," + sp + "% 100%)", true);
-        /* the body over the legs' tops - its lower edge fades out across the hips (a straight cut showed as a seam) */
-        const fade = "linear-gradient(to bottom,#000 " + (c - 3) + "%,transparent " + (c + .5) + "%)";
-        part("-webkit-mask-image:" + fade + ";mask-image:" + fade);
         e.style.visibility = "hidden";
-        const leg = (1 - S.py) * H, stride = 2 * leg * Math.sin(S.a * Math.PI / 360);   // (the feet's distance apart)
-        const T = Math.max(380, 2 * stride / (Math.abs(dx) / ms)), it = ms / T;      // one cycle = two steps over the ground they cover
-        front.animate([{ rotate: "0deg" }, { rotate: S.a + "deg" }, { rotate: "0deg" }], { duration: T, iterations: it, easing: "ease-in-out" });
-        back.animate([{ rotate: "0deg" }, { rotate: -S.a + "deg" }, { rotate: "0deg" }], { duration: T, iterations: it, easing: "ease-in-out" });
-        bob.animate([{ translate: "0 0" }, { translate: "0 " + (-S.bob * H) + "px" }, { translate: "0 0" }], { duration: T / 2, iterations: it * 2, easing: "ease-in-out" });
-        const a = P.animate([{ translate: "0 0" }, { translate: dx + "px 0" }], { duration: ms, easing: "linear" });
-        a.onfinish = a.oncancel = ()=>{ P.remove(); setXY(e, x, e._y); e.style.visibility = "";
+        pvWalk(sc, "gm-walk", src, S, e._h * S.h, e._x, e._y + e._h, dx, ms).then(()=>{ setXY(e, x, e._y); e.style.visibility = "";
           if(e.isConnected) e.animate([{ scale: ".5 1" }, { scale: "1 1" }], { duration: 220, easing: "ease-out" });   // (the turn to the front)
-          r(); }; });
+          r(); }); });
       /* the screen's own left / right edge in stage px (the lawn goes on beyond the stage on a wide screen - the kids come
          from out there: user 2026-10-30 "they should come from out of the screen") */
       const edge = side =>{ const r = $("stage").getBoundingClientRect(), k = r.width / 1333 || 1, vw = window.innerWidth || r.right;
@@ -3389,6 +3396,10 @@ const PVLanding = {
   FEET: 202, BASE: 130, MID: 386, KID_X: [208, 564], FIG_H: 224, FILE_H: 640,
   HANDS: { kabir: [[.099, .19], [.896, .185]], tara: [[.118, .18], [.905, .13]], aman: [[.099, .19], [.896, .185]], meera: [[.118, .18], [.905, .13]], aaru: [[.125, .127], [.917, .49]], pari: [[.07, .40], [.84, .54]],
            madhav: [[.153, .091], [.846, .085]], aanya: [[.205, .065], [.805, .087]], akash: [[.153, .091], [.846, .085]], moni: [[.205, .065], [.805, .087]] },   // (S02's cover, user 2026-10-27: the raised palms in char_<who>_cheer - tools/make_poses.py)
+  /* where the blocks rest when carried (user 2026-11-02 "feel like the blocks are on the kids hand"): front - the top of the
+     two palms held together in char_<who>_carry (make_poses.py POSES=carry prints it); side - the top of the hands held
+     forward in char_<who>_side (the walk). Shares of the picture's width / height */
+  PALMS: { rumi: { front: [.488, .466], side: [.756, .441] }, rohan: { front: [.492, .468], side: [.745, .486] } },
   /* the user's drawings (make_house.py / make_castle.py, 2026-10-15), cut into pieces, each where it is in the drawing:
      boxes in the drawing's px; the build's middle at x WX, its foot at FOOT (on BASE + DY); S stage px per drawing px. order: the
      pieces bottom up, [name, who brings it, the order]. */
@@ -3474,7 +3485,7 @@ const PVLanding = {
       '<div class="sgp-bcast" style="transform-origin:' + L.MID + 'px ' + foot + 'px">' + casts + '</div>' +
       '<i class="sgp-bshd" style="left:' + (bx0 - 6) + 'px;width:' + (bx1 - bx0 + 12) + 'px;top:' + (foot - 7) + 'px"></i>' +
       pieces + kid(h.people[0], 0) + kid(h.people[1], 1) +
-      (kind === "addv" ? '<div class="sgp-vsum"><span class="vs-n">' + [...String(h.a)].map(c => '<b>' + c + '</b>').join("") + '</span><span class="vs-n"><i>+</i>' +
+      (kind === "addv" && !h.pile ? '<div class="sgp-vsum"><span class="vs-n">' + [...String(h.a)].map(c => '<b>' + c + '</b>').join("") + '</span><span class="vs-n"><i>+</i>' +
         [...String(h.b)].map(c => '<b>' + c + '</b>').join("") + '</span><i class="vs-line"></i><span class="vs-n vs-q"><b>?</b><b>?</b></span></div>' : "") +   // (each digit its own box; the answer two "?" boxes - user 2026-10-29)
       '</div>';
   },
@@ -3485,6 +3496,7 @@ const PVLanding = {
     /* title_look "wall": the title is painted on the courtyard wall behind it (S01; user 2026-10-13) */
     const ttl = document.getElementById("sgTitle");
     if(ttl && CARD.landing_hero && CARD.landing_hero.title_look === "wall"){ ttl.classList.add("sg-wall");
+      if(CARD.landing_hero.title_paint) ttl.classList.add("sg-paint-" + CARD.landing_hero.title_paint);   // ("meadow": the game's purple - user 2026-11-02)
       /* user 2026-10-16 "shift the title a little up and make it a little circular with white outline": the words
          ride a gentle arc (an SVG textPath - Devanagari stays shaped, its top bar unbroken), in the brush-streaked
          terracotta paint, edged like S02's title (user 2026-10-16 "just the 2 outline effect"): a white ring and,
@@ -3532,7 +3544,8 @@ const PVLanding = {
     /* a pose change is a cut, not a cross-fade (two half-seen poses read as a double child), hidden by a quick squash */
     const pose = (k, n, pop)=>{ k.querySelectorAll(".sgp-pose").forEach(im => im.classList.toggle("on", im.dataset.for.split(" ").includes(n)));
       if(pop) q(k, ".sgp-fw").animate([{ scale: "1.07 .93" }, { scale: ".98 1.03", offset: .55 }, { scale: "1 1" }], { duration: 220, easing: "ease-out" }); };
-    const ready = Promise.all([...root.querySelectorAll(".sgp-pose")].map(im => (im.decode ? im.decode() : Promise.resolve()).catch(()=>{})))
+    const sides = (CARD.landing_hero || {}).walk ? kids.map(k => pvChar(k.dataset.who, "side")).filter(Boolean).map(f =>{ const im = new Image(); im.src = f; return im; }) : [];
+    const ready = Promise.all([...root.querySelectorAll(".sgp-pose"), ...sides].map(im => (im.decode ? im.decode() : Promise.resolve()).catch(()=>{})))
       .then(()=>{ kids.forEach(k =>{ layout(k); pose(k, reduce || TAKE ? "idle" : "carry"); }); });   // (take: they come empty-handed)
     /* the moves */
     const tilt = k => q(k, ".sgp-tilt"), fw = k => q(k, ".sgp-fw"), move = k => q(k, ".sgp-move");
@@ -3574,8 +3587,8 @@ const PVLanding = {
       q(k, ".sgp-lines").animate([{ opacity: 0, scale: ".3 1" }, { opacity: .5, scale: "1 1", offset: .3 }, { opacity: 0, scale: "1.2 1", offset: .65 }, { opacity: 0 }],
         { duration: 680 * T, easing: "ease-out" });
       setTimeout(()=> dust(s), 400 * T); };
-    const k = ()=> root.getBoundingClientRect().width / 772 || 1;
-    const ctr = (e, o)=>{ const r = e.getBoundingClientRect(), z = k(); return { x: (r.left + r.width / 2 - o.left) / z, y: (r.bottom - o.top) / z }; };
+    const k_ = ()=> root.getBoundingClientRect().width / 772 || 1;
+    const ctr = (e, o)=>{ const r = e.getBoundingClientRect(), z = k_(); return { x: (r.left + r.width / 2 - o.left) / z, y: (r.bottom - o.top) / z }; };
     /* a block from the hand into its place: the child leans in, the block hops across in a small arc, lands, settles */
     const put = async i =>{
       const p = plan[i], s = p[6], kd = kids[s], held = q(kd, '.sgp-held[data-i="' + i + '"]'), pc = pcs[i], gh = q(root, '.sgp-ghost[data-i="' + i + '"]');
@@ -3688,16 +3701,90 @@ const PVLanding = {
       sound(()=> _tone([660, 880, 1180], "sine", .5, .1));
       kids.forEach(kd => pose(kd, "cheer", true)); hop(0, 1, 14); setTimeout(()=> hop(1, 1, 16), 110);
       await took; await until(BT.end); await wait(500); };
+    /* landing_hero.walk (user 2026-11-02 - the cover after the game): each child walks in side-on from beyond the card's
+       edge, as in the game (pvWalk, its kids[].side), and turns to the front at their spot. The walkers move in a layer
+       the size of the card's picture that clips them, so they come out from behind its rounded edge. */
+    const SIDE = ((CARD.slides.find(x => x.type === "ADD_GAME") || {}).data || {}).kids || [];
+    /* carry (user 2026-11-02 "both will have their blocks in their hands, walk in, stop, then all the blocks get added";
+       "feel like the blocks are on the kids hand"): each child's blocks, small (SC), resting on their hands as one would
+       carry them - the rods lying across, the cubes in a row on top (bundle: each piece's middle from the hands' point, and
+       its turn). In the walker on the side picture's hands (dress: they bob with the steps); standing, the child holds
+       them out in the carry pose (char_<who>_carry) on its palms (L.PALMS) - the cover's own pieces there (held[i]) */
+    const SC = .5, held = {};
+    const bundle = s =>{ const own = plan.map((p, i)=> i).filter(i => mine(i) === s), rods = own.filter(isRod), cubes = own.filter(i => !isRod(i)), out = {};
+      const th = plan[rods[0] || own[0]][3] * SC + 1;                           // (a lying rod's thickness)
+      rods.forEach((i, j)=>{ out[i] = { x: 0, y: -(j + .5) * th, r: 90 }; });
+      cubes.forEach((i, j)=>{ const c = plan[i][3] * SC + 1.5, ch = plan[i][4] * SC;
+        out[i] = { x: (j + .5 - cubes.length / 2) * c, y: -rods.length * th - ch / 2, r: 0 }; });
+      return out; };
+    const palm = (s, side)=> (L.PALMS[kids[s].dataset.who] || {})[side] || (side === "side" ? [.75, .45] : [.5, .47]);
+    const dress = s => (bob, W, H)=>{ const b = bundle(s), [fx, fy] = palm(s, "side"), ax = W * fx, ay = H * fy + 2;
+      Object.keys(b).forEach(i =>{ const p = plan[i], o = b[i], im = document.createElement("img"); im.src = "assets/" + p[5] + ".webp"; im.alt = "";
+        Object.assign(im.style, { left: (ax + o.x - p[3] * SC / 2) + "px", top: (ay + o.y - p[4] * SC / 2) + "px", width: p[3] * SC + "px", height: p[4] * SC + "px", rotate: o.r + "deg" });
+        bob.appendChild(im); }); };
+    const hold = s =>{ const b = bundle(s), im = q(kids[s], '.sgp-pose[data-for~="carry"]') || q(kids[s], '.sgp-pose[data-for~="idle"]');
+      const Hc = +im.dataset.h || L.FIG_H, Wc = +im.dataset.w || Hc * .35, [fx, fy] = palm(s, "front");
+      const ax = L.KID_X[s] + (fx - .5) * Wc, ay = L.FEET - Hc + fy * Hc + 3;
+      pose(kids[s], "carry");
+      Object.keys(b).forEach(i =>{ const p = plan[i], o = b[i], e = pcs[i];
+        const h = held[i] = { x: ax + o.x - p[1], y: ay + o.y - (p[2] - p[4] / 2), s: SC, r: o.r };   // (about the piece's middle)
+        Object.assign(e.style, { transformOrigin: "50% 50%", translate: h.x + "px " + h.y + "px", scale: String(SC), rotate: o.r + "deg", zIndex: 50 + +i }); e.classList.add("on"); }); };
+    const walkIn = (s, carry)=>{ const k = kids[s], who = k.dataset.who, S = (SIDE.find(x => x.who === who) || {}).side, src = pvChar(who, "side"), card = root.closest(".sg-card");
+      if(!S || !src || !card){ zoom(s); return Promise.resolve(); }
+      const z = k_(), rr = root.getBoundingClientRect(), cr = card.getBoundingClientRect(), B = 9;   // (9: the picture's inset in the card)
+      const cl = { x: (cr.left + B - rr.left) / z, y: (cr.top + B - rr.top) / z, w: (cr.width - 2 * B) / z, h: (cr.height - 2 * B) / z };
+      const clip = document.createElement("div"); clip.className = "sgp-clip";
+      Object.assign(clip.style, { left: cl.x + "px", top: cl.y + "px", width: cl.w + "px", height: cl.h + "px", borderRadius: (37 / z) + "px" }); root.appendChild(clip);
+      const idle = q(k, '.sgp-pose[data-for~="idle"]'), H = (+idle.dataset.h || L.FIG_H) * S.h, W = H * S.ar;
+      const x1 = L.KID_X[s], x0 = s ? cl.x + cl.w + W * .6 : cl.x - W * .6, d = x1 - x0;
+      return pvWalk(clip, "gm-walk", src, S, H, x0 - cl.x, L.FEET - cl.y, d, Math.abs(d) / .3, carry ? dress(s) : null).then(()=>{ clip.remove();
+        move(k).style.opacity = "1"; if(carry) hold(s); fw(k).animate([{ scale: ".5 1" }, { scale: "1 1" }], { duration: 220, easing: "ease-out" });   // (the turn to the front)
+        dust(s); }); };
+    const enter = (s, carry)=> (CARD.landing_hero || {}).walk ? walkIn(s, carry) : (zoom(s), Promise.resolve());
+    /* landing_hero.pile (user 2026-11-02 "simplify - just blocks with animation that summarise this file"): no written sum.
+       The two numbers' blocks come together into one pile in the middle - the ones first, then the tens (the lesson's
+       rule) - each child leaning in as theirs hop over; the pile glows; the cheer. kind: "o" | "t" */
+    const isRod = i => plan[i][5] === "pv_rod11", mine = i => plan[i][1] < L.MID ? 0 : 1;
+    const slots = (()=>{ const h = CARD.landing_hero || {}, n = (+h.a || 0) + (+h.b || 0), t = Math.floor(n / 10), u = n % 10;
+      const r = plan.find((p, i)=> isRod(i)) || plan[0], w = r[3], ch = (plan.find((p, i)=> !isRod(i)) || r)[4], B = r[2];
+      const W = t * (w + 4) + (u ? 8 + Math.ceil(u / 5) * (w + 2) : 0), x0 = L.MID - W / 2;
+      return { t: [...Array(t)].map((_, j)=> ({ x: x0 + j * (w + 4) + w / 2, y: B })),
+               o: [...Array(u)].map((_, j)=> ({ x: x0 + t * (w + 4) + 8 + Math.floor(j / 5) * (w + 2) + w / 2, y: B - (j % 5) * (ch + 2) })) }; })();
+    const gather = async kind =>{
+      const list = plan.map((p, i)=> i).filter(i => isRod(i) === (kind === "t")).sort((a, b)=> mine(a) - mine(b));
+      [0, 1].forEach(s => list.some(i => mine(i) === s) && setTimeout(()=> lean(s, 7, 520), s * 300));
+      await Promise.all(list.map((i, n)=> wait(n * 90).then(()=>{ const p = plan[i], to = slots[kind][n]; if(!to) return;
+        const h = held[i] || { x: 0, y: 0, s: 1, r: 0 }, dx = to.x - p[1], dy = to.y - p[2], apex = Math.min(h.y, dy) - 46, F = [];   // (from the hands, when held)
+        for(let j = 0; j <= 10; j++){ const t = j / 10, sc = (h.s + (1 - h.s) * t).toFixed(3);
+          F.push({ translate: (h.x + (dx - h.x) * t).toFixed(1) + "px " + ((1 - t) * (1 - t) * h.y + 2 * (1 - t) * t * apex + t * t * dy).toFixed(1) + "px",
+                   scale: sc + " " + sc, rotate: (h.r * (1 - t)).toFixed(1) + "deg", offset: t * .8 }); }
+        F.push({ translate: dx + "px " + dy + "px", scale: "1.16 .84", rotate: "0deg", offset: .9 }, { translate: dx + "px " + dy + "px", scale: "1 1", rotate: "0deg" });
+        shadow(i, false); pcs[i].style.zIndex = 60 + n; sound(()=> PVSFX.appear());
+        return pcs[i].animate(F, { duration: 480, easing: "linear", fill: "forwards" }).finished.catch(()=>{}).then(()=>{
+          sound(()=> PVSFX.land()); if(n % 2 === 0) sparkle(to.x, to.y - p[4] * .6); }); })));
+      await wait(250); };
     /* the addition cover (ART.addv), in step with the greeting as the tens cover is */
     const addv = async ()=>{
-      const idx = plan.map((p, i)=> i), vs = q(root, ".sgp-vsum"), ln = vs ? [...vs.children] : [];
+      const idx = plan.map((p, i)=> i), vs = q(root, ".sgp-vsum"), ln = vs ? [...vs.children] : [], PILE = !!(CARD.landing_hero || {}).pile;
+      const CARRY = PILE && !!(CARD.landing_hero || {}).walk;                  // (they bring their blocks in their hands)
       root.classList.add("go"); window.__sgT0 = window.__sgT0 || Date.now();
-      await until(BT.glide); zoom(0); setTimeout(()=> zoom(1), 160);
-      await until(BT.drop); root.classList.add("dropped");
-      idx.forEach((i, n)=> setTimeout(()=>{ pcs[i].classList.add("on");
+      await until(BT.glide); const came = Promise.all([enter(0, CARRY), wait(160).then(()=> enter(1, CARRY))]);
+      await until(BT.drop); await came; root.classList.add("dropped");          // (the blocks once the children are in place - not under their feet)
+      if(!CARRY) idx.forEach((i, n)=> setTimeout(()=>{ pcs[i].classList.add("on");
         pcs[i].animate([{ translate: "0 -90px", opacity: 0, easing: "cubic-bezier(.55,0,1,.6)" }, { translate: "0 0", opacity: 1, offset: .55 },
           { translate: "0 0", scale: "1.16 .84", offset: .7 }, { translate: "0 -5px", scale: ".96 1.05", offset: .85 }, { translate: "0 0", scale: "1 1" }], { duration: 520, easing: "ease-out" });
         setTimeout(()=>{ shadow(i, true); sound(()=> PVSFX.land()); }, 290); }, n * 110));
+      if(PILE){ await wait(CARRY ? 400 : idx.length * 110 + 600);
+        await until(BT.a); await gather("o");                                   // "आज हम" - the ones together
+        await until(BT.b); await gather("t");                                   // "संख्याओं" - then the tens
+        if(CARRY) kids.forEach(kd => pose(kd, "idle", true));                   // (their hands empty now)
+        await until(BT.q);                                                      // "जोड़ना" - the pile: one number now
+        idx.forEach((i, n)=> setTimeout(()=> pcs[i].classList.add("sgp-glow"), n * 40));
+        sparkle(L.MID - 30, slots.t.length ? slots.t[0].y - 90 : 20, true); sparkle(L.MID + 40, slots.t.length ? slots.t[0].y - 60 : 40, true);
+        await Promise.all([until(BT.cheer), wait(800)]); idx.forEach(i => pcs[i].classList.remove("sgp-glow"));   // (the glow seen a moment)
+        root.classList.add("built"); burst(L.MID, (slots.t[0] || { y: 100 }).y - 70); sound(()=> _tone([660, 880, 1180], "sine", .5, .1));
+        kids.forEach(kd => pose(kd, "cheer", true)); hop(0, 1, 14); setTimeout(()=> hop(1, 1, 16), 110);
+        await until(BT.end); await wait(500); return; }
       const line = (e, big)=>{ if(!e) return; e.classList.add("on"); sparkle(386 + (Math.random() - .5) * 40, e.offsetTop + 10, big); sound(()=> PVSFX.appear()); };
       await until(BT.a); line(ln[0]);
       await until(BT.b); line(ln[1]);
@@ -4146,8 +4233,8 @@ function conceptTileHTML(c){
    from Safari 18.4). */
 /* @asset-sizes:begin (generated by tools/gen_asset_sizes.js - do not edit by hand) */
 const ASSET_SIZES = {
+  "assets/bg_landing_game.webp": 13874,
   "assets/bg_landing_soft2.webp": 60972,
-  "assets/bg_landing_v3.webp": 54416,
   "assets/bgdeco_spark.svg": 220,
   "assets/bgdeco_star.svg": 391,
   "assets/bgdeco_star_o.svg": 448,
@@ -4188,6 +4275,8 @@ const ASSET_SIZES = {
   "assets/char_pari_full.webp": 50702,
   "assets/char_rohan.webp": 19818,
   "assets/char_rohan_blink.webp": 17330,
+  "assets/char_rohan_carry.webp": 32880,
+  "assets/char_rohan_carry_blink.webp": 31598,
   "assets/char_rohan_cheer.webp": 36794,
   "assets/char_rohan_cheer_blink.webp": 34898,
   "assets/char_rohan_full.webp": 35060,
@@ -4195,6 +4284,8 @@ const ASSET_SIZES = {
   "assets/char_rohan_side.webp": 34152,
   "assets/char_rumi.webp": 17878,
   "assets/char_rumi_blink.webp": 15714,
+  "assets/char_rumi_carry.webp": 29450,
+  "assets/char_rumi_carry_blink.webp": 28038,
   "assets/char_rumi_cheer.webp": 32732,
   "assets/char_rumi_cheer_blink.webp": 31278,
   "assets/char_rumi_full.webp": 32072,
@@ -4443,7 +4534,7 @@ const Assets = (function(){
   function init(){
     if(items.size) return;
     /* CRIT: the landing - what the boot loader waits for */
-    ["startnew_bg_plain.webp", "start_card.webp", "bg_landing_v3.webp", "pv_rod11.webp", "pv_cube4.webp", "pv_cube10.webp",
+    ["startnew_bg_plain.webp", "start_card.webp", "bg_landing_game.webp", "pv_rod11.webp", "pv_cube4.webp", "pv_cube10.webp",
      "btn-play-round-waiting.svg", "btn-play-round.svg", "bgdeco_star.svg", "bgdeco_star_o.svg", "bgdeco_spark.svg",
      ...((CARD.landing_hero && CARD.landing_hero.people) || []).map(w => (pvChar(w, true) || pvChar(w)).slice(7)),
      ...PVLanding.files(CARD.landing_hero)].forEach(f => add("assets/" + f, CRIT));

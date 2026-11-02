@@ -25,7 +25,7 @@ What this skill adds (`app.js` `[pv add]`, `style.css` `[pv add]`):
 ## The lesson
 | slide | deck | type | what happens |
 |---|---|---|---|
-| landing | p1 | — | "संख्याओं का जोड़"; Akash and Moni glide in, their blocks drop, 23 / + 14 / ? appears with the greeting |
+| landing | p1 | — | "संख्याओं का जोड़" on the game's meadow (`bg_landing_game.webp`); Rumi and Rohan walk in side-on (`pvWalk`) carrying their blocks on their hands (rods lying across); standing in their carry pose (`char_<who>_carry`), the blocks hop off their palms into one pile in the middle - the ones first, then the tens - with the greeting (no written sum; user 2026-11-02) |
 | T1 | p2 | STORY_ADD ask | "कुल कितने ब्लॉक्स?" Akash 23, Moni 14, the written sum 23 / + 14 — in sync with the VO |
 | T2 | p3 | PV_ADD_DEMO | Swiftee builds 23, the child builds 14, moves the ones then the tens; 3 + 4 = 7, 2 + 1 = 3, 37 |
 | T3 | p4 | STORY_ADD sum | "23 जोड़ 14 बराबर 37" — their blocks fly into one pile, 37 |

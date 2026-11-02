@@ -6,7 +6,10 @@ Sources in <src_dir> (Gemini pictures on a flat magenta-ish background - tools/g
 <who>_cheer_src.png (an edit of the full one: same size, same feet), and their _blink_src.png copies.
 Each picture is cut to its figure; the bottom edge is the soles (the engine stands it there, centred).
 Prints the HANDS entry for app.js PVLanding (where the two raised palms are in the cheer picture, as shares of its width /
-height - the lifted red top is held there) and the open / shut overlap (alignment check)."""
+height - the lifted red top is held there) and the open / shut overlap (alignment check).
+POSES=carry (env; default "full,cheer"): <who>_carry_src.png - both hands held together in front, palms up (the cover's
+children carry their blocks on them, user 2026-11-02) - cut at the standing picture's scale; prints PALMS: the middle of
+the palms' top as shares of its width / height (the blocks stand there)."""
 import os, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -57,8 +60,8 @@ def save(img, bb, scale, path):
 full, alf = key(os.path.join(src, who + "_full_src.png"))
 bf = box(alf); scale = H_FULL / (bf[3] - bf[1])                    # the standing child: 640px tall
 report = []
-for pose in ("full", "cheer"):
-    img, al = (full, alf) if pose == "full" else key(os.path.join(src, who + "_cheer_src.png"))
+for pose in os.environ.get("POSES", "full,cheer").split(","):
+    img, al = (full, alf) if pose == "full" else key(os.path.join(src, "%s_%s_src.png" % (who, pose)))
     bb = bf if pose == "full" else box(al)
     c = save(img, bb, scale, os.path.join(out, "char_%s_%s.webp" % (who, pose)))
     imb, alb = key(os.path.join(src, "%s_%s_blink_src.png" % (who, pose)))
@@ -73,4 +76,12 @@ for pose in ("full", "cheer"):
             sel = ys < top + Hc * .07                                   # the fingers and the palm
             hands.append([round(float((xs[sel] + x0).mean()) / Wc, 3), round(float(top + Hc * .06) / Hc, 3)])
         report.append("HANDS %s: %s" % (who, hands))
+    if pose == "carry":
+        # the palms: skin (warm, light) in the middle columns, between the chest and the hips - their top edge
+        a = np.asarray(c).astype(int); Hc, Wc = a.shape[:2]; R, G, B = a[..., 0], a[..., 1], a[..., 2]
+        skin = (a[..., 3] > 128) & (R > 190) & (R > G + 15) & (G > B + 10) & (B > 110)   # (B > 110: not the orange / yellow clothes)
+        x0, x1, y0, y1 = int(Wc * .38), int(Wc * .62), int(Hc * .42), int(Hc * .66)   # (below the neck)
+        sk = skin[y0:y1, x0:x1]; top = int(np.argmax(sk.sum(1) >= 10))      # (a row of hand, not a drawstring's sliver)
+        ys, xs = np.where(sk[top:top + 12])
+        report.append("PALMS %s: [%.3f, %.3f]" % (who, (xs.mean() + x0) / Wc, (top + y0) / Hc))
 print(who, "scale %.3f;" % scale, "; ".join(report))

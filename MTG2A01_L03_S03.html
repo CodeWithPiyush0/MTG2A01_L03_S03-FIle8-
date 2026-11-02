@@ -12,13 +12,13 @@
      request, so without this the very first paint is unstyled. This inline rule
      lands the loader's own colour on the first frame. -->
 <style>html,body{background:#FFFFFF;margin:0;}</style>
-<link rel="stylesheet" href="style.css?v=20261102c">
+<link rel="stylesheet" href="style.css?v=20261102g">
 <!-- [loading] the landing's own files start downloading with the page, alongside style.css - not only once app.js has
      arrived and asked for them (the boot loader waits for exactly these: app.js Assets, CRIT). http(s) only: on
      file:// a preload of a fetch() fails, and local files need no head start. -->
 <script>(function(){ if(!/^https?:$/.test(location.protocol)) return;
   [["assets/fonts/baloo2-800.woff2", "font", "font/woff2"], ["assets/gif/new_landing_swiftee_anim.webp", "fetch"],
-   ["assets/startnew_bg_plain.webp", "image"], ["assets/bg_landing_v3.webp", "image"], ["assets/pv_rod11.webp", "image"]
+   ["assets/startnew_bg_plain.webp", "image"], ["assets/bg_landing_game.webp", "image"], ["assets/pv_rod11.webp", "image"]
   ].forEach(function(f){ var l = document.createElement("link"); l.rel = "preload"; l.href = f[0]; l.as = f[1];
     if(f[2]) l.type = f[2]; if(f[1] !== "image") l.crossOrigin = "anonymous"; document.head.appendChild(l); });
 })();</script>
@@ -165,14 +165,17 @@
  "landing_hero": {
   "kind": "pv_story",
   "people": [
-   "akash",
-   "moni"
+   "rumi",
+   "rohan"
   ],
   "build": "addv",
   "title_look": "wall",
+  "title_paint": "meadow",
+  "walk": true,
+  "pile": true,
   "start_at": 0,
-  "a": 23,
-  "b": 14,
+  "a": 25,
+  "b": 12,
   "beats": {
    "glide": 0.28,
    "drop": 1.3,
@@ -1191,6 +1194,6 @@
 
 <!-- ============ ENGINE ============ -->
 <script src="swiftpal-bridge.js"></script>   <!-- [QA 01] host bridge: Android / iOS / web - must load before app.js -->
-<script src="app.js?v=20261102c"></script>
+<script src="app.js?v=20261102g"></script>
 </body>
 </html>

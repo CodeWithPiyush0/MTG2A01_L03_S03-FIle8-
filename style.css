@@ -1790,7 +1790,7 @@ body.is-start .sg-sky{
 .tut-card.tc-pv{margin:-20px 0 -40px;}
 /* the first screen's scene is each game's own village art (assets/bg_landing_soft2.webp - a new name, so no browser keeps the old room): shown whole-width and
    cropped top / bottom (not stretched into the 2.5:1 card), and the old room art's lamp glow + lens flare are off */
-.sg-card::before{background-image:url("assets/bg_landing_v3.webp") !important;background-size:cover !important;background-position:center 40% !important;}
+.sg-card::before{background-image:url("assets/bg_landing_game.webp") !important;background-size:cover !important;background-position:center 40% !important;}
 .sg-fx .sg-lamp,.sg-fx .sg-sun{display:none;}
 .pv-stage{position:absolute;width:1333px;height:750px;pointer-events:none;z-index:2;}
 .pv-stage > *{position:absolute;pointer-events:auto;}
@@ -2564,3 +2564,13 @@ body.vo-busy #slideHost .pv-ans, body.vo-busy #navBtn{pointer-events:none !impor
 /* user 2026-11-02: the sum's two boxes in the middle of their column */
 .gm-lab.gm-lab-sum{justify-content:center;padding:0;}
 .gm-lab.gm-lab-sum .gm-sum{margin-left:0;}
+/* the cover after the game (user 2026-11-02): the meadow; the children walk in from behind the card's edge (.sgp-clip:
+   the picture's own size and corners, clipping them - pvWalk's puppet in it); the title in the game's purple */
+.sgp-clip{position:absolute;overflow:hidden;z-index:45;pointer-events:none;}
+.sgp-clip .gm-walk{position:absolute;}
+.sg-title.sg-wall.sg-paint-meadow .sgw-arc{filter:drop-shadow(0 3px 4px rgba(40,10,90,.3));}
+.sg-title.sg-wall.sg-paint-meadow #sgPaint rect:nth-child(1){fill:#6A2BD9;}
+.sg-title.sg-wall.sg-paint-meadow #sgPaint rect:nth-child(2){fill:#5B21B6;}
+.sg-title.sg-wall.sg-paint-meadow #sgPaint rect:nth-child(3){fill:#7A3FE4;}
+.sg-title.sg-wall.sg-paint-meadow #sgPaint rect:nth-child(4){fill:#6326CC;}
+.sg-title.sg-wall.sg-paint-meadow .sgw-b{fill:#2E0F6B;stroke:#2E0F6B;}

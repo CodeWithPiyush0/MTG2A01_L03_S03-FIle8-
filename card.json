@@ -14,14 +14,17 @@
  "landing_hero": {
   "kind": "pv_story",
   "people": [
-   "akash",
-   "moni"
+   "rumi",
+   "rohan"
   ],
   "build": "addv",
   "title_look": "wall",
+  "title_paint": "meadow",
+  "walk": true,
+  "pile": true,
   "start_at": 0,
-  "a": 23,
-  "b": 14,
+  "a": 25,
+  "b": 12,
   "beats": {
    "glide": 0.28,
    "drop": 1.3,

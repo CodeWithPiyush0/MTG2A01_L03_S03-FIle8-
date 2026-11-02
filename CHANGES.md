@@ -292,3 +292,17 @@ Verified (muted):
 - P2 typed 97 three times: the ones line, then the tens line after the ones key, then accepted.
 - The game played start to end with two wrong checks: `lesson_completed`, 0 console errors.
 | V5 | Game sum screen: the sum's box in the centre | ✅ DONE | the sum row's label (`gm-lab-sum`) centres its two boxes in the number column (measured: column 431–575 px, boxes 451–553 px). Cache `v=20261102c` |
+
+## Cover — 2026-11-02 (user: "a new cover image and its animation according to my game" → the game scene)
+| # | Ask | Status | How |
+|---|---|---|---|
+| W1 | New cover picture after the game | ✅ DONE | `assets/bg_landing_game.webp`: the game's meadow drawn wide for the cover (Gemini, the game's `game_meadow.webp` as the style reference), a tree at each edge, flowers in the corners, two butterflies, the middle left open. The courtyard (`bg_landing_v3.webp`) moved to `_archive_v1/cover_courtyard/`. The title in the game's purple (`title_paint: "meadow"`, white ring kept) |
+| W2 | Its animation after the game | ✅ DONE | Rumi & Rohan (`landing_hero.people`, 25 + 12). On "नमस्ते दोस्त" each walks in side-on from behind the card's edge (the game's puppet walk - now one shared `pvWalk()`, used by the game too - in a clipping layer the card picture's size) and turns to the front. Once both are in place ("मैं हूँ स्विफ्टी") their blocks drop in beside them. "आज हम" 25, "संख्याओं" + 12, "जोड़ना" the line and "? ?". "सीखेंगे" the cheer. Then the play button |
+Cache `v=20261102d`.
+
+Verified (muted):
+- The cover checked frame by frame: the walk-in, the blocks, the sum, the cheer, the play button; 0 console errors.
+- The game's screen 1 walk unchanged.
+| W3 | Simplify the cover: no written sum - just blocks whose animation sums up the lesson | ✅ DONE | `landing_hero.pile`: the 25 / + 12 / ? ? card is gone. After the walk-in and their blocks: on "आज हम" both children's ones hop into one pile in the middle (each child leans in), on "संख्याओं" the tens follow (the lesson's rule: ones first, then tens); on "जोड़ना" the pile of 37 glows; on "सीखेंगे" the cheer, then the play button. Cache `v=20261102e`; checked frame by frame (muted), 0 console errors |
+| W4 | Both children have their blocks in their hands, walk in, stop, then all the blocks get added with animation | ✅ DONE | each child walks in carrying their number's blocks (a small bundle in the walker, bobbing with the steps - `pvWalk(…, dress)`). Standing, they hold it in the hand on the middle's side. On "आज हम" the ones hop out of both hands into one pile in the middle, on "संख्याओं" the tens; on "जोड़ना" the pile of 37 glows; "सीखेंगे" the cheer; the play button. No blocks dropping in now. Cache `v=20261102f`; checked frame by frame (muted), 0 console errors |
+| W5 | The blocks in their hands do not look held - make them feel on the kids' hands | ✅ DONE | new carry pose for each child (`char_<who>_carry` + blink): both hands held out together in front, palms up - an edit of their standing picture, same scale and feet (`make_poses.py` `POSES=carry`, which also measures the palms → `PVLanding.PALMS`). The blocks rest ON the hands as one carries them: the rods lying across, the cubes in a row on top - on the walking picture's forward hands while they walk (bobbing with the steps), on the palms once they stand. On "आज हम" / "संख्याओं" they fly off the hands (turning upright, growing to size) into the pile; with empty hands the children stand normally, then cheer. Cache `v=20261102g`; checked frame by frame (muted), 0 console errors |
