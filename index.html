@@ -12,7 +12,7 @@
      request, so without this the very first paint is unstyled. This inline rule
      lands the loader's own colour on the first frame. -->
 <style>html,body{background:#FFFFFF;margin:0;}</style>
-<link rel="stylesheet" href="style.css?v=20261102k">
+<link rel="stylesheet" href="style.css?v=20261105e">
 <!-- [loading] the landing's own files start downloading with the page, alongside style.css - not only once app.js has
      arrived and asked for them (the boot loader waits for exactly these: app.js Assets, CRIT). http(s) only: on
      file:// a preload of a fetch() fails, and local files need no head start. -->
@@ -254,9 +254,11 @@
    "vo_gm3_sum2": "assets/voiceover/vo_gm3_sum2.ogg",
    "vo_gm3_sum_late": "assets/voiceover/vo_gm3_sum_late.ogg",
    "vo_gm3_type2": "assets/voiceover/vo_gm3_type2.ogg",
+   "vo_gm3_type3": "assets/voiceover/vo_gm3_type3.ogg",
    "vo_gm4_sum2": "assets/voiceover/vo_gm4_sum2.ogg",
    "vo_gm4_sum_late": "assets/voiceover/vo_gm4_sum_late.ogg",
    "vo_gm4_type2": "assets/voiceover/vo_gm4_type2.ogg",
+   "vo_gm4_type3": "assets/voiceover/vo_gm4_type3.ogg",
    "vo_gm_add3": "assets/voiceover/vo_gm_add3.ogg",
    "vo_gm_again": "assets/voiceover/vo_gm_again.ogg",
    "vo_gm_final2": "assets/voiceover/vo_gm_final2.ogg",
@@ -354,9 +356,11 @@
    "vo_gm3_sum2": "शाबाश! 41 और 30 का जोड़ 71 होता है।",
    "vo_gm3_sum_late": "41 और 30 का जोड़ 71 होता है।",
    "vo_gm3_type2": "अब बिना ब्लॉक्स के जोड़िए। 41 और 30 को जोड़कर सही उत्तर टाइप करिए।",
+   "vo_gm3_type3": "रूमी को 41 और रोहन को 30 ब्लॉक्स मिले हैं। अब बिना ब्लॉक्स के जोड़िए, कुल कितने ब्लॉक्स हुए इन दोनों के पास। फिर सही उत्तर टाइप करिए।",
    "vo_gm4_sum2": "बहुत अच्छे! 62 और 17 का जोड़ 79 होता है।",
    "vo_gm4_sum_late": "62 और 17 का जोड़ 79 होता है।",
    "vo_gm4_type2": "अब 62 और 17 को जोड़िए। सही उत्तर टाइप करिए।",
+   "vo_gm4_type3": "रूमी को 62 और रोहन को 17 ब्लॉक्स मिले हैं। अब बिना ब्लॉक्स के जोड़िए, कुल कितने ब्लॉक्स हुए इन दोनों के पास। फिर सही उत्तर टाइप करिए।",
    "vo_gm_add3": "अब दोनों के ब्लॉक्स जोड़िए।",
    "vo_gm_again": "फिर से करिए।",
    "vo_gm_final2": "शाबाश! आपने रूमी और रोहन की सभी एक्टिविटी पूरी कर दीं!",
@@ -1194,6 +1198,6 @@
 
 <!-- ============ ENGINE ============ -->
 <script src="swiftpal-bridge.js"></script>   <!-- [QA 01] host bridge: Android / iOS / web - must load before app.js -->
-<script src="app.js?v=20261102k"></script>
+<script src="app.js?v=20261105e"></script>
 </body>
 </html>

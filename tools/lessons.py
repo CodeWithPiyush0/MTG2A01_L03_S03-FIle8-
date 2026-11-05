@@ -41,6 +41,11 @@ CAST = {"आकाश": "akash", "मोनी": "moni"}
 PEOPLE = [{"who": "akash", "name": "आकाश"}, {"who": "moni", "name": "मोनी"}]
 
 
+def rendered(new, old):
+    """a new line is used once its clip is on disk (tools/build_vo.py); until then the line it replaces - never a silent gap"""
+    return new if os.path.exists(os.path.join(ROOT, "assets", "voiceover", new + ".ogg")) else old
+
+
 def split(n):
     return n // 10, n % 10
 
@@ -186,10 +191,12 @@ game_audio = {"t_more": vo("vo_gm_t_more", "इसमें दहाई ज़�
               "intro2": vo("vo_gm2_meet3", "अब रूमी को 34 और रोहन को 25 ब्लॉक्स मिले हैं। पहले दोनों संख्याएँ बनाइए, फिर कुल पता करते हैं।"),   # (user 2026-10-30: VO2)
               "done2": vo("vo_gm2_sum2", "बहुत बढ़िया! 34 और 25 जोड़ने पर 59 मिले।"),
               # questions 3-4 ("late": after a wrong answer)
-              "type3": vo("vo_gm3_type2", "अब बिना ब्लॉक्स के जोड़िए। 41 और 30 को जोड़कर सही उत्तर टाइप करिए।"),
+              "type3": rendered(vo("vo_gm3_type3", "रूमी को 41 और रोहन को 30 ब्लॉक्स मिले हैं। अब बिना ब्लॉक्स के जोड़िए, कुल कितने ब्लॉक्स हुए इन दोनों के पास। फिर सही उत्तर टाइप करिए।"),   # (SME 2026-11-05)
+                                vo("vo_gm3_type2", "अब बिना ब्लॉक्स के जोड़िए। 41 और 30 को जोड़कर सही उत्तर टाइप करिए।")),
               "done3": vo("vo_gm3_sum2", "शाबाश! 41 और 30 का जोड़ 71 होता है।"),
               "late3": vo("vo_gm3_sum_late", "41 और 30 का जोड़ 71 होता है।"),
-              "type4": vo("vo_gm4_type2", "अब 62 और 17 को जोड़िए। सही उत्तर टाइप करिए।"),
+              "type4": rendered(vo("vo_gm4_type3", "रूमी को 62 और रोहन को 17 ब्लॉक्स मिले हैं। अब बिना ब्लॉक्स के जोड़िए, कुल कितने ब्लॉक्स हुए इन दोनों के पास। फिर सही उत्तर टाइप करिए।"),   # (SME 2026-11-05)
+                                vo("vo_gm4_type2", "अब 62 और 17 को जोड़िए। सही उत्तर टाइप करिए।")),
               "done4": vo("vo_gm4_sum2", "बहुत अच्छे! 62 और 17 का जोड़ 79 होता है।"),
               "late4": vo("vo_gm4_sum_late", "62 और 17 का जोड़ 79 होता है।")}
 slides.append({

@@ -339,3 +339,19 @@ Compared side by side (muted runs of both; File4's end screen reached through it
 | Speaker buttons | ✅ DONE | File4's: every speaker (title, card, header chip) disabled while any clip plays - opacity .45, `grayscale(.75)`, no taps - and once the page is solved (`body.spk-done`) until the next page |
 | Title Play button | ✅ DONE | File4's: pops in (`ltPlayIn`) when the greeting ends and pulses while it waits (`ltPlayPulse`, ×1.09 / 1.3 s, no ring) |
 Cache `v=20261102k`. Verified (muted): the end-screen sequence, speakers greyed during every line (title, G2) and after solving, Play's animation; the game → end screen played through: `lesson_completed`, 0 console errors.
+
+## SME review 2 — 2026-11-05 (Google Doc, "5/11/2026" notes; the faces left out on purpose - user: "for now do not add face of characters")
+| # | SME | Status | How |
+|---|---|---|---|
+| X1 | T2: inactive 7 s on the ones / tens - a hand nudge with the VO | ✅ DONE | the tap step (`tapAcross`): with "इकाई / दहाई पर टैप करके जोड़िए।" the hand points at a block to tap; a tap removes it. Shared by T2, G1–G4 |
+| X2 | P2: the sum in the centre; when typing starts and the keypad comes, the sum to the left; the keypad lower, aligned with the answer box | ✅ DONE | the sum starts in the middle; the keypad's opening (`numpad` `cfg.onOpen`) slides it left and places the keypad beside it, its bottom row level with the answer's boxes (measured: both 397 px); after the 2nd help's table it lines up with them again. P3 the same |
+| X3 | Game: the table's blocks look like cuboids, not cubes | ✅ DONE | the 3D blocks are built .55 G tall (the 66° camera squeezed tops and kept fronts - a G-tall block read as a tall box); a cube's outline is square now, the rods' ten cubes' joins stronger |
+| X4 | Game: all numbers in boxes, not only the answer | ✅ DONE | the sum screen: 25 / + 12 / ? ? all as digit boxes, the three rows' boxes one column each, the "+" left of them |
+| X5 | Game: display only the hint relevant to the student's progress | ✅ DONE | activities 3–4's 2nd help: only the column(s) typed wrong get their blocks and are added (e.g. 70 for 71: only the ones) |
+| X6 | Game: VO for questions 3 and 4 | ⏳ CODE DONE, VO PENDING | the lines "रूमी को 41 और रोहन को 30 ब्लॉक्स मिले हैं। अब बिना ब्लॉक्स के जोड़िए, कुल कितने ब्लॉक्स हुए इन दोनों के पास। फिर सही उत्तर टाइप करिए।" (and 62 / 17) are in (`vo_gm3_type3`, `vo_gm4_type3`), but Gemini TTS refused them: HTTP 402 "prepayment credits are depleted". Until they are rendered the build keeps the old lines (`rendered()` in lessons.py - no silent gap); after topping up: `python tools/build_vo.py` then `python tools/lessons.py` |
+| X7 | Game: the keypad lower, aligned with the answer box | ✅ DONE | activities 3–4: the keypad's bottom row level with the answer's boxes (411 / 411 px), again after the 2nd help |
+| — | Game: Rumi's and Rohan's faces left of their numbers | ⏸ NOT DONE | on hold (user, pending a talk with the SME; it reverses the 2026-11-02 removal) |
+Cache `v=20261105c`. Verified (muted): each change above on screen; P1 → the game → the end played through with wrong answers: `lesson_completed`, 0 console errors.
+| X8 | "hand nudge still does not appear" (T2) | ✅ DONE | the build step (T2's 14, G1's numbers) had no hand - after 7 s only the + pulsed with "अब इकाई बनाइए।"; now the hand points at the + to press (`childBuild`), a tap removes it. (The tap-to-add step's hand, X1, was there.) Checked on T2 (muted): the hand on the pulsing + |
+| X9 | Rumi's and Rohan's faces in the last two levels ("it feels empty" - user + SME) | ✅ DONE | activities 3–4: their round portraits left of their numbers (Rumi's beside 41, Rohan's beside "+ 30"), one column; they pop in with the sum and move with it when the 2nd help's table comes (the sum, faces and keypad a little right then, clear of the table). The sum screen of activities 1–2 stays without faces (2026-11-02) |
+Cache `v=20261105e`.

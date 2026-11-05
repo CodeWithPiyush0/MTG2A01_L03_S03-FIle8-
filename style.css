@@ -2592,3 +2592,15 @@ body.spk-done .audio-chip,body.spk-done .tut-audio,body.spk-done .sg-vo{pointer-
   animation:ltPlayIn .45s cubic-bezier(.34,1.4,.6,1) both,ltPlayPulse 1.3s ease-in-out .45s infinite;}
 .sg-btn.sg-btn--play:not(.sg-waiting):active{animation:none;}
 @media (prefers-reduced-motion:reduce){ .sg-btn.sg-btn--play{animation:none !important;} }
+/* SME 2026-11-05 - the game's sum screen: every number in boxes (a digit each, the "?" boxes' size), all three rows centred
+   so the tens and the ones stand in one column each */
+.gm-lab .gm-nums .gm-d{border:3px solid #B9A2EE;background:#fff;color:#3A2370;}
+.gm-lab .gm-nums.gm-say .gm-d{border-color:#F0A800;}
+/* the table's rods: their ten cubes' joins a little stronger (they read as cubes, not a bar) */
+.gm-box-t .bx-t{background:repeating-linear-gradient(to bottom,#8BE653 0,#72D43C calc(var(--g) - 3px),#2F7D14 calc(var(--g) - 3px),#2F7D14 var(--g));}
+/* (the "+" of the second row was behind its first box: all three rows' boxes a little right - still one column - and the
+   "+" in the room left of them) */
+.gm-lab.gm-lab-sum{padding-left:34px;}
+.gm-lab.gm-lab-sum .gm-plus{left:8px;z-index:1;}
+/* the game's activities 3-4: the children's round faces beside their numbers (user + SME 2026-11-05) */
+.gm-kidface{border-radius:50%;border:4px solid #fff;background:#fff;box-shadow:0 4px 10px rgba(60,20,120,.25);object-fit:cover;z-index:5;pointer-events:none !important;}

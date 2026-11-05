@@ -1351,6 +1351,7 @@ Object.assign(PVK, (function(){
       const tapLine = kind && C.has("tap_" + kind) ? "tap_" + kind : null;
       const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin) return;
         pool().forEach(b => K.repulse(b));
+        if(pool()[0]) placeNudge(pool()[0]);                          // (and the hand on one of them - SME 2026-11-05; a tap removes it)
         if(tapLine && !saying){ saying = true; C.say(tapLine).then(()=>{ saying = false; if(!fin) arm(); }, ()=>{}); return; }
         arm(); }, idleMs()); };
       from.forEach(T => [...T.rods, ...T.cubes].forEach(b =>{
@@ -1628,7 +1629,8 @@ Object.assign(PVK, (function(){
       const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || busy || over) return;
         if(!open) placeNudge(cfg.nudge || ans); else if(guide != null) lightKey(); else if(typed.length >= N) K.repulse(ok);   // the answer counter's hand (the decks); cfg.nudge: G4's one box (user 2026-11-02)
         busy = true; C.say(P.reask || cfg.reask || "prompt").then(()=>{ busy = false; arm(); }, ()=>{}); }, IDLE_MS); };
-      const openPad = ()=>{ if(open || over) return; open = true; stopNudge(); pad.classList.remove("pv-hide"); pop(pad); ans.classList.add("open"); render(); arm(); };
+      const openPad = ()=>{ if(open || over) return; open = true; stopNudge(); pad.classList.remove("pv-hide"); pop(pad); ans.classList.add("open"); render(); arm();
+        if(cfg.onOpen) cfg.onOpen(P); };                              // (cfg.onOpen: the page moves things as the keypad comes - P2/P3, the game)
       ans.onclick = ()=>{ if(!C.alive() || busy) return; if(!open) PVSFX.tap(); openPad(); };
       P.open = openPad;
       async function check(){
@@ -1760,7 +1762,8 @@ Object.assign(PVK, (function(){
       const sync = ()=>{ const nx = next();
         ["t", "o"].forEach(k =>{ const g = S[k], full = cnt(k) >= want[k]; g.plus.classList.toggle("off", full); g.classList.toggle("pv-done", full);
           g.classList.toggle("pulse", k === nx); }); };
-      const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin) return; const k = next(); if(k) K.repulse(S[k]); arm(); }, IDLE_MS); };
+      const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin) return; const k = next();
+        if(k){ K.repulse(S[k]); placeNudge(S[k].plus); } arm(); }, IDLE_MS); };   // (and the hand on that + - SME 2026-11-05; a tap removes it)
       const check = ()=>{ if(next() || fin) return; fin = true; clearTimeout(idleT); stopNudge(); vo.stop();
         ["t", "o"].forEach(k =>{ S[k].plus.onclick = null; S[k].classList.remove("pulse"); });
         setTimeout(res, 450); };
@@ -2934,8 +2937,10 @@ const PVModules = {
       const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {}, L = PV_ADD_LAY.main, s = d.a + d.b;
       const pick = d.answer === "mcq";
       state.ownsAudio = true; state.locked = false; setNavActive(false); $("navBtn").style.display = "none"; setSwMood("point"); pvReplay(C);
-      const BIG = pick ? { cx: 666, ys: [222, 330, 452], h: 92 } : { cx: 520, ys: [222, 330, 452], h: 92 };
-      const PAD = { x: 700, y: 164 }, PAD_BY_TABLE = { x: 985, y: 238 };   // (P2/P3: the keypad near the sum - user 2026-10-29; beside the table once it comes)
+      const BIG = { cx: 666, ys: [222, 330, 452], h: 92 };                 // (P2/P3 too: the sum in the middle until the keypad comes - SME 2026-11-05)
+      const PAD = { x: 700, y: 164 }, PAD_BY_TABLE_X = 985;               // (the keypad beside the sum; beside the table once it comes)
+      /* the keypad's bottom row level with the answer's boxes (SME 2026-11-05 "align it better with the answer box") */
+      const padTo = (P, x, ms)=>{ const y = W.ys[2] + W.h / 2 - P.pad.offsetHeight; return ms ? K.glide(P.pad, { x, y }, ms, false) : (K.setXY(P.pad, x, y), Promise.resolve()); };
       const W = K.vcards(sc, d.a, d.b, BIG.cx, BIG.ys, BIG.h);
       const h1 = async ()=>{ const c = CU.h1 || { ao: .2, bo: .35, at: .55, bt: .7 };
         await C.cue("h1", [[c.ao, ()=> K.lightDigit(W.a, "o")], [c.bo, ()=> K.lightDigit(W.b, "o")],
@@ -2983,9 +2988,10 @@ const PVModules = {
         }
         await K.numpad(C, { answer: s, x: BIG.cx, y: 600, reask: "reask", target: W.q, padAt: PAD,
           onReady: P =>{ P.hide(true); C.say("prompt").then(()=>{ P.hide(false); P.ready(); }, ()=>{}); },
+          onOpen: P =>{ if(V) return; W.place(520, BIG.ys, BIG.h, 450); padTo(P, PAD.x); },   // (the sum to the left, the keypad beside it)
           onRight: ()=> W.fill(s),
           sayCorrect: ()=> C.cue("correct", [[((CU[C.right("correct")] || CU.correct || {}).n) || .8, ()=> K.sayEl(W.q)]]),
-          ladder: async (n, P)=>{ if(n === 1) await h1(); else if(n === 2){ K.glide(P.pad, PAD_BY_TABLE, 520, false); await blocks(()=>{}); }
+          ladder: async (n, P)=>{ if(n === 1) await h1(); else if(n === 2){ await blocks(()=>{}); await padTo(P, PAD_BY_TABLE_X, 520); }
             else {
               /* WA3 (SME 2026-10-30; user 2026-11-02 "one by one"): only the right keys work, the ones first -
                  "कुल 8 इकाई हैं, तो सही संख्या यह है।"; once the ones key is typed, "कुल 9 दहाई हैं, …". Idle meanwhile:
@@ -3133,8 +3139,11 @@ const PVModules = {
         /* the blocks lying on the table (user 2026-10-30: like the deck's picture - the rods flat, pointing away, side by
            side; the cubes in a little grid): real 3D boxes on the table's top (CSS preserve-3d), so they have a top, a front
            and sides and turn with the table */
-        const G = 30, blocks = [];
-        const box = (x, y, w, dd, kind)=>{ const e = add(face, "div", "gm-box gm-box-" + kind, "left:" + px(x) + ";top:" + px(y) + ";width:" + px(w) + ";height:" + px(dd) + ";--h:" + px(G) + ";--g:" + px(G));
+        /* (SME 2026-11-05 "the blocks look like cuboids instead of cubes": the camera looks down at 66deg, which squeezes a
+           top to ~.4 of its depth while a front stays ~.9 of its height - a block G tall read as a tall box. Built .55 G
+           tall, a cube's outline comes out square, and a rod reads as ten such cubes) */
+        const G = 30, BOXH = Math.round(G * .55), blocks = [];
+        const box = (x, y, w, dd, kind)=>{ const e = add(face, "div", "gm-box gm-box-" + kind, "left:" + px(x) + ";top:" + px(y) + ";width:" + px(w) + ";height:" + px(dd) + ";--h:" + px(BOXH) + ";--g:" + px(G));
           e.innerHTML = '<i class="bx-t"></i><i class="bx-f"></i><i class="bx-l"></i><i class="bx-r"></i>'; blocks.push(e); return e; };
         const lay = (n, cx)=>{ const { t, o } = pvSplit(n), oc = Math.min(o, 3), orows = Math.ceil(o / 3), rg = 12, cg = 9;
           const w = t * (G + rg) - (t ? rg : 0) + (t && o ? 34 : 0) + (oc * (G + cg) - (oc ? cg : 0));
@@ -3205,9 +3214,9 @@ const PVModules = {
         const ka = kid(KA, 110, 600, 270), kb = kid(KB, 240, 610, 270);
         /* user 2026-11-02: no "एक्टिविटी" box and no portraits in the rows (the kids stand beside the board) - the numbers bigger */
         const LX = 360, LW = 180, B = board(LX, 40, 820, 640, LW), rowH = (B.ih - 8) / 3, G = 19;
-        const lab = (k, n, r, plus)=>{ const e = put(add(sc, "div", "gm-lab" + (k ? "" : " gm-lab-sum"))); setXY(e, LX + 22, B.y0 + r * rowH); e.style.width = px(LW); e.style.height = px(rowH);
-          e.innerHTML = (plus ? '<i class="gm-plus">+</i>' : '') + (k ? '<span class="gm-num gm-num-big">' + n + '</span>'
-            : '<span class="gm-sum"><b class="gm-d gm-dt">?</b><b class="gm-d gm-do">?</b></span>'); return e; };
+        const lab = (k, n, r, plus)=>{ const e = put(add(sc, "div", "gm-lab gm-lab-sum")); setXY(e, LX + 22, B.y0 + r * rowH); e.style.width = px(LW); e.style.height = px(rowH);   // (all centred: the boxes one column)
+          e.innerHTML = (plus ? '<i class="gm-plus">+</i>' : '') + (k ? '<span class="gm-sum gm-nums">' + String(n).split("").map(c => '<b class="gm-d">' + c + '</b>').join("") + '</span>'
+            : '<span class="gm-sum"><b class="gm-d gm-dt">?</b><b class="gm-d gm-do">?</b></span>'); return e; };   // (every number in boxes, a digit each - SME 2026-11-05)
         const la = lab(KA, a, 0), lb = lab(KB, b, 1, true), ls = lab(null, 0, 2);
         const fillD = (kind, v)=>{ const e = ls.querySelector(kind === "t" ? ".gm-dt" : ".gm-do"); e.textContent = String(v); e.classList.add("on"); K.pop(e); sfxPop(); };
         const line = put(add(sc, "i", "gm-line")); setXY(line, LX + 22, B.y0 + 2 * rowH - 2); line.style.width = px(820 - 44);
@@ -3254,7 +3263,7 @@ const PVModules = {
         const say = (el, list)=>{ if(el){ el.classList.remove("gm-say"); void el.offsetWidth; el.classList.add("gm-say"); } shine(list); };
         const inSum = r => [...cols[2].t.list, ...cols[2].o.list].filter(e => r == null || e._from === r);
         const doneLine = ()=>{ const c = CU["done" + i] || { a: .25, b: .45, n: .8 };
-          return C.cue("done" + i, [[c.a, ()=> say(la.querySelector(".gm-num"), inSum(0))], [c.b, ()=> say(lb.querySelector(".gm-num"), inSum(1))],
+          return C.cue("done" + i, [[c.a, ()=> say(la.querySelector(".gm-nums"), inSum(0))], [c.b, ()=> say(lb.querySelector(".gm-nums"), inSum(1))],
                                     [c.n, ()=> say(ls.querySelector(".gm-sum"), inSum())]]); };
         if(!typeIt){ fillD("t", S.t); done(); await doneLine(); return; }
         /* the child types the sum into the two boxes: the keypad stands where the kids were (they step aside meanwhile) */
@@ -3279,21 +3288,31 @@ const PVModules = {
       async function keypad(i, a, b){
         const s = a + b;                                                      // (no heading in the game - user 2026-11-02)
         const YS = [214, 330, 466], CX = 690, W = K.vcards(sc, a, b, CX, YS, 100); W.all().forEach(e =>{ put(e); K.pop(e); }); sfxPop();
+        /* their faces (user + SME 2026-11-05: "show the characters' faces in the last two levels - it feels empty"): Rumi's
+           left of her number, Rohan's left of his "+", one column; they move with the sum */
+        const faces = [KA, KB].map(k =>{ const e = put(add(sc, "img", "gm-kidface")); e.src = pvChar(k.who); e.alt = k.name; K.pop(e); return e; });
+        const placeFaces = (cx, ys, h, ms)=>{ const fs = Math.round(h * .8), x = cx - h * 1.55 / 2 - h * .62 - fs - 12;
+          return Promise.all(faces.map((e, r)=>{ e.style.width = e.style.height = px(fs); const p = { x, y: ys[r] - fs / 2 };
+            return ms ? glide(e, p, ms, false) : (setXY(e, p.x, p.y), Promise.resolve()); })); };
+        placeFaces(CX, YS, 100);
         W.q.dataset.want = s;                                                 // (for the automated play-through)
         let shown = false;
         /* the 2nd help (user 2026-10-30: "show it in the table"): the three-row दहाई | इकाई board comes in at the left and
            the written sum glides beside its rows; a's blocks fill the first row, b's the second, then they all go down
            into the sum's row (the ones, then the tens), leaving grey copies - the total's blocks stay */
-        const blocks = async ()=>{ if(shown) return; shown = true;
+        /* kinds (SME 2026-11-05 "display only the hint relevant to the student's current progress"): only the column(s)
+           typed wrong get their blocks and are added - the other column stays empty */
+        const blocks = async kinds =>{ if(shown) return; shown = true; kinds = kinds && kinds.length ? kinds : ["o", "t"];
           const B = board(50, 112, 520, 545), rowH = (B.ih - 8) / 3, G = 16, S = pvSplit(s);
           const ys = [0, 1, 2].map(r => B.y0 + r * rowH + rowH / 2);
           const line = put(add(sc, "i", "gm-line")); setXY(line, 50 + 22, B.y0 + 2 * rowH - 2); line.style.width = px(520 - 44); K.pop(line);
-          await W.place(745, ys, 92, 520); C.guard();
+          await Promise.all([W.place(805, ys, 92, 520), placeFaces(805, ys, 92, 520)]); C.guard();   // (805: the faces clear of the board's edge)
           const cols = [0, 1, 2].map(r => ({ t: col("t", B.x0, B.y0 + r * rowH, B.cw, rowH, G), o: col("o", B.x0 + B.cw, B.y0 + r * rowH, B.cw, rowH, G) }));
           const A = pvSplit(a), Bn = pvSplit(b);
-          await Promise.all([cols[0].t.fill(A.t), cols[0].o.fill(A.o)]); await C.wait(250);
-          await Promise.all([cols[1].t.fill(Bn.t), cols[1].o.fill(Bn.o)]); await C.wait(500);
-          for(const k of ["o", "t"]){ B[k === "o" ? "oh" : "th"].classList.add("on");
+          const has = k => kinds.includes(k);
+          await Promise.all([has("t") && cols[0].t.fill(A.t), has("o") && cols[0].o.fill(A.o)]); await C.wait(250);
+          await Promise.all([has("t") && cols[1].t.fill(Bn.t), has("o") && cols[1].o.fill(Bn.o)]); await C.wait(500);
+          for(const k of ["o", "t"].filter(has)){ B[k === "o" ? "oh" : "th"].classList.add("on");
             for(const e of [...cols[0][k].list, ...cols[1][k].list]){ const Q = cols[2][k], p = Q.at(Q.list.length, S[k]); Q.list.push(e);
               const gh = put(K.block(sc, k, e._x, e._y, k === "t" ? e._h : e._w)); gh.classList.add("gm-ghost");
               glide(e, p, 520, true).then(()=> K.knock()); await C.wait(150); }
@@ -3301,12 +3320,16 @@ const PVModules = {
           shine([...cols[2].t.list, ...cols[2].o.list]); C.guard(); };
         await C.wait(300);
         await C.say("type" + i);
+        /* the keypad's bottom row level with the answer's boxes (SME 2026-11-05 "move the keypad slightly lower and align it") */
+        const padTo = (P, ms, x)=>{ x = x || 880; const y = W.ys[2] + W.h / 2 - P.pad.offsetHeight; return ms ? glide(P.pad, { x, y }, ms, false) : (setXY(P.pad, x, y), Promise.resolve()); };
+        const wrongKinds = v =>{ const w = String(s); v = v || ""; return ["o", "t"].filter(k => (k === "o" ? v.slice(-1) : (v.length > 1 ? v.slice(-2, -1) : "")) !== (k === "o" ? w[1] : w[0])); };
         wrongs += await K.numpad(C, { answer: s, x: CX, y: 600, reask: "type" + i, target: W.q, padAt: { x: 880, y: 168 }, keep: true,
           onReady: P => P.ready(),
+          onOpen: P => padTo(P),
           onRight: ()=> W.fill(s),
           sayCorrect: ()=>{ const r = (C.late ? "late" : "done") + i, c = CU[r] || { a: .2, b: .4, n: .75 };   // (the numbers light as said - user 2026-11-02)
             return C.cue(r, [[c.a, ()=> K.sayEl(W.a)], [c.b, ()=> K.sayEl(W.b)], [c.n, ()=> K.sayEl(W.q)]]); },
-          ladder: async (k, P)=>{ if(k === 1) await C.say("rewrite"); else if(k === 2) await blocks(); else P.guideKeys(); } }) || 0;
+          ladder: async (k, P)=>{ if(k === 1) await C.say("rewrite"); else if(k === 2){ await blocks(wrongKinds(P.last)); await padTo(P, 520, 915); } else P.guideKeys(); } }) || 0;
         sc.querySelectorAll(".pv-pad").forEach(e => put(e));
       }
       K.run(C, async ()=>{
