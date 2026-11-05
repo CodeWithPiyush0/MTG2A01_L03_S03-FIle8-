@@ -361,6 +361,7 @@
     "a": 23,
     "b": 14,
     "demo": true,
+    "idle_hand": true,
     "cues": {
      "r1": {
       "t": 0.336,
@@ -472,6 +473,7 @@
     "b": 25,
     "build": true,
     "answer": "none",
+    "idle_hand": true,
     "cues": {
      "r1": {
       "t": 0.186,

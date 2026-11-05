@@ -78,7 +78,7 @@ slides.append({
               "t_sum": vo("vo_t2_t_sum", "2 दहाई और 1 दहाई मिलाकर हुई, 3 दहाई।"),
               "total": vo("vo_t2_total", "अब हमारे पास कुल 3 दहाइयाँ और 7 इकाइयाँ हैं, यानी 37"),
               "done": vo("vo_t2_done", "इसलिए, 23 और 14 को जोड़ने पर 37 मिलता है।"), **TAP},
-    "data": {"a": 23, "b": 14, "demo": True}})
+    "data": {"a": 23, "b": 14, "demo": True, "idle_hand": True}})   # (idle 7s: the hand too - T2 and G1 only, user 2026-11-05)
 
 # deck page 4 - replaced: "कुल कितने ब्लॉक्स?" again - their blocks come together, 23 / + 14 / 37
 slides.append({
@@ -102,7 +102,7 @@ slides.append({
               "t_sum": vo("vo_g1_t_sum", "3 दहाई और 2 दहाई मिलाकर हुईं, 5 दहाई।"),
               "total": vo("vo_g1_total", "अब हमारे पास कुल 5 दहाइयाँ और 9 इकाइयाँ हैं, यानी 59"),
               "correct": vo("vo_g1_correct", "शाबाश! 34 और 25 को जोड़ने पर 59 मिलता है।"), **TAP},   # (deck: "52" - a slip, 34 + 25 = 59)
-    "data": {"a": 34, "b": 25, "build": True, "answer": "none"}})
+    "data": {"a": 34, "b": 25, "build": True, "answer": "none", "idle_hand": True}})
 
 
 def pv_add(sid, a, b, answer, options=None):

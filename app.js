@@ -1351,7 +1351,7 @@ Object.assign(PVK, (function(){
       const tapLine = kind && C.has("tap_" + kind) ? "tap_" + kind : null;
       const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin) return;
         pool().forEach(b => K.repulse(b));
-        if(pool()[0]) placeNudge(pool()[0]);                          // (and the hand on one of them - SME 2026-11-05; a tap removes it)
+        if(C.slide.data.idle_hand && pool()[0]) placeNudge(pool()[0]);   // (and the hand on one of them - T2 / G1 only, data.idle_hand: user 2026-11-05; a tap removes it)
         if(tapLine && !saying){ saying = true; C.say(tapLine).then(()=>{ saying = false; if(!fin) arm(); }, ()=>{}); return; }
         arm(); }, idleMs()); };
       from.forEach(T => [...T.rods, ...T.cubes].forEach(b =>{
@@ -1599,15 +1599,22 @@ Object.assign(PVK, (function(){
         if(ICON[k]){ b.innerHTML = ICON[k]; b.setAttribute("aria-label", k === "⌫" ? "मिटाएँ" : "जाँचें"); } else b.textContent = k;
         b._k = k; keys[k] = b; });
       const ok = keys["✓"];
-      if(cfg.padAt) setXY(pad, cfg.padAt.cx != null ? cfg.padAt.cx - pad.offsetWidth / 2 : cfg.padAt.x, cfg.padAt.y);
-      else setXY(pad, x0 + ansW + 40, cfg.y + 40 + ans.offsetHeight / 2 - pad.offsetHeight / 2);
+      /* the keypad never goes under the instruction band or off the screen (user 2026-11-05: "it gets hidden behind the
+         instruction panel") - every placement is kept inside: below the band, above the bottom edge */
+      const safe = (x, y)=>{ const sr = sc.getBoundingClientRect(), k = sr.width / (sc.offsetWidth || 1) || 1, band = document.querySelector(".prompt-band");
+        const br = band && band.getClientRects().length && getComputedStyle(band).visibility !== "hidden" ? band.getBoundingClientRect() : null;
+        const top = br ? (br.bottom - sr.top) / k + 12 : 12, bot = sc.offsetHeight - pad.offsetHeight - 12, right = sc.offsetWidth - pad.offsetWidth - 12;
+        return { x: Math.max(12, Math.min(right, x)), y: Math.max(top, Math.min(bot, y)) }; };
+      const place = (x, y, ms)=>{ const p = safe(x, y); return ms ? glide(pad, p, ms, false) : (setXY(pad, p.x, p.y), Promise.resolve()); };
+      if(cfg.padAt) place(cfg.padAt.cx != null ? cfg.padAt.cx - pad.offsetWidth / 2 : cfg.padAt.x, cfg.padAt.y);
+      else place(x0 + ansW + 40, cfg.y + 40 + ans.offsetHeight / 2 - pad.offsetHeight / 2);
       let typed = [], wrong = 0, busy = false, open = false, over = false, idleT = 0, guide = null, ready = false;
       /* the written sum's two boxes fill from the ones (user 2026-10-29: "addition always starts from ones"): the first key
          goes into the ones box, the next into the tens; the keys to press (3rd help) come in that order too */
       const rtl = !!(T && T._boxes), order = rtl ? digits.slice().reverse() : digits;
       const boxOf = j =>{ const bx = T._boxes(); return bx[bx.length - 1 - j]; };
       (C.waits = C.waits || []).push({ live: ()=> ready && !over, busy: ()=> busy });
-      const P = { ans, pad,
+      const P = { ans, pad, place,
         hide(on){ if(!T) ans.classList.toggle("pv-hide", on !== false); pad.classList.toggle("pv-hide", on !== false || !open); },
         guideKeys(){ guide = 0; Object.values(keys).forEach(b => b.classList.add("locked")); lightKey(); } };
       /* the third layer: the right digit keys light one after the other, then the tick */
@@ -1763,7 +1770,7 @@ Object.assign(PVK, (function(){
         ["t", "o"].forEach(k =>{ const g = S[k], full = cnt(k) >= want[k]; g.plus.classList.toggle("off", full); g.classList.toggle("pv-done", full);
           g.classList.toggle("pulse", k === nx); }); };
       const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin) return; const k = next();
-        if(k){ K.repulse(S[k]); placeNudge(S[k].plus); } arm(); }, IDLE_MS); };   // (and the hand on that + - SME 2026-11-05; a tap removes it)
+        if(k){ K.repulse(S[k]); if(C.slide.data.idle_hand) placeNudge(S[k].plus); } arm(); }, IDLE_MS); };   // (and the hand on that + - T2 / G1 only: user 2026-11-05; a tap removes it)
       const check = ()=>{ if(next() || fin) return; fin = true; clearTimeout(idleT); stopNudge(); vo.stop();
         ["t", "o"].forEach(k =>{ S[k].plus.onclick = null; S[k].classList.remove("pulse"); });
         setTimeout(res, 450); };
@@ -2940,7 +2947,7 @@ const PVModules = {
       const BIG = { cx: 666, ys: [222, 330, 452], h: 92 };                 // (P2/P3 too: the sum in the middle until the keypad comes - SME 2026-11-05)
       const PAD = { x: 700, y: 164 }, PAD_BY_TABLE_X = 985;               // (the keypad beside the sum; beside the table once it comes)
       /* the keypad's bottom row level with the answer's boxes (SME 2026-11-05 "align it better with the answer box") */
-      const padTo = (P, x, ms)=>{ const y = W.ys[2] + W.h / 2 - P.pad.offsetHeight; return ms ? K.glide(P.pad, { x, y }, ms, false) : (K.setXY(P.pad, x, y), Promise.resolve()); };
+      const padTo = (P, x, ms)=> P.place(x, W.ys[2] + W.h / 2 - P.pad.offsetHeight, ms);   // (P.place: kept below the band, on the screen)
       const W = K.vcards(sc, d.a, d.b, BIG.cx, BIG.ys, BIG.h);
       const h1 = async ()=>{ const c = CU.h1 || { ao: .2, bo: .35, at: .55, bt: .7 };
         await C.cue("h1", [[c.ao, ()=> K.lightDigit(W.a, "o")], [c.bo, ()=> K.lightDigit(W.b, "o")],
@@ -2991,7 +2998,9 @@ const PVModules = {
           onOpen: P =>{ if(V) return; W.place(520, BIG.ys, BIG.h, 450); padTo(P, PAD.x); },   // (the sum to the left, the keypad beside it)
           onRight: ()=> W.fill(s),
           sayCorrect: ()=> C.cue("correct", [[((CU[C.right("correct")] || CU.correct || {}).n) || .8, ()=> K.sayEl(W.q)]]),
-          ladder: async (n, P)=>{ if(n === 1) await h1(); else if(n === 2){ await blocks(()=>{}); await padTo(P, PAD_BY_TABLE_X, 520); }
+          /* 2nd help: the keypad goes to the right first, so the sum never passes under it (user 2026-11-05: "the keypad is
+             hiding the box where the number is written") */
+          ladder: async (n, P)=>{ if(n === 1) await h1(); else if(n === 2){ await padTo(P, PAD_BY_TABLE_X, 450); await blocks(()=>{}); await padTo(P, PAD_BY_TABLE_X, 520); }
             else {
               /* WA3 (SME 2026-10-30; user 2026-11-02 "one by one"): only the right keys work, the ones first -
                  "कुल 8 इकाई हैं, तो सही संख्या यह है।"; once the ones key is typed, "कुल 9 दहाई हैं, …". Idle meanwhile:
@@ -3321,7 +3330,7 @@ const PVModules = {
         await C.wait(300);
         await C.say("type" + i);
         /* the keypad's bottom row level with the answer's boxes (SME 2026-11-05 "move the keypad slightly lower and align it") */
-        const padTo = (P, ms, x)=>{ x = x || 880; const y = W.ys[2] + W.h / 2 - P.pad.offsetHeight; return ms ? glide(P.pad, { x, y }, ms, false) : (setXY(P.pad, x, y), Promise.resolve()); };
+        const padTo = (P, ms, x)=> P.place(x || 880, W.ys[2] + W.h / 2 - P.pad.offsetHeight, ms);   // (P.place: kept on the screen)
         const wrongKinds = v =>{ const w = String(s); v = v || ""; return ["o", "t"].filter(k => (k === "o" ? v.slice(-1) : (v.length > 1 ? v.slice(-2, -1) : "")) !== (k === "o" ? w[1] : w[0])); };
         wrongs += await K.numpad(C, { answer: s, x: CX, y: 600, reask: "type" + i, target: W.q, padAt: { x: 880, y: 168 }, keep: true,
           onReady: P => P.ready(),
