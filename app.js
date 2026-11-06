@@ -1615,6 +1615,7 @@ Object.assign(PVK, (function(){
       const boxOf = j =>{ const bx = T._boxes(); return bx[bx.length - 1 - j]; };
       (C.waits = C.waits || []).push({ live: ()=> ready && !over, busy: ()=> busy });
       const P = { ans, pad, place,
+        rowY: (k = "0")=> pad.clientTop + keys[k].offsetTop + keys[k].offsetHeight / 2,   // (key k's row middle, from the pad's top - to centre that row on a box row)
         hide(on){ if(!T) ans.classList.toggle("pv-hide", on !== false); pad.classList.toggle("pv-hide", on !== false || !open); },
         guideKeys(){ guide = 0; Object.values(keys).forEach(b => b.classList.add("locked")); lightKey(); } };
       /* the third layer: the right digit keys light one after the other, then the tick */
@@ -2946,8 +2947,10 @@ const PVModules = {
       state.ownsAudio = true; state.locked = false; setNavActive(false); $("navBtn").style.display = "none"; setSwMood("point"); pvReplay(C);
       const BIG = { cx: 666, ys: [222, 330, 452], h: 92 };                 // (P2/P3 too: the sum in the middle until the keypad comes - SME 2026-11-05)
       const PAD = { x: 700, y: 164 }, PAD_BY_TABLE_X = 985;               // (the keypad beside the sum; beside the table once it comes)
-      /* the keypad's bottom row level with the answer's boxes (SME 2026-11-05 "align it better with the answer box") */
-      const padTo = (P, x, ms)=> P.place(x, W.ys[2] + W.h / 2 - P.pad.offsetHeight, ms);   // (P.place: kept below the band, on the screen)
+      /* the keypad's top row (1 2 3) level with the answer's boxes (SME 2026-11-05 "align it better with the answer box"; user
+         2026-11-06 "move it more down, so its top row sits level with the sum box (or slightly upwards)") - P.place keeps it
+         on the screen, so where it would run off the bottom it stops a little higher */
+      const padTo = (P, x, ms)=> P.place(x, W.ys[2] - P.rowY("2"), ms);   // (P.place: kept below the band, on the screen)
       const W = K.vcards(sc, d.a, d.b, BIG.cx, BIG.ys, BIG.h);
       const h1 = async ()=>{ const c = CU.h1 || { ao: .2, bo: .35, at: .55, bt: .7 };
         await C.cue("h1", [[c.ao, ()=> K.lightDigit(W.a, "o")], [c.bo, ()=> K.lightDigit(W.b, "o")],
@@ -3329,8 +3332,9 @@ const PVModules = {
           shine([...cols[2].t.list, ...cols[2].o.list]); C.guard(); };
         await C.wait(300);
         await C.say("type" + i);
-        /* the keypad's bottom row level with the answer's boxes (SME 2026-11-05 "move the keypad slightly lower and align it") */
-        const padTo = (P, ms, x)=> P.place(x || 880, W.ys[2] + W.h / 2 - P.pad.offsetHeight, ms);   // (P.place: kept on the screen)
+        /* the keypad's top row (1 2 3) level with the answer's boxes (SME 2026-11-05 "move the keypad slightly lower and align
+           it"; user 2026-11-06 "its top row level with the sum box (or slightly upwards)"; kept on the screen) */
+        const padTo = (P, ms, x)=> P.place(x || 880, W.ys[2] - P.rowY("2"), ms);   // (P.place: kept on the screen)
         const wrongKinds = v =>{ const w = String(s); v = v || ""; return ["o", "t"].filter(k => (k === "o" ? v.slice(-1) : (v.length > 1 ? v.slice(-2, -1) : "")) !== (k === "o" ? w[1] : w[0])); };
         wrongs += await K.numpad(C, { answer: s, x: CX, y: 600, reask: "type" + i, target: W.q, padAt: { x: 880, y: 168 }, keep: true,
           onReady: P => P.ready(),
