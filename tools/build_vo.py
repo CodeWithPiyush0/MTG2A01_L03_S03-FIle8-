@@ -8,6 +8,7 @@ unless --force (all) or ids are named:
     python tools/build_vo.py                 # the missing ones
     python tools/build_vo.py vo_g1_prompt    # just these (re-render)
     python tools/build_vo.py --force         # everything
+    python tools/build_vo.py --from <folder> # clips made elsewhere (<id>.wav / .mp3 - lesson_vo_manifest.xlsx), finished the same way
 
 Key: GEMINI_KEY from the environment (never written here). Needs ffmpeg on PATH and internet.
 Then run  node tools/gen_asset_sizes.js  (the preload manifest).
@@ -71,7 +72,26 @@ def finish(src, dst):
                     "-c:a", "libopus", "-b:a", "32k", "-vbr", "on", "-application", "voip", dst], check=True)
 
 
+def from_folder(src):
+    """--from <folder>: clips made elsewhere (AI Studio, a VO artist - lesson_vo_manifest.xlsx) as <id>.wav / .mp3, finished as
+    the rendered ones into assets/voiceover/<id>.ogg"""
+    script = json.load(open(os.path.join(HERE, "vo_script.json"), encoding="utf-8"))
+    os.makedirs(OUT, exist_ok=True)
+    done, skipped = 0, []
+    for f in sorted(os.listdir(src)):
+        k, ext = os.path.splitext(f)
+        if ext.lower() not in (".wav", ".mp3", ".m4a", ".ogg"):
+            continue
+        if k not in script:
+            skipped.append(f); continue
+        finish(os.path.join(src, f), os.path.join(OUT, k + ".ogg")); done += 1
+        print("ok", k, flush=True)
+    print(f"VO: {done} clips finished" + (f"; not in vo_script.json (name them <clip id>.wav): {skipped}" if skipped else ""))
+
+
 def main(args):
+    if "--from" in args:
+        return from_folder(args[args.index("--from") + 1])
     key = os.environ.get("GEMINI_KEY") or os.environ.get("GEMINI_API_KEY")
     if not key:
         sys.exit("set GEMINI_KEY in the environment")
