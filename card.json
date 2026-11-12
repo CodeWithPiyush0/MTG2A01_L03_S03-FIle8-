@@ -33,7 +33,8 @@
    "q": 4.29,
    "cheer": 4.83,
    "end": 5.52
-  }
+  },
+  "construct": "castle"
  },
  "skill_description_hi": "दो अंकों की दो संख्याओं को ऊपर-नीचे लिखकर (बिना हासिल के) जोड़ता है: पहले इकाई, फिर दहाई।",
  "phase_distribution": {

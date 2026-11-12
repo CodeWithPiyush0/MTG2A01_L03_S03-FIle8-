@@ -43,6 +43,14 @@ body.is-start{background:#7FC8F4;}
    and the room / yard / fridge door just carries on past the edge. */
 .stage-bleed{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;}
 .stage-bleed i{position:absolute;left:0;top:0;width:1333px;height:750px;transform-origin:0 0;}
+.stage-bleed .camera-garden-front,.stage-bleed .camera-garden-top{display:none;position:absolute;background-repeat:no-repeat;background-size:100% 100%;}
+.stage-bleed.camera-bleed i{overflow:hidden;}
+.stage-bleed.camera-bleed .camera-garden-front{display:block;left:0;top:var(--camera-front-y);width:1333px;height:var(--camera-front-h);background-image:url("assets/game_meadow.webp");}
+.stage-bleed.camera-bleed .camera-garden-top{display:block;left:var(--camera-top-x);top:var(--camera-top-y);width:var(--camera-top-w);height:var(--camera-top-h);opacity:var(--camera-blend);background-image:url("assets/game_meadow_overhead.svg");}
+.stage-bleed .camera-garden-frame{display:none;position:absolute;inset:0;width:1333px;height:750px;}
+.stage-bleed.camera-frame .camera-garden-front,.stage-bleed.camera-frame .camera-garden-top{display:none;}
+.stage-bleed.camera-frame .camera-garden-frame{display:block;}
+.stage[data-bg="meadow"].camera-bg-top{background-image:url("assets/game_meadow_overhead.svg");}
 .stage-bleed .b-l {transform:scale(var(--scale,1)) translateX(1px) scaleX(-1);}
 .stage-bleed .b-r {transform:scale(var(--scale,1)) translateX(2665px) scaleX(-1);}
 .stage-bleed .b-t {transform:scale(var(--scale,1)) translateY(1px) scaleY(-1);}
@@ -2604,3 +2612,65 @@ body.spk-done .audio-chip,body.spk-done .tut-audio,body.spk-done .sg-vo{pointer-
 .gm-lab.gm-lab-sum .gm-plus{left:8px;z-index:1;}
 /* the game's activities 3-4: the children's round faces beside their numbers (user + SME 2026-11-05) */
 .gm-kidface{border-radius:50%;border:4px solid #fff;background:#fff;box-shadow:0 4px 10px rgba(60,20,120,.25);object-fit:cover;z-index:5;pointer-events:none !important;}
+
+/* Number-only progress and a collection of finished block models. */
+.gm-journey{left:24px;top:22px;width:244px;box-sizing:border-box;padding:13px 16px;border:3px solid #fff;border-radius:30px;
+  background:#FFF9EDF2;box-shadow:0 4px 0 #A8CA80,0 8px 20px #30552120;z-index:15;pointer-events:none !important;font-family:var(--font-hi);}
+.gm-stops{display:flex;justify-content:space-between;position:relative;}
+.gm-stops::before{content:"";position:absolute;left:16px;right:16px;top:19px;height:4px;background:#DCD0EC;}
+.gm-stop{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:40px;height:40px;border-radius:50%;border:3px solid #D5C7E8;
+  background:#fff;color:#796C8D;font-size:23px;font-weight:800;}
+.gm-stop.current{border-color:#7734D4;color:#6122B8;box-shadow:0 0 0 4px #E9DAFF;}
+.gm-stop.done{border-color:#388E30;background:#4FA838;color:white;}
+.gm-journey-finished{display:none;}
+.pv-stage.gm .gm-camera-view{left:0;top:0;width:1333px;height:750px;z-index:3;pointer-events:none !important;}
+.pv-stage.gm .gm-camera-settled{z-index:0;}
+.gm-kid.gm-guide{width:104px;height:104px;padding:0;border:0;background:none;box-shadow:none;filter:none;}
+.gm-guide img{display:block;width:104px;height:104px;object-fit:cover;border:4px solid white;border-radius:50%;background:white;box-shadow:0 0 0 2px #C8B1E8,0 5px 10px #34531C26;}
+.gm-board.gm-overhead-board{z-index:1;}
+.gm-reward{left:356px;top:78px;width:620px;height:590px;box-sizing:border-box;border:5px solid #fff;border-radius:40px;
+  background:radial-gradient(ellipse at 50% 45%,#FFFFFC,#FFF1D0);box-shadow:0 9px 0 #93B966,0 20px 45px #27471333;z-index:12;text-align:center;font-family:var(--font-hi);color:#4B267A;}
+.gm-reward-title{margin:20px 12px 8px;font-size:40px;font-weight:800;line-height:1.4;}
+.gm-creation{position:relative;width:360px;height:390px;margin:0 auto;pointer-events:none;}
+.gm-project-art{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;}
+.gm-kid.gm-cheering{transform-origin:50% 90%;animation:gmBuildJoy .95s ease-in-out infinite;}
+.gm-kid.gm-cheering:nth-last-of-type(2){animation-delay:.15s;}
+@keyframes gmBuildJoy{0%,50%,100%{translate:0 0;rotate:0deg;}25%{translate:0 -14px;rotate:-2deg;}75%{translate:0 -10px;rotate:2deg;}}
+.gm-reward-next{display:block;margin:18px auto 0;padding:6px 36px;min-height:60px;border:3px solid #fff;border-radius:32px;background:linear-gradient(#8746E9,#6428BE);
+  box-shadow:0 5px 0 #452080;color:white;font-family:var(--font-hi);font-size:28px;font-weight:800;line-height:1.4;cursor:pointer;}
+.gm-reward-next:hover{background:linear-gradient(#9658F1,#7434CE);}
+.gm-reward-next:active{translate:0 3px;box-shadow:0 2px 0 #452080;}
+.gm-reward-next:focus-visible{outline:4px solid #FFC44C;outline-offset:5px;}
+.gm-reward-next:disabled{opacity:.6;cursor:default;}
+.gm-gallery{left:250px;top:36px;width:833px;height:680px;text-align:center;font-family:var(--font-hi);color:#4B267A;z-index:3;}
+.gm-gallery-title{margin:0 0 18px;font-size:46px;font-weight:800;line-height:1.5;text-shadow:0 2px #fff;}
+.gm-collection{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.gm-project-card{height:236px;box-sizing:border-box;border:4px solid #fff;border-radius:28px;background:radial-gradient(ellipse at 50% 35%,#FFFFFD,#FFF1D4);
+  box-shadow:0 6px 0 #95B76A,0 12px 24px #26491C26;}
+.gm-project-card .gm-creation{width:310px;height:190px;}
+.gm-project-card h3{margin:0;font-size:27px;line-height:1.4;}
+.gm-gallery > .gm-reward-next{margin-top:22px;position:relative;z-index:10;}
+@media (prefers-reduced-motion:reduce){.gm-kid.gm-cheering{animation:none;}}
+
+.pv-stage.gm.gm-view-overhead .gm-bg{background-image:url('assets/game_meadow_overhead.svg');}
+/* Keypad rounds keep their maths interaction and gain a visible build mission. */
+.gm-mission{left:28px;top:167px;width:330px;height:373px;padding:17px 18px;box-sizing:border-box;border:3px solid #fff;border-radius:30px;
+  background:linear-gradient(145deg,#F8FCFFEE,#E5F2FAEE);box-shadow:0 6px 0 #ABC5D0,0 12px 22px #30552120;color:#4B267A;text-align:center;font-family:var(--font-hi);z-index:4;}
+.gm-mission h3{font-size:29px;line-height:1.4;font-weight:800;}
+.gm-blueprint{display:block;width:276px;height:244px;margin:0 auto;object-fit:contain;opacity:.3;filter:grayscale(1) sepia(.2) hue-rotate(145deg);transition:opacity .35s,filter .35s;}
+.gm-mission-steps{display:flex;justify-content:center;gap:14px;}
+.gm-mission-steps span{min-width:105px;padding:3px 10px;border:2px solid #C8D8E7;border-radius:16px;background:white;color:#8A9BA8;font-size:25px;font-weight:800;line-height:1.4;}
+.gm-mission-steps .active{border-color:#8A50D0;color:#662EB1;box-shadow:0 0 0 3px #E4D7F7;}
+.gm-mission-steps .done{border-color:#9467CB;background:#EEE4FA;color:#6435A0;}
+.gm-mission-ready .gm-mission-steps .done{border-color:#4B9B59;background:#E6F5DF;color:#3A7A37;}
+.gm-mission-entered{box-shadow:0 6px 0 #ABC5D0,0 0 0 4px #FFF2B4;}
+.gm-mission-ready .gm-blueprint{opacity:1;filter:none;}
+/* Cover: the game-style toy bricks form a front-facing house at the feet line. */
+.sgp-build-story > .sgp-bshd,.sgp-front-build > .sgp-bcast{display:none;}
+.sgp-front-ground{position:absolute;width:224px;height:12px;z-index:10;pointer-events:none;background:radial-gradient(ellipse,#477B473D,transparent 70%);border-radius:50%;}
+.sgp-front-piece{pointer-events:none;}
+@media(prefers-reduced-motion:reduce){.gm-blueprint{transition:none;}}
+.sgp-front-door{position:absolute;width:64px;height:44px;z-index:12;pointer-events:none;opacity:0;transition:opacity .4s;}
+.sgp-front-door svg{display:block;width:100%;height:100%;}
+.sgp-front-door.on{opacity:1;}
+@media(prefers-reduced-motion:reduce){.sgp-front-door{transition:none;}}

@@ -358,7 +358,7 @@ card = {
     "title": {"hi": "संख्याओं का जोड़", "en": "Adds vertically without regrouping"},
     # the cover after the game (user 2026-11-02): Rumi & Rohan on the meadow, walking in side-on, their 25 + 12
     "landing_hero": {"kind": "pv_story", "people": ["rumi", "rohan"], "build": "addv", "title_look": "wall", "title_paint": "meadow",
-                     "walk": True, "pile": True, "start_at": 0, "a": 25, "b": 12, "beats": BEATS},   # (pile: no written sum - their blocks come together, ones then tens - user 2026-11-02)
+                     "walk": True, "pile": True, "construct": "castle", "start_at": 0, "a": 25, "b": 12, "beats": BEATS},   # 25 + 12 game-style bricks form one front-view castle directly
     "skill_description_hi": "दो अंकों की दो संख्याओं को ऊपर-नीचे लिखकर (बिना हासिल के) जोड़ता है: पहले इकाई, फिर दहाई।",
     "phase_distribution": phase_n,
     "scaffold_rules": {"nudge_timeout_ms": {"tutorial": 7000, "guided": 7000, "practice": 7000, "independent": 7000},

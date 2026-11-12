@@ -121,6 +121,31 @@ const Screen = (function(){
     for(const i of b.children) i.style.cssText = css;
   }
   function queueBleed(){ if(!bleedQueued){ bleedQueued = true; requestAnimationFrame(bleed); } }
+  /* Mirror the background-only camera frame, without copying the table or UI.
+     At rest, matching CSS layers keep the outside panels in the same view. */
+  function camera(t, frame){
+    const st=$("stage"), b=$("stageBleed"); if(!st||!b)return;
+    const on=t!=null; b.classList.toggle("camera-bleed",on);b.classList.toggle("camera-frame",on&&!!frame);st.classList.toggle("camera-bg-active",on);
+    st.classList.toggle("camera-bg-top",on&&t>=1);
+    if(!on)return;
+    for(const panel of b.children)if(!panel.querySelector(".camera-garden-front")){
+      for(const name of ["front","top"]){const layer=document.createElement("span");layer.className="camera-garden-"+name;panel.appendChild(layer);}
+    }
+    const values={"front-y":-470*t,"front-h":750+110*t,"top-x":-32*(1-t),"top-y":-90*(1-t),"top-w":1333+64*(1-t),"top-h":750+140*(1-t)};
+    for(const [key,value] of Object.entries(values))root.style.setProperty("--camera-"+key,value+"px");
+    root.style.setProperty("--camera-blend",Math.max(0,Math.min(1,(t-.08)/.78)));
+    if(frame){
+      const wide=root.classList.contains("bands-x"),tall=root.classList.contains("bands-y");
+      for(const panel of b.children){
+        const corner=/b-(tl|tr|bl|br)/.test(panel.className);
+        const visible=corner?wide&&tall:(panel.classList.contains("b-l")||panel.classList.contains("b-r"))?wide:tall;
+        if(!visible)continue;
+        let copy=panel.querySelector(".camera-garden-frame");
+        if(!copy){copy=document.createElement("canvas");copy.className="camera-garden-frame";copy.width=frame.width;copy.height=frame.height;panel.appendChild(copy);}
+        const ctx=copy.getContext("2d");ctx.clearRect(0,0,copy.width,copy.height);ctx.drawImage(frame,0,0);
+      }
+    }
+  }
   function watch(){
     const st = document.getElementById("stage");
     if(!st || !window.MutationObserver) return;
@@ -134,7 +159,7 @@ const Screen = (function(){
   window.addEventListener("load", fit);
   if(window.visualViewport) window.visualViewport.addEventListener("resize", fit);
   fit(); watch();
-  return { fit: fit, fullscreen: fullscreen, bleed: queueBleed };
+  return { fit: fit, fullscreen: fullscreen, bleed: queueBleed, camera };
 })();
 
 /* ---------- 2. SIGNAL BUS + OFFLINE TELEMETRY ---------- */
@@ -945,7 +970,24 @@ const PVSFX = (function(){
     move(){ if(!ok("move", 150)) return; noise(.22, 700, 2300, .09, "bandpass"); },
     whoosh(){ this.move(); },
     unpop(){ tone(700, 300, .1, .12, "sine"); },
-    land(){ if(!ok("land", 45)) return; tone(300, 170, .08, .15, "triangle"); noise(.04, 1000, 700, .1, "bandpass"); }
+    land(){ if(!ok("land", 45)) return; tone(300, 170, .08, .15, "triangle"); noise(.04, 1000, 700, .1, "bandpass"); },
+    assemble(duration, alive){
+      let timer=0,stopped=false,step=0;const start=performance.now(),notes=[523.25,659.25,783.99,1046.5,1174.66,1318.51];
+      const tick=()=>{
+        if(stopped||!alive()||performance.now()-start>=duration)return;
+        if(!document.hidden){const v=isPlaying ? .035 : .065,n=notes[Math.floor(step/4)%notes.length];
+          tone(230+(step%3)*45,110,.075,v,"triangle");noise(.035,1800,650,v*.65,"bandpass");
+          tone(n*1.5,n,.065,v*.4,"sine",.035);
+          if(step%4===0){noise(.12,650,2600,v*.3,"bandpass");tone(n,n,.16,v*.45,"sine",.04);}
+        }
+        step++;timer=setTimeout(tick,130);
+      };
+      tick();return ()=>{stopped=true;clearTimeout(timer);};
+    },
+    buildFinish(){if(!ok("buildFinish",500))return;
+      [523.25,659.25,783.99,1046.5].forEach((n,i)=>{tone(n,n,.3,.065,"sine",i*.065);tone(n*2,n*2,.19,.022,"sine",i*.065+.035);});
+      noise(.28,2400,6800,.035,"highpass",.12);
+    }
   };
 })();
 const PVK = (function(){
@@ -1626,6 +1668,7 @@ Object.assign(PVK, (function(){
       /* the tick: dim until a digit is in, pulsing once the box holds the whole answer */
       const okState = ()=>{ ok.classList.toggle("off", !typed.length); ok.classList.toggle("pulse", typed.length >= N && !over && !busy); };
       const render = ()=>{ const full = typed.length >= N || over;
+        if(cfg.onInput)cfg.onInput(typed.length,N,open);
         if(T && !open && !typed.length){ if(ok) okState(); return; }          // (the "?" stays until the pad opens)
         if(rtl){ T._boxes().forEach((b, i, bx)=>{ const j = bx.length - 1 - i, cur = open && !full && j === typed.length;   // the written sum's two boxes: a digit each, the ones first
             b.innerHTML = typed[j] != null ? '<span class="pv-ch">' + typed[j] + '</span>' : cur ? '<span class="pv-caret">|</span>' : "?";
@@ -3017,6 +3060,8 @@ const PVModules = {
   },
   ADD_GAME: {
     /* the review deck's page 17 (MTG2A01_L03_S03_review.pptx, user 2026-10-29) - Rumi & Rohan on a plain lawn, no Swiftee;
+       2026-11-12: same SME maths and keypad rounds; a four-stop building journey,
+       shared block artwork, camera orbit above the same table, earned creations and final gallery.
        four questions. 1 (25 + 12) and 2 (34 + 25) "make and add blocks": screen 1 the two behind a table, their blocks
        lying on it, "रूमी को 25 और रोहन को 12 ब्लॉक्स मिले हैं।" - then the camera rises and the table's top becomes the
        दहाई | इकाई board; Rumi walks in and the child makes her number with − / + and जाँचें, she walks off and Rohan
@@ -3033,7 +3078,42 @@ const PVModules = {
       state.ownsAudio = true; state.locked = false; setNavActive(false); $("navBtn").style.display = "none"; pvReplay(C);
       const { px, add, setXY, glide, wait } = K, [KA, KB] = d.kids;
       sc.classList.add("gm");
+      const view = overhead=>{sc.classList.toggle("gm-view-overhead",overhead);Screen.camera(overhead?1:0);};
+      view(false);
       add(sc, "div", "gm-bg");
+      /* A persistent four-stop building journey. Each completed round earns a finished block model. */
+      const projects = ["ब्लॉक घर", "पुल", "मीनार", "किला"];
+      const journey = add(sc, "div", "gm-journey");
+      journey.setAttribute("role", "status"); journey.setAttribute("aria-live", "polite");
+      const stops = add(journey, "div", "gm-stops");
+      const markers = d.acts.map((_, j)=>{ const e = add(stops, "span", "gm-stop"); e.textContent = String(j + 1); return e; });
+      const completed = new Set();
+      const progress = current =>{
+        markers.forEach((e, j)=>{ e.classList.toggle("done", completed.has(j)); e.classList.toggle("current", j === current && !completed.has(j));
+          e.textContent = String(j + 1); e.setAttribute("aria-label", projects[j] + (completed.has(j) ? " पूरा" : j === current ? " अभी बनाएँ" : " बाकी")); });
+      };
+      progress(0);
+      const creation = (parent, index, animate)=>{
+        const art = add(parent, "div", "gm-creation");
+        const image = add(art, "img", "gm-project-art");
+        const moving=animate&&!K.reduce(), base="assets/game-build-"+["house","bridge","tower","castle"][index];
+        const src=moving?Assets.fresh(base+"-animated.svg"):base+".svg";
+        art.built=moving?new Promise((resolve,reject)=>{
+          image.onload=()=>{image.onload=null;const stop=PVSFX.assemble(4000,()=>C.alive()&&art.isConnected);
+            C.wait(4100).then(resolve,reject).finally(()=>{stop();if(src.startsWith("blob:"))URL.revokeObjectURL(src);});};
+          image.onerror=()=>{image.onerror=null;image.onload=null;image.src=base+".svg";if(src.startsWith("blob:"))URL.revokeObjectURL(src);resolve();};
+        }):Promise.resolve();
+        image.src=src;
+        image.alt = projects[index]; image.draggable = false;
+        return art;
+      };
+      const continueFrom = async (parent, label)=>{
+        const btn = add(parent, "button", "gm-reward-next"); btn.type = "button"; btn.textContent = label;
+        let next = false; btn.onclick = ()=>{ next = true; PVSFX.tap(); btn.disabled = true; };
+        btn.focus({ preventScroll: true });
+        while(!next){ await C.wait(100); C.guard(); }
+        btn.onclick = null;
+      };
       const BX = 330, BY = 56, BW = 800, BH = 450;                            // the board (user 2026-10-29: higher - room above the buttons)
       let screen = [];                                                        // what the current screen put up
       const put = e =>{ screen.push(e); return e; };
@@ -3042,10 +3122,17 @@ const PVModules = {
       const hop = e =>{ if(e && !K.reduce()) e.animate([{ translate: "0 0" }, { translate: "0 -22px", offset: .4 }, { translate: "0 0", offset: .7 }, { translate: "0 0" }], { duration: 620, iterations: 2, easing: "ease-out" }); };
       /* a wrong column's blocks wiggle (user 2026-10-29: the blocks, not the check button) */
       const wig = e =>{ if(e && !K.reduce()) e.animate([{ rotate: "0deg" }, { rotate: "-10deg" }, { rotate: "10deg" }, { rotate: "-7deg" }, { rotate: "7deg" }, { rotate: "0deg" }], { duration: 560, easing: "ease-in-out" }); };
-      const kid = (k, x, y, h, pose, still)=>{ const e = put(add(sc, "img", "gm-kid")); e.src = pvChar(k.who, pose || true) || pvChar(k.who); e.alt = ""; e.style.height = px(h); e._h = h;
+      const kid = (k, x, y, h, pose, still)=>{
+        if(sc.classList.contains("gm-view-overhead")){
+          const e=put(add(sc,"div","gm-kid gm-guide")), image=add(e,"img");
+          image.src=pvChar(k.who);image.alt=k.name;e._h=104;e._kid=k;
+          setXY(e,x,y-h);if(!still)K.pop(e);return e;
+        }
+        const e = put(add(sc, "img", "gm-kid")); e.src = pvChar(k.who, pose || true) || pvChar(k.who); e.alt = ""; e.style.height = px(h); e._h = h;
         e._kid = k; setXY(e, x, y - h); if(!still) K.pop(e); return e; };
       /* a kid walks to x in side view (pvWalk); there the child turns to the front (its standing picture). Resolves there. */
       const walk = (e, x, ms)=> new Promise(r =>{ const dx = x - e._x, k = e._kid, S = k && k.side, src = k && pvChar(k.who, "side");
+        if(e.classList.contains("gm-guide"))return r();
         if(K.reduce() || !S || !src){ setXY(e, x, e._y); return r(); }
         e.style.visibility = "hidden";
         pvWalk(sc, "gm-walk", src, S, e._h * S.h, e._x, e._y + e._h, dx, ms).then(()=>{ setXY(e, x, e._y); e.style.visibility = "";
@@ -3057,7 +3144,8 @@ const PVModules = {
         return side < 0 ? -r.left / k : 1333 + (vw - r.right) / k; };
       const pace = d => Math.max(900, Math.abs(d) / .34);                    // (a child's pace: ~340 px a second)
       const KX = 175, KF = 610, KH = 330;                                     // the make screen's kid: x, feet, height
-      const walkIn = async k =>{ const x0 = edge(-1) - KH * .45, e = kid(k, x0, KF, KH, true, true); await walk(e, KX, pace(KX - x0)); return e; };
+      const walkIn = async k =>{ if(sc.classList.contains("gm-view-overhead"))return kid(k,KX,KF,KH,true);
+        const x0 = edge(-1) - KH * .45, e = kid(k, x0, KF, KH, true, true); await walk(e, KX, pace(KX - x0)); return e; };
       const badge = (k, n, x, y)=>{ const e = put(add(sc, "div", "gm-badge")); e.innerHTML = '<b>' + k.name + '</b><span>' + n + '</span><i>ब्लॉक्स</i>'; setXY(e, x, y); K.pop(e); return e; };
       /* a column of one kind of block, centred in its box (x0, y0, w, h); its blocks are scene elements */
       const col = (kind, x0, y0, w, h, G)=>{
@@ -3076,7 +3164,7 @@ const PVModules = {
       };
       /* the wooden board: a frame, its दहाई | इकाई heads; label: a first column (the add board's pictures). still: no pop
          (it is the table's top, already there - its heads fade in) */
-      const board = (x, y, w, h, label, still)=>{ const e = put(add(sc, "div", "gm-board", "width:" + px(w) + ";height:" + px(h))); setXY(e, x, y);
+      const board = (x, y, w, h, label, still)=>{ const e = still && still.nodeType ? still : put(add(sc, "div", "gm-board", "width:" + px(w) + ";height:" + px(h))); setXY(e, x, y);
         const L = label || 0, cw = (w - 44 - L) / 2;
         e.innerHTML = '<div class="gm-in">' + (L ? '<div class="gm-hd gm-hd-l" style="width:' + px(L) + '"></div>' : "") +
           '<div class="gm-hd gm-hd-t" style="left:' + px(L) + ';width:' + px(cw) + '">दहाई</div><div class="gm-hd gm-hd-o" style="left:' + px(L + cw) + ';width:' + px(cw) + '">इकाई</div>' +
@@ -3140,80 +3228,133 @@ const PVModules = {
         arm();
       });
       const shine = list =>{ list.forEach((b, i)=> setTimeout(()=>{ if(!b.isConnected) return; b.classList.remove("hl"); void b.offsetWidth; b.classList.add("hl"); }, i * 60)); };
-      /* screen 1 - the two of them behind a table, their blocks lying on it (side by side, none on another); then the camera
-         rises: the kids and the table's legs go out at the bottom and the top turns to face us - it is the board (returns it) */
-      async function meet(i, a, b){
-        const ka = kid(KA, edge(-1) - 200, 580, 420, true, true), kb = kid(KB, edge(1) + 200, 580, 420, true, true);
-        const T3 = put(add(sc, "div", "gm-t3")), face = add(T3, "div", "gm-board gm-face", "width:" + px(BW) + ";height:" + px(BH));
-        setXY(face, BX, BY); face.innerHTML = '<div class="gm-in"></div>';
-        const TILT = "translateY(248px) rotateX(66deg) scale(.84)";
-        face.style.transform = TILT; face.classList.add("gm-3d");
-        /* the blocks lying on the table (user 2026-10-30: like the deck's picture - the rods flat, pointing away, side by
-           side; the cubes in a little grid): real 3D boxes on the table's top (CSS preserve-3d), so they have a top, a front
-           and sides and turn with the table */
-        /* (SME 2026-11-05 "the blocks look like cuboids instead of cubes": the camera looks down at 66deg, which squeezes a
-           top to ~.4 of its depth while a front stays ~.9 of its height - a block G tall read as a tall box. Built .55 G
-           tall, a cube's outline comes out square, and a rod reads as ten such cubes) */
-        const G = 30, BOXH = Math.round(G * .55), blocks = [];
-        const box = (x, y, w, dd, kind)=>{ const e = add(face, "div", "gm-box gm-box-" + kind, "left:" + px(x) + ";top:" + px(y) + ";width:" + px(w) + ";height:" + px(dd) + ";--h:" + px(BOXH) + ";--g:" + px(G));
-          e.innerHTML = '<i class="bx-t"></i><i class="bx-f"></i><i class="bx-l"></i><i class="bx-r"></i>'; blocks.push(e); return e; };
-        const lay = (n, cx)=>{ const { t, o } = pvSplit(n), oc = Math.min(o, 3), orows = Math.ceil(o / 3), rg = 12, cg = 9;
-          const w = t * (G + rg) - (t ? rg : 0) + (t && o ? 34 : 0) + (oc * (G + cg) - (oc ? cg : 0));
-          let x = cx - w / 2;
-          for(let j = 0; j < t; j++){ box(x, BH / 2 - 5 * G, G, 10 * G, "t"); x += G + rg; }
-          x += t ? 34 - rg : 0;
-          const oy = BH / 2 - (orows * (G + cg) - cg) / 2;
-          for(let j = 0; j < o; j++) box(x + (j % 3) * (G + cg), oy + Math.floor(j / 3) * (G + cg), G, G, "o"); };
-        lay(a, BW * .27); lay(b, BW * .73);
-        /* the table's front edge and two legs hang from its top (3D too: user 2026-10-30 "fix the edge of the table") */
-        const apron = add(face, "div", "gm-apron", "left:" + px(26) + ";top:" + px(BH - 2) + ";width:" + px(BW - 52));
-        const legs = [56, BW - 56 - 38].map(x => add(face, "div", "gm-leg", "left:" + px(x) + ";top:" + px(BH - 46)));
-        const ba = badge(KA, a, 190, 250), bb = badge(KB, b, 1143, 250); [ba, bb].forEach(e => e.classList.add("pv-hide"));
-        await Promise.all([walk(ka, 470, pace(470 - ka._x)), walk(kb, 866, pace(kb._x - 866))]); C.guard();   // (they walk up to the table)
-        const c = CU["intro" + i] || { a: .05, b: .45 };
-        await C.cue("intro" + i, [[c.a, ()=>{ hop(ka); K.show(ba); sfxPop(); }], [c.b, ()=>{ hop(kb); K.show(bb); sfxPop(); }]]);
-        await C.wait(600); C.guard();
-        const ms = K.reduce() ? 0 : 1600;
-        [ba, bb].forEach(drop);
-        /* user 2026-11-02 ("its legs and characters fade away - this does not look good"): the kids walk off, Rumi to the
-           left and Rohan to the right, as the camera rises; the legs and the front edge are not faded - they hang under
-           the top in 3D and turn with it, so from above they are hidden under it */
-        const off = [walk(ka, edge(-1) - 420 * .45, pace(ka._x - edge(-1) + 420 * .45)).then(()=> ka.remove()),
-                     walk(kb, edge(1) + 420 * .45, pace(edge(1) + 420 * .45 - kb._x)).then(()=> kb.remove())];
-        if(ms){ await C.wait(350);
-          setTimeout(()=> blocks.forEach(drop), ms * .5);                     // (they go as it turns: the child makes them now)
+      /* Scene camera: the garden, ground details, shadows and stationary table
+         share the front-to-overhead move. The tabletop uses the original board
+         finish and dimensions, rather than a replacement table design. */
+      function tableCamera(canvas, a, b){
+        canvas.width = 1600; canvas.height = 900;
+        const ctx = canvas.getContext("2d"), boxes = [];
+        const garden=document.createElement("canvas");garden.width=1600;garden.height=900;const gardenCtx=garden.getContext("2d");
+        const wood = ["#C9874A", "#A8662E", "#7A4519"], green = ["#8BE653", "#65BF35", "#3C9223"], gold = ["#FFE875", "#F6BF2B", "#D99716"];
+        const front = new Image(), overhead = new Image();
+        front.src = "assets/game_meadow.webp"; overhead.src = "assets/game_meadow_overhead.svg";
+        let isBlock = false;
+        const box = (x,y,z,w,h,depth,c)=> boxes.push({x,y,z,w,h,depth,c,isBlock});
+        // Original shallow apron and short legs; the board surface is never resized.
+        box(-374,-25,202,748,25,23,wood);
+        for(const x of [-344,306]) for(const z of [-175,137]) box(x,-205,z,38,180,38,wood);
+        isBlock = true;
+        // Physical pieces remain stationary on the tabletop throughout the orbit.
+        for(const [n,cx] of [[a,-190],[b,190]]){
+          const t = Math.floor(n / 10), o = n % 10, totalW = t * 38 + (o ? 100 : 0);
+          const left = cx - totalW / 2;
+          for(let j=0;j<t;j++) for(let k=0;k<10;k++) box(left+j*38,2,-140+k*28,28,20,27.5,green);
+          for(let j=0;j<o;j++) box(left+t*38+12+(j%3)*33,2,-45+Math.floor(j/3)*33,28,25,28,gold);
+        }
+        let piecesAlpha = 1;
+        const draw = t =>{
+          const pitch = (18 + 72*t) * Math.PI / 180, sn = Math.sin(pitch), cs = Math.cos(pitch);
+          const distance = 1750 - 150*t, focal = 1600, cy = 452 - 171*t;
+          const project = ([x,y,z])=>{const depth=distance-y*sn-z*cs;return [730+focal*x/depth,cy-focal*(y*cs-z*sn)/depth,depth];};
+          ctx.setTransform(1.2,0,0,1.2,0,0); ctx.clearRect(0,0,1333,750);
+          gardenCtx.setTransform(1.2,0,0,1.2,0,0);gardenCtx.clearRect(0,0,1333,750);
+          // The skyline leaves the frame as the camera looks down at the lawn.
+          // Both garden views move, rather than leaving a fixed front-view sky.
+          if(front.complete&&front.naturalWidth)gardenCtx.drawImage(front,0,-470*t,1333,750+110*t);
+          const blend=Math.max(0,Math.min(1,(t-.08)/.78));
+          if(overhead.complete&&overhead.naturalWidth){gardenCtx.globalAlpha=blend;gardenCtx.drawImage(overhead,-32*(1-t),-90*(1-t),1333+64*(1-t),750+140*(1-t));gardenCtx.globalAlpha=1;}
+          const ground=(x,z)=>project([x,-205,z]);
+          Screen.camera(t,garden);ctx.drawImage(garden,0,0,1333,750);
+          const shadow=ground(0,0); ctx.fillStyle="rgba(37,57,20,.13)";ctx.beginPath();ctx.ellipse(shadow[0],shadow[1],375,38+105*t,0,0,Math.PI*2);ctx.fill();
+          const faces=[];
+          for(const q of boxes){
+            const {x,y,z,w,h,depth:d,c}=q;
+            const p=[[x,y,z],[x+w,y,z],[x+w,y,z+d],[x,y,z+d],[x,y+h,z],[x+w,y+h,z],[x+w,y+h,z+d],[x,y+h,z+d]];
+            for(const [ids,color,normal] of [[[4,5,6,7],c[0],[0,1,0]],[[3,2,6,7],c[1],[0,0,1]],[[0,4,7,3],c[2],[-1,0,0]],[[1,2,6,5],c[1],[1,0,0]],[[0,1,5,4],c[2],[0,0,-1]]]){
+              const centre=ids.reduce((r,i)=>r.map((v,k)=>v+p[i][k]/4),[0,0,0]);
+              if(normal[0]*-centre[0]+normal[1]*(distance*sn-centre[1])+normal[2]*(distance*cs-centre[2])<=0) continue;
+              const points=ids.map(i=>project(p[i])); faces.push({points,color,layer:q.isBlock?1:0,alpha:q.isBlock?piecesAlpha:1,d:points.reduce((v,p)=>v+p[2]/4,0)});
+            }
+          }
+          faces.sort((a,b)=>a.layer-b.layer || b.d-a.d);
+          ctx.lineJoin="round";ctx.lineWidth=.65;
+          const paintFaces = list=>{for(const f of list){ctx.globalAlpha=f.alpha;ctx.beginPath();f.points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=f.color;ctx.fill();ctx.strokeStyle="rgba(73,48,16,.26)";ctx.stroke();}ctx.globalAlpha=1;};
+          paintFaces(faces.filter(f=>f.layer===0));
+          // Project the original rounded board geometry directly. This keeps
+          // its finish continuous, with no texture-mesh seams during the move.
+          const rounded=(x,y,w,h,r)=>{
+            ctx.beginPath();
+            const corners=[[x+w-r,y+r,-Math.PI/2],[x+w-r,y+h-r,0],[x+r,y+h-r,Math.PI/2],[x+r,y+r,Math.PI]];
+            corners.forEach(([cx,cy,start],j)=>{for(let n=0;n<=8;n++){
+              const angle=start+n*Math.PI/16,p=project([cx+r*Math.cos(angle)-BW/2,0,cy+r*Math.sin(angle)-BH/2]);
+              if(j===0&&n===0)ctx.moveTo(p[0],p[1]);else ctx.lineTo(p[0],p[1]);
+            }});ctx.closePath();
+          };
+          const from=project([-400,0,-225]),to=project([400,0,225]);
+          const finish=ctx.createLinearGradient(from[0],from[1],to[0],to[1]);
+          finish.addColorStop(0,"#C9874A");finish.addColorStop(.45,"#A8662E");finish.addColorStop(1,"#C27B3D");
+          rounded(0,0,BW,BH,30);ctx.fillStyle=finish;ctx.fill();
+          rounded(2,2,BW-4,BH-4,28);ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=3;ctx.stroke();
+          rounded(22,22,BW-44,BH-44,14);ctx.fillStyle="#FFF8EC";ctx.fill();
+          ctx.lineWidth=.65;paintFaces(faces.filter(f=>f.layer===1));
+        };
+        draw(0);
+        return { clearPieces: async ()=>{
+          if(K.reduce()){piecesAlpha=0;draw(1);return;}
+          await new Promise(resolve=>{let start;const frame=now=>{if(!C.alive()){resolve();return;}if(start===undefined)start=now;const t=Math.min(1,(now-start)/350);piecesAlpha=1-t;draw(1);if(t<1)requestAnimationFrame(frame);else resolve();};requestAnimationFrame(frame);});C.guard();
+        }, orbit: async ()=>{
+          if(K.reduce()){draw(1);return;}
           PVSFX.move();
-          await face.animate([{ transform: TILT }, { transform: "none" }], { duration: ms, easing: "cubic-bezier(.55,0,.25,1)", fill: "forwards" }).finished; }
-        await Promise.all(off);
-        face.style.transform = "none"; C.guard();
-        [ka, kb, apron, ...legs].forEach(e => e.isConnected && e.remove()); blocks.forEach(e => e.remove());
-        screen = screen.filter(e => e !== T3);                               // (the top stays: the next screen's board takes its place)
-        return T3;
+          await new Promise(resolve=>{let start;
+            const frame=now=>{if(!C.alive()){resolve();return;}if(start===undefined)start=now;
+              const t=Math.min(1,(now-start)/2300), eased=t*t*(3-2*t);draw(eased);
+              if(t<1)requestAnimationFrame(frame);else resolve();};requestAnimationFrame(frame);
+          }); C.guard();
+        }};
+      }
+      async function meet(i, a, b){
+        view(false);
+        const ka=kid(KA,edge(-1)-200,680,330,true,true), kb=kid(KB,edge(1)+200,680,330,true,true);
+        const canvas=put(add(sc,"canvas","gm-camera-view")), camera=tableCamera(canvas,a,b);
+        const ba=badge(KA,a,175,140), bb=badge(KB,b,1230,140); [ba,bb].forEach(e=>e.classList.add("pv-hide"));
+        // Keep the whole figures outside the table silhouette during the intro.
+        await Promise.all([walk(ka,175,pace(175-ka._x)),walk(kb,1230,pace(kb._x-1230))]);C.guard();
+        const c=CU["intro"+i]||{a:.05,b:.45};
+        await C.cue("intro"+i,[[c.a,()=>{hop(ka);K.show(ba);sfxPop();}],[c.b,()=>{hop(kb);K.show(bb);sfxPop();}]]);
+        await C.wait(450);[ba,bb].forEach(drop);
+        const off=[walk(ka,edge(-1)-190,pace(ka._x-edge(-1)+190)),walk(kb,edge(1)+190,pace(edge(1)+190-kb._x))];
+        await Promise.all(off);C.guard();[ka,kb].forEach(e=>e.remove());
+        await camera.orbit();C.guard();view(true);
+        await C.wait(450);await camera.clearPieces();
+        return canvas;
       }
       /* screen 2 - Rumi's number, then (the board reset) Rohan's. table: the meet's table top (the board comes on it);
          onlyB: start with Rohan (the QA menu). Activity 1 says "पहले रूमी के लिए 25 बनाइए।" / "शाबाश! अब रोहन के लिए 12
          बनाइए।"; activity 2's one line came on screen 1 ("…दोनों संख्याएँ बनाइए।") - its kids just change over */
       async function make(i, a, b, table, onlyB){
+        view(true);
+        // The camera has settled overhead. Place-value labels are an overlay on
+        // the fixed tabletop, with identical bounds; they do not reshape it.
         const B = board(BX, BY, BW, BH, 0, !!table), G = 33;
-        if(table) setTimeout(()=> table.remove(), 520);
+        if(table){ B.el.classList.add("gm-overhead-board"); table.classList.add("gm-camera-settled"); }
         const qt = col("t", B.x0, B.y0, B.cw, B.ih, G), qo = col("o", B.x0 + B.cw, B.y0, B.cw, B.ih, G);
         const cy = BY + BH + 22, ct = counter(qt, B.x0 + B.cw / 2, cy), co = counter(qo, B.x0 + B.cw * 1.5, cy), chk = checkBtn(B.x0 + B.cw, cy + 96);
         let kd, bd;
         if(!onlyB){
-          kd = await walkIn(KA); bd = badge(KA, a, KX, 520);
+          kd = await walkIn(KA); bd = badge(KA, a, KX, 435);
           if(C.has("build_a" + i)) await C.say("build_a" + i);
           await solve([ct, co], [Math.floor(a / 10), a % 10], chk); C.guard();
-          shine([...qt.list, ...qo.list]); K.beat([bd], 0); await C.wait(700);
+          shine([...qt.list, ...qo.list]); K.beat([bd], 0); hop(kd); await C.wait(700);
         }
         /* Rumi walks off to the left, the board empties and Rohan walks in (activity 1: on "अब" of its line) */
         let came = Promise.resolve();
         const swap = ()=>{ const old = kd; drop(bd); ct.reset(); co.reset();
           came = (old ? walk(old, edge(-1) - KH * .45, pace(old._x - edge(-1) + KH * .45)).then(()=> old.remove()) : Promise.resolve()).then(()=> C.alive() && walkIn(KB))
-            .then(e =>{ if(!e) return; kd = e; bd = badge(KB, b, KX, 520); }); };
+            .then(e =>{ if(!e) return; kd = e; bd = badge(KB, b, KX, 435); }); };
         if(C.has("ok_a" + i)) await C.cue("ok_a" + i, [[((CU["ok_a" + i]) || { swap: .3 }).swap, swap]]); else swap();
         await came; C.guard();
         await solve([ct, co], [Math.floor(b / 10), b % 10], chk); C.guard();
-        shine([...qt.list, ...qo.list]); K.beat([bd], 0); await C.wait(500);
+        shine([...qt.list, ...qo.list]); K.beat([bd], 0); hop(kd); await C.wait(500);
         await C.say("add");                                                   // "अब दोनों के ब्लॉक्स जोड़िए।"
         await clear();
       }
@@ -3222,10 +3363,11 @@ const PVModules = {
          box when it is complete. typeIt (activity 2, deck: "Child enters 9 in the ones column and 5 in the tens column"):
          no lines - the blocks pulse - and then the child types the sum into its boxes on the keypad (the ones first) */
       async function total(i, a, b, typeIt){
+        view(true);
         const s = a + b, A = pvSplit(a), Bn = pvSplit(b), S = pvSplit(s);
-        const ka = kid(KA, 110, 600, 270), kb = kid(KB, 240, 610, 270);
-        /* user 2026-11-02: no "एक्टिविटी" box and no portraits in the rows (the kids stand beside the board) - the numbers bigger */
         const LX = 360, LW = 180, B = board(LX, 40, 820, 640, LW), rowH = (B.ih - 8) / 3, G = 19;
+        // Each face sits beside its own addend, on that row's centre line.
+        const ka=kid(KA,LX-72,B.y0+rowH/2+52,104), kb=kid(KB,LX-72,B.y0+rowH*1.5+52,104);
         const lab = (k, n, r, plus)=>{ const e = put(add(sc, "div", "gm-lab gm-lab-sum")); setXY(e, LX + 22, B.y0 + r * rowH); e.style.width = px(LW); e.style.height = px(rowH);   // (all centred: the boxes one column)
           e.innerHTML = (plus ? '<i class="gm-plus">+</i>' : '') + (k ? '<span class="gm-sum gm-nums">' + String(n).split("").map(c => '<b class="gm-d">' + c + '</b>').join("") + '</span>'
             : '<span class="gm-sum"><b class="gm-d gm-dt">?</b><b class="gm-d gm-do">?</b></span>'); return e; };   // (every number in boxes, a digit each - SME 2026-11-05)
@@ -3259,7 +3401,7 @@ const PVModules = {
           e._from = cols[0][e._kind].list.includes(e) ? 0 : 1;               // (its row: the completion line lights a's / b's blocks in the sum)
           const Q = cols[2][e._kind], p = Q.at(Q.list.length, S[e._kind]); Q.list.push(e);
           glide(e, p, 560, true).then(()=>{ K.knock(); if(Q.list.length === S[e._kind] && step){ const f = step; step = null; f(); } }); }; });
-        const column = k => new Promise(r =>{ kind = k; step = r; left(k).forEach(e => e.classList.remove("gm-off")); mark(); left(k).forEach(e => e.classList.add("pulse")); arm(); });
+        const column = k => new Promise(r =>{ kind = k; step = ()=>{ hop(k === "o" ? ka : kb); r(); }; left(k).forEach(e => e.classList.remove("gm-off")); mark(); left(k).forEach(e => e.classList.add("pulse")); arm(); });
         B.oh.classList.add("on"); K.beat([...cols[0].o.list, ...cols[1].o.list], 50);
         if(!typeIt) await C.say("ones");
         await column("o"); C.guard();
@@ -3298,6 +3440,15 @@ const PVModules = {
          and the two numbers are added with blocks beside the sum - the total's blocks stay; 3 only the right key works.
          Right: "शाबाश! 41 और 30 का जोड़ 71 होता है।" - after a wrong answer the same without "शाबाश!" */
       async function keypad(i, a, b){
+        view(false);
+        const mission=put(add(sc,"aside","gm-mission")), missionTitle=add(mission,"h3"), blueprint=add(mission,"img","gm-blueprint");
+        missionTitle.textContent=projects[i-1]+" बनाइए";blueprint.src="assets/game-build-"+["house","bridge","tower","castle"][i-1]+".svg";blueprint.alt=projects[i-1];
+        const steps=add(mission,"div","gm-mission-steps");
+        const lights=["इकाई","दहाई"].map(text=>{const e=add(steps,"span");e.textContent=text;return e;});
+        let entered=0;
+        const input=(count,total,open)=>{lights.forEach((e,j)=>{e.classList.toggle("done",j<count);e.classList.toggle("active",open&&j===count);});
+          if(count>entered&&!K.reduce())lights[count-1].animate([{scale:"1"},{scale:"1.12",offset:.4},{scale:"1"}],{duration:260,easing:"ease-out"});entered=count;
+          mission.classList.toggle("gm-mission-entered",count===total);};
         const s = a + b;                                                      // (no heading in the game - user 2026-11-02)
         const YS = [214, 330, 466], CX = 690, W = K.vcards(sc, a, b, CX, YS, 100); W.all().forEach(e =>{ put(e); K.pop(e); }); sfxPop();
         /* their faces (user + SME 2026-11-05: "show the characters' faces in the last two levels - it feels empty"): Rumi's
@@ -3315,6 +3466,7 @@ const PVModules = {
         /* kinds (SME 2026-11-05 "display only the hint relevant to the student's current progress"): only the column(s)
            typed wrong get their blocks and are added - the other column stays empty */
         const blocks = async kinds =>{ if(shown) return; shown = true; kinds = kinds && kinds.length ? kinds : ["o", "t"];
+          mission.classList.add("pv-hide");
           const B = board(50, 112, 520, 545), rowH = (B.ih - 8) / 3, G = 16, S = pvSplit(s);
           const ys = [0, 1, 2].map(r => B.y0 + r * rowH + rowH / 2);
           const line = put(add(sc, "i", "gm-line")); setXY(line, 50 + 22, B.y0 + 2 * rowH - 2); line.style.width = px(520 - 44); K.pop(line);
@@ -3337,13 +3489,32 @@ const PVModules = {
         const padTo = (P, ms, x)=> P.place(x || 880, W.ys[2] - P.rowY("2"), ms);   // (P.place: kept on the screen)
         const wrongKinds = v =>{ const w = String(s); v = v || ""; return ["o", "t"].filter(k => (k === "o" ? v.slice(-1) : (v.length > 1 ? v.slice(-2, -1) : "")) !== (k === "o" ? w[1] : w[0])); };
         wrongs += await K.numpad(C, { answer: s, x: CX, y: 600, reask: "type" + i, target: W.q, padAt: { x: 880, y: 168 }, keep: true,
+          onInput:input,
           onReady: P => P.ready(),
           onOpen: P => padTo(P),
-          onRight: ()=> W.fill(s),
+          onRight: ()=>{ W.fill(s); faces.forEach(hop);mission.classList.add("gm-mission-ready");K.pop(blueprint);PVSFX.magic(); },
           sayCorrect: ()=>{ const r = (C.late ? "late" : "done") + i, c = CU[r] || { a: .2, b: .4, n: .75 };   // (the numbers light as said - user 2026-11-02)
             return C.cue(r, [[c.a, ()=> K.sayEl(W.a)], [c.b, ()=> K.sayEl(W.b)], [c.n, ()=> K.sayEl(W.q)]]); },
           ladder: async (k, P)=>{ if(k === 1) await C.say("rewrite"); else if(k === 2){ await blocks(wrongKinds(P.last)); await padTo(P, 520, 915); } else P.guideKeys(); } }) || 0;
         sc.querySelectorAll(".pv-pad").forEach(e => put(e));
+      }
+      async function reward(i){
+        await clear(); C.guard();
+        view(false);
+        completed.add(i - 1); progress(i);
+        const panel = put(add(sc, "section", "gm-reward")); panel.setAttribute("aria-label", projects[i - 1] + " पूरा हुआ");
+        const title = add(panel, "h2", "gm-reward-title"); title.textContent = projects[i - 1];
+        const model=creation(panel, i - 1, true);
+        const ka = kid(KA, 230, 650, 330, "cheer"), kb = kid(KB, 1100, 650, 330, "cheer");
+        [ka,kb].forEach(e=>e.classList.add("gm-cheering"));sfxCorrect();
+        await model.built;C.guard();
+        [ka,kb].forEach(e=>e.classList.remove("gm-cheering"));
+        title.textContent=projects[i-1]+" तैयार है!";hop(ka);hop(kb);
+        PVSFX.buildFinish();
+        try{confettiCannon();}catch(e){}
+        await C.wait(K.reduce()?150:650);C.guard();
+        await continueFrom(panel, i < d.acts.length ? "अगला बनाएँ →" : "सब देखें →");
+        await clear();
       }
       K.run(C, async ()=>{
         await C.wait(300);
@@ -3351,7 +3522,10 @@ const PVModules = {
         const mode = i => (d.modes || [])[i - 1] || "blocks";
         let i0 = 1, p0 = 0;
         if(J){ if(J.part === "final") i0 = n + 1; else { i0 = Math.max(1, Math.min(n, J.i)); p0 = Math.max(0, PARTS.indexOf(J.part)); } }
+        // Direct QA jumps represent earlier stops as complete, just like normal play.
+        for(let j = 0; j < i0 - 1; j++) completed.add(j);
         for(let i = i0; i <= n; i++){
+          progress(i - 1);
           const [a, b] = d.acts[i - 1], from = i === i0 ? p0 : 0;
           if(mode(i) === "keypad") await keypad(i, a, b);
           else {
@@ -3359,15 +3533,24 @@ const PVModules = {
             if(from <= 2) await make(i, a, b, table, from === 2);
             await total(i, a, b, mode(i) === "blocks_type");
           }
-          if(i < n){ await C.wait(900); await clear(); }                      // (deck: "Move to the next screen.")
+          await reward(i);
         }
-        /* the final screen: both cheer */
+        /* Keep the complete collection visible until the child chooses to leave. */
         await clear();
-        const fa = kid(KA, 500, 660, 470, "cheer"), fb = kid(KB, 840, 660, 470, "cheer");
+        view(false);
+        progress(n); journey.classList.add("gm-journey-finished");
+        const gallery = put(add(sc, "section", "gm-gallery"));
+        const heading = add(gallery, "h2", "gm-gallery-title"); heading.textContent = "मिलकर सब बना लिया!";
+        const collection = add(gallery, "div", "gm-collection");
+        d.acts.forEach((_, j)=>{ const card = add(collection, "div", "gm-project-card");
+          creation(card, j, false); const name = add(card, "h3"); name.textContent = projects[j];
+        });
+        const fa = kid(KA, 118, 670, 350, "cheer"), fb = kid(KB, 1215, 670, 350, "cheer");
         try{ confettiCannon(); }catch(e){} hop(fa); hop(fb);
         await C.say("final");
         recordResult(slide, wrongs === 0);
-        await C.wait(600); completeSlide(wrongs === 0);
+        await continueFrom(gallery, "आगे →");
+        completeSlide(wrongs === 0);
       });
     }
   },
@@ -3483,6 +3666,16 @@ const PVLanding = {
       return out; }
     if(kind === "addv"){      // [type, x, y, w, h, picture] - each child's number: the rods side by side, the cubes stacked beside them
       const h = (CARD.landing_hero || {}), w = A.RH * 147 / 987, ch = w * 289 / 300, out = [];
+      if(h.construct){
+        const cells=[];
+        for(let row=0;row<3;row++)for(let col=-4;col<=4;col++){
+          if(Math.abs(col)<=1&&row<2)continue;
+          cells.push({col,row,color:row===2&&Math.abs(col)===3?"glass":"green"});
+        }
+        for(const row of [3,4])for(const col of [-4,-3,-2,2,3,4])cells.push({col,row,color:row===4?"gold":"green"});
+        for(const col of [-4,-2,2,4])cells.push({col,row:5,color:"gold"});
+        return cells.map((cell,i)=>["img",M+cell.col*22,this.FEET-cell.row*22,22,22*30/28,"game-build-unit-"+cell.color+".svg",i<h.a?0:1,i]);
+      }
       A.GROUPS.forEach(([gx, k])=>{ const n = +h[k] || 0, t = Math.floor(n / 10), u = n % 10;
         for(let j = 0; j < t; j++) out.push(["img", gx + j * (w + 4), B, w, A.RH, "pv_rod11"]);
         for(let i = 0; i < u; i++) out.push(["img", gx + t * (w + 4) + 6, B - i * (ch + 2), w, ch, "pv_cube10"]); });
@@ -3490,12 +3683,21 @@ const PVLanding = {
     return A.order.map(([k, by, seq])=>{ const [x0, y0, x1, y1] = A[k];
       return ["img", M + ((x0 + x1) / 2 - A.WX) * A.S, B + (y1 - A.FOOT) * A.S, (x1 - x0) * A.S, (y1 - y0) * A.S, kind + "_" + k, by, seq || 0]; }); },
   /* the build's pictures, for the boot loader (the landing waits for them) */
-  files(h){ const A = h && this.ART[h.build]; if(A && !A.order) return ["pv_rod11.webp", "pv_cube10.webp"]; return A ? A.order.map(([k])=> h.build + "_" + k + ".webp").concat(A.carry ? [h.build + "_" + A.carry + ".webp"] : []) : []; },
-  piece(type, c){ return '<img alt="" src="assets/' + c + '.webp" class="sgp-im">'; },
+  files(h){ const A = h && this.ART[h.build];
+    const files=A&&!A.order?["pv_rod11.webp","pv_cube10.webp"]:A?A.order.map(([k])=>h.build+"_"+k+".webp").concat(A.carry?[h.build+"_"+A.carry+".webp"]:[]):[];
+    if(h&&h.construct){
+      ["green","gold","glass"].forEach(c=>files.push("game-build-unit-"+c+".svg"));
+      (h.people||[]).forEach(w=>["carry","cheer","side"].forEach(p=>{const f=pvChar(w,p);if(f)files.push(f.slice(7));}));}
+    return files;
+  },
+  piece(type, c){ return '<img alt="" src="assets/' + c + (c.endsWith(".svg")?"":".webp") + '" class="sgp-im">'; },
   html(h){
-    const L = this, kind = L.ART[h.build] ? h.build : "house", plan = L.build(kind, L.MID, L.BASE);
+    const L = this, kind = L.ART[h.build] ? h.build : "house";
     L.KID_X = L.ART[kind].KIDX || [208, 564];                                  // where the children stop (by the build's width)
-    L.FEET = L.ART[kind].KIDY || 202;                                          // and the line their soles are on
+    // Fit the scene above the original centred play button, without moving it.
+    L.FEET = (L.ART[kind].KIDY || 202)-(h.construct?54:0);
+    L.FIG_H=h.construct?178:224;
+    const plan=L.build(kind,L.MID,L.BASE);
     const box = (cls, p, i, extra)=> '<div class="' + cls + '" data-i="' + i + '" style="left:' + (p[1] - p[3] / 2) + 'px;top:' + (p[2] - p[4]) + 'px;width:' +
       p[3] + 'px;height:' + p[4] + 'px;z-index:' + (20 + i) + ';' + (extra || "") + '">';
     const brought = p => p[6] === 0 || p[6] === 1, take = !!L.ART[kind].take;   // (take: the brought pieces stand from the start)
@@ -3518,7 +3720,7 @@ const PVLanding = {
     const casts = plan.map((p, i)=> box("sgp-pcs" + (stand(p) ? " sgp-stand" : ""), p, i) + L.piece(p[0], p[5]) + '</div>').join("");
     const xs = plan.map(p => [p[1] - p[3] / 2, p[1] + p[3] / 2]), bx0 = Math.min(...xs.map(x => x[0])), bx1 = Math.max(...xs.map(x => x[1]));
     const foot = L.BASE + (L.ART[kind].DY || 0);                                // (the build's foot line: a castle stands DY lower)
-    return '<div class="sgp sgp-' + kind + '" id="sgp">' +
+    return '<div class="sgp sgp-' + kind + (h.construct ? ' sgp-build-story' : '') + '" id="sgp">' +
       '<div class="sgp-bcast" style="transform-origin:' + L.MID + 'px ' + foot + 'px">' + casts + '</div>' +
       '<i class="sgp-bshd" style="left:' + (bx0 - 6) + 'px;width:' + (bx1 - bx0 + 12) + 'px;top:' + (foot - 7) + 'px"></i>' +
       pieces + kid(h.people[0], 0) + kid(h.people[1], 1) +
@@ -3747,8 +3949,10 @@ const PVLanding = {
        carry them - the rods lying across, the cubes in a row on top (bundle: each piece's middle from the hands' point, and
        its turn). In the walker on the side picture's hands (dress: they bob with the steps); standing, the child holds
        them out in the carry pose (char_<who>_carry) on its palms (L.PALMS) - the cover's own pieces there (held[i]) */
-    const SC = .5, held = {};
+    const SC = (CARD.landing_hero||{}).construct ? .26 : .5, held = {};
     const bundle = s =>{ const own = plan.map((p, i)=> i).filter(i => mine(i) === s), rods = own.filter(isRod), cubes = own.filter(i => !isRod(i)), out = {};
+      if((CARD.landing_hero||{}).construct){const cols=Math.min(5,own.length),cw=plan[own[0]][3]*SC+.4,ch=plan[own[0]][4]*SC-.4;
+        own.forEach((i,j)=>out[i]={x:(j%cols-(cols-1)/2)*cw,y:-(Math.floor(j/cols)+.5)*ch,r:0});return out;}
       const th = plan[rods[0] || own[0]][3] * SC + 1;                           // (a lying rod's thickness)
       rods.forEach((i, j)=>{ out[i] = { x: 0, y: -(j + .5) * th, r: 90 }; });
       cubes.forEach((i, j)=>{ const c = plan[i][3] * SC + 1.5, ch = plan[i][4] * SC;
@@ -3756,7 +3960,7 @@ const PVLanding = {
       return out; };
     const palm = (s, side)=> (L.PALMS[kids[s].dataset.who] || {})[side] || (side === "side" ? [.75, .45] : [.5, .47]);
     const dress = s => (bob, W, H)=>{ const b = bundle(s), [fx, fy] = palm(s, "side"), ax = W * fx, ay = H * fy + 2;
-      Object.keys(b).forEach(i =>{ const p = plan[i], o = b[i], im = document.createElement("img"); im.src = "assets/" + p[5] + ".webp"; im.alt = "";
+      Object.keys(b).forEach(i =>{ const p = plan[i], o = b[i], im = document.createElement("img"); im.src = "assets/" + p[5] + (p[5].endsWith(".svg")?"":".webp"); im.alt = "";
         Object.assign(im.style, { left: (ax + o.x - p[3] * SC / 2) + "px", top: (ay + o.y - p[4] * SC / 2) + "px", width: p[3] * SC + "px", height: p[4] * SC + "px", rotate: o.r + "deg" });
         bob.appendChild(im); }); };
     const hold = s =>{ const b = bundle(s), im = q(kids[s], '.sgp-pose[data-for~="carry"]') || q(kids[s], '.sgp-pose[data-for~="idle"]');
@@ -3765,7 +3969,10 @@ const PVLanding = {
       pose(kids[s], "carry");
       Object.keys(b).forEach(i =>{ const p = plan[i], o = b[i], e = pcs[i];
         const h = held[i] = { x: ax + o.x - p[1], y: ay + o.y - (p[2] - p[4] / 2), s: SC, r: o.r };   // (about the piece's middle)
-        Object.assign(e.style, { transformOrigin: "50% 50%", translate: h.x + "px " + h.y + "px", scale: String(SC), rotate: o.r + "deg", zIndex: 50 + +i }); e.classList.add("on"); }); };
+        // The carried pieces belong to the figure's movement layer, so its
+        // hands, leaning body and blocks always move together.
+        tilt(kids[s]).appendChild(e);e.dataset.carried="1";
+        Object.assign(e.style,{left:(ax-L.KID_X[s]+o.x-p[3]/2)+"px",top:(ay-L.FEET+o.y-p[4]/2)+"px",transformOrigin:"50% 50%",translate:"0 0",scale:String(SC),rotate:o.r+"deg",zIndex:50+ +i});e.classList.add("on"); }); };
     const walkIn = (s, carry)=>{ const k = kids[s], who = k.dataset.who, S = (SIDE.find(x => x.who === who) || {}).side, src = pvChar(who, "side"), card = root.closest(".sg-card");
       if(!S || !src || !card){ zoom(s); return Promise.resolve(); }
       const z = k_(), rr = root.getBoundingClientRect(), cr = card.getBoundingClientRect(), B = 9;   // (9: the picture's inset in the card)
@@ -3781,7 +3988,7 @@ const PVLanding = {
     /* landing_hero.pile (user 2026-11-02 "simplify - just blocks with animation that summarise this file"): no written sum.
        The two numbers' blocks come together into one pile in the middle - the ones first, then the tens (the lesson's
        rule) - each child leaning in as theirs hop over; the pile glows; the cheer. kind: "o" | "t" */
-    const isRod = i => plan[i][5] === "pv_rod11", mine = i => plan[i][1] < L.MID ? 0 : 1;
+    const isRod = i => plan[i][5] === "pv_rod11", mine = i => plan[i][6]===0||plan[i][6]===1?plan[i][6]:plan[i][1] < L.MID ? 0 : 1;
     const slots = (()=>{ const h = CARD.landing_hero || {}, n = (+h.a || 0) + (+h.b || 0), t = Math.floor(n / 10), u = n % 10;
       const r = plan.find((p, i)=> isRod(i)) || plan[0], w = r[3], ch = (plan.find((p, i)=> !isRod(i)) || r)[4], B = r[2];
       const W = t * (w + 4) + (u ? 8 + Math.ceil(u / 5) * (w + 2) : 0), x0 = L.MID - W / 2;
@@ -3791,6 +3998,10 @@ const PVLanding = {
       const list = plan.map((p, i)=> i).filter(i => isRod(i) === (kind === "t")).sort((a, b)=> mine(a) - mine(b));
       [0, 1].forEach(s => list.some(i => mine(i) === s) && setTimeout(()=> lean(s, 7, 520), s * 300));
       await Promise.all(list.map((i, n)=> wait(n * 90).then(()=>{ const p = plan[i], to = slots[kind][n]; if(!to) return;
+        if(pcs[i].dataset.carried){const rr=root.getBoundingClientRect(),r=pcs[i].getBoundingClientRect(),z=k_();
+          held[i]={x:(r.left+r.width/2-rr.left)/z-p[1],y:(r.top+r.height/2-rr.top)/z-(p[2]-p[4]/2),s:SC,r:isRod(i)?90:0};
+          root.appendChild(pcs[i]);Object.assign(pcs[i].style,{left:(p[1]-p[3]/2)+"px",top:(p[2]-p[4])+"px"});delete pcs[i].dataset.carried;
+        }
         const h = held[i] || { x: 0, y: 0, s: 1, r: 0 }, dx = to.x - p[1], dy = to.y - p[2], apex = Math.min(h.y, dy) - 46, F = [];   // (from the hands, when held)
         for(let j = 0; j <= 10; j++){ const t = j / 10, sc = (h.s + (1 - h.s) * t).toFixed(3);
           F.push({ translate: (h.x + (dx - h.x) * t).toFixed(1) + "px " + ((1 - t) * (1 - t) * h.y + 2 * (1 - t) * t * apex + t * t * dy).toFixed(1) + "px",
@@ -3800,6 +4011,49 @@ const PVLanding = {
         return pcs[i].animate(F, { duration: 480, easing: "linear", fill: "forwards" }).finished.catch(()=>{}).then(()=>{
           sound(()=> PVSFX.land()); if(n % 2 === 0) sparkle(to.x, to.y - p[4] * .6); }); })));
       await wait(250); };
+    // The cover uses the game's toy-brick palette and one continuous build.
+    // All 25 + 12 carried bricks stay in the scene and form a front-facing castle.
+    const assembleCover=async still=>{
+      const active=()=>root.isConnected&&document.body.classList.contains("is-start");
+      const order=plan.map((p,i)=>i),targets=new Map(plan.map((p,i)=>[i,{x:p[1],y:p[2]-p[4]/2,s:1,r:0}]));
+      const delays=order.map((_,i)=>i*3400/Math.max(1,order.length-1));
+      const roofTop=Math.min(...plan.map(p=>p[2]-p[4]));
+      root.classList.add("sgp-front-build");root.style.setProperty("--sg-feet",L.FEET+"px");
+      root.dataset.buildTotal=String(order.length);
+      const ground=document.createElement("i");ground.className="sgp-front-ground";
+      Object.assign(ground.style,{left:(L.MID-112)+"px",top:(L.FEET-3)+"px"});root.appendChild(ground);
+      const doorway=document.createElement("div");doorway.className="sgp-front-door";
+      Object.assign(doorway.style,{left:(L.MID-32)+"px",top:(L.FEET-44)+"px"});
+      doorway.innerHTML='<svg viewBox="0 0 64 44" aria-hidden="true"><defs><linearGradient id="coverGateDepth" x2="1" y2="1"><stop stop-color="#193F37" stop-opacity=".65"/><stop offset="1" stop-color="#386845" stop-opacity=".32"/></linearGradient></defs><path d="M2 44V26C2 11 15 2 32 2s30 9 30 24v18" fill="url(#coverGateDepth)"/><path d="M8 44V27C8 15 18 8 32 8" fill="none" stroke="#173D33" stroke-opacity=".22" stroke-width="3"/></svg>';
+      root.appendChild(doorway);
+      root.querySelectorAll(".sgp-pcs").forEach(e=>e.style.opacity="0");
+      const place=async(i,n)=>{
+        if(!still)await wait(delays[n]);if(!active())return;
+        const e=pcs[i],p=plan[i],to=targets.get(i),owner=mine(i);
+        let from={x:to.x,y:to.y,s:to.s,r:to.r};
+        if(!still){const rr=root.getBoundingClientRect(),r=e.getBoundingClientRect(),z=k_();
+          from={x:(r.left+r.width/2-rr.left)/z,y:(r.top+r.height/2-rr.top)/z,s:SC,r:isRod(i)?90:0};}
+        e.getAnimations().forEach(a=>a.cancel());root.appendChild(e);delete e.dataset.carried;
+        Object.assign(e.style,{left:(to.x-p[3]/2)+"px",top:(to.y-p[4]/2)+"px",translate:"0 0",scale:String(to.s),rotate:to.r+"deg",transformOrigin:"50% 50%",zIndex:50+n});
+        e.classList.add("on","sgp-front-piece");e.dataset.buildOrder=String(n);
+        if(!still){
+          lean(owner,4,260);const apex=Math.min(from.y,to.y)-35,F=[];
+          for(let j=0;j<=12;j++){const t=j/12,x=from.x+(to.x-from.x)*t,y=(1-t)*(1-t)*from.y+2*(1-t)*t*apex+t*t*to.y;
+            F.push({translate:(x-to.x)+"px "+(y-to.y)+"px",scale:String(from.s+(to.s-from.s)*t),rotate:(from.r+(to.r-from.r)*t)+"deg",offset:t*.86});}
+          F.push({translate:"0 0",scale:(to.s*1.06)+" "+(to.s*.95),rotate:to.r+"deg",offset:.94},{translate:"0 0",scale:String(to.s),rotate:to.r+"deg"});
+          if(!kids[owner].querySelector(".sgp-pc[data-carried]"))pose(kids[owner],"cheer",true);
+          await e.animate(F,{duration:620,easing:"linear",fill:"forwards"}).finished.catch(()=>{});
+          if(!active())return;sound(()=>PVSFX.land());sparkle(to.x,to.y, false);
+        }
+        e.dataset.placed="1";
+      };
+      const stop=still?()=>{}:PVSFX.assemble(4100,active);
+      try{await Promise.all(order.map(place));}finally{stop();}
+      if(!active())return;root.classList.add("built");
+      doorway.classList.add("on");
+      kids.forEach(k=>pose(k,"cheer",!still));
+      if(!still){burst(L.MID,roofTop+34);sound(()=>PVSFX.buildFinish());hop(0,2,14);hop(1,2,16);await wait(650);}
+    };
     /* the addition cover (ART.addv), in step with the greeting as the tens cover is */
     const addv = async ()=>{
       const idx = plan.map((p, i)=> i), vs = q(root, ".sgp-vsum"), ln = vs ? [...vs.children] : [], PILE = !!(CARD.landing_hero || {}).pile;
@@ -3811,7 +4065,8 @@ const PVLanding = {
         pcs[i].animate([{ translate: "0 -90px", opacity: 0, easing: "cubic-bezier(.55,0,1,.6)" }, { translate: "0 0", opacity: 1, offset: .55 },
           { translate: "0 0", scale: "1.16 .84", offset: .7 }, { translate: "0 -5px", scale: ".96 1.05", offset: .85 }, { translate: "0 0", scale: "1 1" }], { duration: 520, easing: "ease-out" });
         setTimeout(()=>{ shadow(i, true); sound(()=> PVSFX.land()); }, 290); }, n * 110));
-      if(PILE){ await wait(CARRY ? 400 : idx.length * 110 + 600);
+      if(PILE){ await wait(CARRY ? 850 : idx.length * 110 + 600);
+        if((CARD.landing_hero||{}).construct){await assembleCover(false);return;}
         await until(BT.a); await gather("o");                                   // "आज हम" - the ones together
         await until(BT.b); await gather("t");                                   // "संख्याओं" - then the tens
         if(CARRY) kids.forEach(kd => pose(kd, "idle", true));                   // (their hands empty now)
@@ -3833,7 +4088,8 @@ const PVLanding = {
     let started = false;
     const go = async ()=>{ if(started) return; started = true;
       await ready;
-      if(reduce){ root.classList.add("go", "still", "built"); pcs.forEach(p => p.classList.add("on", "landed")); root.querySelectorAll(".sgp-pcs").forEach(p => p.classList.add("on")); done(); return; }
+      if(reduce){ root.classList.add("go", "still", "built"); pcs.forEach(p => p.classList.add("on", "landed")); root.querySelectorAll(".sgp-pcs").forEach(p => p.classList.add("on"));
+        if((CARD.landing_hero||{}).construct){kids.forEach(k=>move(k).style.opacity="1");await assembleCover(true);}done();return; }
       if(KIND === "addv"){ await addv(); done(); return; }
       if(L.ART[KIND].drop){ await tens(); done(); return; }
       if(TAKE){                                                                  // subtraction: the whole castle; each child takes a top away
@@ -3946,6 +4202,7 @@ function mountSlide(idx){ const t = ++_mountTok; Assets.whenSlide(idx, ()=>{ if(
       setTimeout(()=>{ if(t !== _mountTok) return; host.classList.remove("q-out"); window.__qIn = true; mountSlideNow(idx); }, 340);
     } else mountSlideNow(idx); }); }
 function mountSlideNow(idx){
+  Screen.camera(null);
   state.idx = idx;
   state.slideStart = Date.now();
   state.attempts = 0; state.selectedKey = null; state.locked = false;
@@ -4334,7 +4591,19 @@ const ASSET_SIZES = {
   "assets/fonts/baloo2-600.woff2": 87020,
   "assets/fonts/baloo2-700.woff2": 86108,
   "assets/fonts/baloo2-800.woff2": 74512,
+  "assets/game-build-bridge-animated.svg": 74461,
+  "assets/game-build-bridge.svg": 74098,
+  "assets/game-build-castle-animated.svg": 178980,
+  "assets/game-build-castle.svg": 178617,
+  "assets/game-build-house-animated.svg": 99860,
+  "assets/game-build-house.svg": 99497,
+  "assets/game-build-tower-animated.svg": 111628,
+  "assets/game-build-tower.svg": 111265,
+  "assets/game-build-unit-glass.svg": 1075,
+  "assets/game-build-unit-gold.svg": 795,
+  "assets/game-build-unit-green.svg": 795,
   "assets/game_meadow.webp": 10722,
+  "assets/game_meadow_overhead.svg": 3078,
   "assets/gif/loader.webp": 137428,
   "assets/gif/new_landing_swiftee_anim.webp": 641710,
   "assets/gif/peeking_talk_up.webp": 1561680,
@@ -4563,7 +4832,7 @@ const Assets = (function(){
     if(s.type !== "CELEBRATION"){ img("pv_rod11"); img("pv_cube10"); out.push("assets/nudge_hand_new.svg"); }
     [].concat(...(d.people || []).map(p => p.who), ...(d.total ? [d.total.who] : [])).forEach(w => out.push(pvChar(w)));
     (d.count_clips || []).forEach(id => out.push(vo(id)));
-    if(s.type === "ADD_GAME"){ img("game_meadow"); (d.kids || []).forEach(k => [pvChar(k.who), pvChar(k.who, true), pvChar(k.who, "cheer"), pvChar(k.who, "side")].forEach(f => f && out.push(f))); }
+    if(s.type === "ADD_GAME"){ ["house", "bridge", "tower", "castle"].forEach(k => out.push("assets/game-build-" + k + ".svg","assets/game-build-" + k + "-animated.svg")); out.push("assets/game_meadow_overhead.svg"); img("game_meadow"); (d.kids || []).forEach(k => [pvChar(k.who), pvChar(k.who, true), pvChar(k.who, "cheer"), pvChar(k.who, "side")].forEach(f => f && out.push(f))); }
     if(s.type === "CELEBRATION"){ img("end_screen"); out.push(art("sw_lg_celebrating_anim.webp")); out.push(vo("sfx_celebrate")); }
     if(s.phase === "tutorial" && s.type !== "CELEBRATION") img("start_mascot");      // the tutorial card's Swiftie
     return out;
@@ -5703,20 +5972,21 @@ function buildDevNav(){
   const go = (i)=>{ i = Math.max(0, Math.min(i, CARD.slides.length - 1)); leaveStart(); mountSlide(i); sync(); };
   land.onclick = ()=>{ const sg = $("startGate"); if(sg){ sg.classList.remove("hidden"); document.body.classList.add("is-start"); } };
   first.onclick = ()=> go(0); prev.onclick = ()=> go(cur() - 1); next.onclick = ()=> go(cur() + 1); last.onclick = ()=> go(CARD.slides.length - 1);
-  sel.onchange = ()=> go(parseInt(sel.value, 10));
-  /* the game's parts (pvGameJump): start the game at any activity's table / building / adding, or its last screen */
-  const gsel = document.createElement("select"); gsel.className = "dev-nav-sel dev-nav-game"; gsel.title = "game: start at a part";
+  /* Game parts are nested in the main slide menu, not a second toolbar. */
   const gi = CARD.slides.findIndex(s => s.type === "ADD_GAME");
   if(gi >= 0){ const gd = CARD.slides[gi].data || {}, [ka, kb] = (gd.kids || []).map(k => k.name);
-    gsel.add(new Option("खेल · भाग चुनें…", ""));
-    (gd.acts || []).forEach((ab, k)=> ((gd.modes || [])[k] === "keypad" ? [["type", "टाइप करिए"]]
+    const afterGame=sel.options[gi+1]||null;
+    (gd.acts || []).forEach((ab, k)=>{const group=document.createElement("optgroup");
+      group.label="खेल · एक्टिविटी "+(k+1)+" ("+ab[0]+" + "+ab[1]+")";
+      (((gd.modes || [])[k] === "keypad" ? [["type", "टाइप करिए"]]
       : [["meet", "मेज़"], ["make", ka + " के ब्लॉक्स"], ["make_b", kb + " के ब्लॉक्स"], ["total", "जोड़िए"]])
-      .forEach(([p, t])=> gsel.add(new Option("एक्टिविटी " + (k + 1) + " (" + ab[0] + " + " + ab[1] + ") · " + t, (k + 1) + "." + p))));
-    gsel.add(new Option("अंतिम स्क्रीन", "final"));
-    gsel.onchange = ()=>{ const v = gsel.value; if(!v) return; const [a, p] = v.split(".");
-      window.PV_GAME_JUMP = a === "final" ? { part: "final" } : { i: +a, part: p }; gsel.value = ""; go(gi); }; }
+      .forEach(([p, t])=>group.appendChild(new Option(t,"game:"+(k+1)+"."+p))));sel.insertBefore(group,afterGame);});
+    const end=document.createElement("optgroup");end.label="खेल · समापन";end.appendChild(new Option("अंतिम स्क्रीन","game:final"));sel.insertBefore(end,afterGame);
+  }
+  sel.onchange = ()=>{const value=sel.value;if(value.startsWith("game:")){
+    const [a,p]=value.slice(5).split(".");window.PV_GAME_JUMP=a==="final"?{part:"final"}:{i:+a,part:p};go(gi);
+  }else go(parseInt(value,10));};
   bar.append(land, first, prev, sel, lbl, next, last);
-  if(gi >= 0) bar.append(gsel);
   document.body.appendChild(bar);
   setInterval(sync, 300); sync();
 }
