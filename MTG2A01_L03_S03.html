@@ -12,7 +12,7 @@
      request, so without this the very first paint is unstyled. This inline rule
      lands the loader's own colour on the first frame. -->
 <style>html,body{background:#FFFFFF;margin:0;}</style>
-<link rel="stylesheet" href="style.css?v=20261112i">
+<link rel="stylesheet" href="style.css?v=20261120c">
 <!-- [loading] the landing's own files start downloading with the page, alongside style.css - not only once app.js has
      arrived and asked for them (the boot loader waits for exactly these: app.js Assets, CRIT). http(s) only: on
      file:// a preload of a fetch() fails, and local files need no head start. -->
@@ -173,6 +173,7 @@
   "title_paint": "meadow",
   "walk": true,
   "pile": true,
+  "construct": "castle",
   "start_at": 0,
   "a": 25,
   "b": 12,
@@ -184,8 +185,7 @@
    "q": 4.29,
    "cheer": 4.83,
    "end": 5.52
-  },
-  "construct": "castle"
+  }
  },
  "skill_description_hi": "दो अंकों की दो संख्याओं को ऊपर-नीचे लिखकर (बिना हासिल के) जोड़ता है: पहले इकाई, फिर दहाई।",
  "phase_distribution": {
@@ -428,7 +428,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_ADD",
-   "prompt_hi": "कुल कितने ब्लॉक्स?",
+   "prompt_hi": "",
    "audio": {
     "a": "vo_t1_a",
     "b": "vo_t1_b",
@@ -879,6 +879,10 @@
     "b": 22,
     "answer": "numpad",
     "cues": {
+     "prompt": {
+      "a": 0.073,
+      "b": 0.283
+     },
      "h1": {
       "ao": 0.213,
       "bo": 0.344,
@@ -920,6 +924,10 @@
     "b": 60,
     "answer": "numpad",
     "cues": {
+     "prompt": {
+      "a": 0.067,
+      "b": 0.282
+     },
      "h1": {
       "ao": 0.211,
       "bo": 0.343,
@@ -1201,6 +1209,6 @@
 
 <!-- ============ ENGINE ============ -->
 <script src="swiftpal-bridge.js"></script>   <!-- [QA 01] host bridge: Android / iOS / web - must load before app.js -->
-<script src="app.js?v=20261112i"></script>
+<script src="app.js?v=20261120c"></script>
 </body>
 </html>

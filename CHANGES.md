@@ -358,3 +358,43 @@ Cache `v=20261105c`. Verified (muted): each change above on screen; P1 → the g
 | X11 | "the keypad is hiding many elements … sometimes it hides the box where the number is to be written, sometimes it gets hidden behind the instruction panel" | ✅ DONE | P2/P3 after the 2nd wrong answer: the sum slid under the keypad for ~12 s while the blocks played, then the keypad jumped up behind the instruction band. Now the keypad moves to the right first, then the help plays; and every keypad placement (all slides) is kept below the instruction band and on the screen (`numpad` `P.place`). Checked muted with 3 wrong answers on G4, P2, P3, game 3: the keypad overlaps nothing at any moment |
 | X12 | "move the keypad little downwards so that it gets aligned with the box where the numbers appear (sum)"; then "move it more down, so its top row sits level with the sum box (or slightly upwards)" | ✅ DONE | P1–P3 and game activities 3–4: the keypad's top row (1 2 3) is placed level with the sum's boxes, also after the 2nd help moves it beside the table (`numpad` `P.rowY`). The keypad is kept on the screen, so it stops at the bottom edge: its top row ends up level with the boxes on P1–P3 (12 px higher) and slightly above them in the game (24 px). G4 unchanged. Checked muted with 3 wrong answers on P2 and game 3: no overlaps |
 Cache `v=20261106d`.
+
+## Common fixes from File6 (MTG2A01_L04_S01) — 2026-11-20
+User: "fix 1–6 first" (the File6 fixes of 2026-11-17 … 11-19 that also apply here; the lead-review design changes are NOT done - to be decided later).
+
+| # | Fix | How it is built |
+|---|---|---|
+| 1 | The play button greys while the greeting is replayed (File4's round 26) | The play button still appears for the first time when the greeting ends; after that a tap on the cover speaker turns it into the grey disabled disc (btn-play-round-waiting.svg - on screen, no tap, no pulse) until the line ends, then it pops back live and pulsing. `playLanding` + `setStartBtnReady` (`sg-shown`), `.sg-btn.sg-shown.sg-waiting` |
+| 2 | The speaker no longer flashes blue between two lines | `body.spk-busy` (setPlaying): on while a clip plays, off 0.7s after it stops - it greys the cover's, the header's and the card's speaker (was `vo-busy`, which dropped in every gap: 0.1-0.5s of blue). A page still talking between its lines greys it too (`.chip-wait`), and a page counts as talking from its first frame (`pvReplay`: `C.seq`). Blue only while the page waits for the child |
+| 3 | The ones digit lit longer than the tens digit (1.6s against 1.1s) | `lightDigit(card, which, on, ms)`: every digit lit by a line goes off by itself after 1.1s (an explicit off still turns it off at once) |
+| 4 | A little more space between the cover title's words | `.sgw-t` / `.sgw-b` `word-spacing:.12em` (about 8px); the arch stays centred |
+| 5 | The equation could blink when the next line started | `show()` pops only what was hidden - a number already on screen is left as it is |
+| 6 | Dev menu: mute / unmute | A 🔊 / 🔇 button at the end of the dev nav bar (`?dev=1` / `?nav=1` only). Mutes the VO, the SFX, the music and the WebAudio tones; the clips still play muted, so the flow keeps its timing. Remembered across reloads (localStorage `devMute`) |
+
+Verified in the browser: cover - live → speaker tapped: grey disc, a tap on it does nothing → line over: live and pulsing; T2 / G1 - the speaker grey through every line and gap, blue only at the build step; digits lit 1.03-1.13s; mute toggles; every page (T1 … CEL) opens with 0 console errors. Cache version `?v=20261120a`.
+
+## Lead review (File6's), the changes that apply here — 2026-11-20
+User: "do 1–11 together, and leave 12 and 13 for now" (12: Ananya's keypad, 13: Ananya's title style - not done).
+
+| # | Change | How it is built |
+|---|---|---|
+| 1 | T1: no heading | `lessons.py` T1 `prompt_hi` "" (its line «…कुल कितने ब्लॉक्स?» is still said); the page's layout already sat centred on the card |
+| 2 | Bigger ones, a bigger tap area | The stacked table's ones are 1.3 x the rod's width (`vtable` `CG`: 23px on T2 / G1, 27px on G2 - G4; were 18 / 19); each one that can be tapped has 7px of invisible padding round it (`.pv-blk.pv-cube.pv-tap`) |
+| 3 | The ones further apart | `vtable` `og`: about 10-11px between them (was 4-5px) |
+| 4 | A bigger table where there is room | G2 / G3 / G4 (nothing built with the + buttons): `PV_ADD_LAY.big` - rows 150px (were 136), blocks 21 (18), the table 462 centred so it clears the written sum (its right edge 771, the "+" at 778) |
+| 5 | Only the दहाई / इकाई word lights, not the head strip | The head's word is its own span (`.pv-hw`); `beatCol` / `beatHead` glow and pop the word only; `.pv-th.hl` no longer animates the strip |
+| 6 | The दहाई / इकाई words pulsate with «… 2 दहाई और 3 इकाई …» | T2 (r1 / r2) and G1 (r1 / r2): on «… दहाई» the दहाई word, on «… इकाई» the इकाई word, with the digit lighting as before (G1 used to beat the + box's icons) |
+| 7 | The + buttons only when blocks are added | T2: in for Swiftee's demo, out after it, back with «अब …बनाइए» for the child's build. G1: in only after «… दहाई और … इकाई हैं», when the child builds (they came with the table) |
+| 8 | A hand on the + buttons | `childBuild`: the hand on the + to press as the step starts, on the other + once its column is full, and again on inactivity (it was on inactivity only) |
+| 9 | The options pulse on inactivity | `mcq`: after the idle time the cards still in play breathe (4 %, 2.2s a beat - `.mq-opt.idle-pulse`) until the right one is tapped (G2, G3, P1) |
+| 10 | P2 / P3: the question's numbers light as they are said | «76 और 22 को जोड़िए…» lights 76 then 22 (each 1.1s, yellow; measured on the recordings: 0.30s / 1.16s; P3 37 / 60: 0.30s / 1.26s - `PROMPT_AT`); only at the start - the 7s reminder says it without lights. P1's question («सही जोड़ चुनिए।») names no numbers |
+| 11 | Practice pages: no hand on the answer box | P2 / P3 (MENTAL_ADD): on inactivity the box pulses, no hand. G4 (guided) keeps its hand |
+
+Verified in the browser: T1 without heading; T2 - the words pulsate at 9.8s / 10.9s, the + box in for the demo, out, back for the build with the hand on it; G1 - the + box only after the line, the hand on it at once; G2 - the bigger table clear of the sum, the cards pulse after the idle time and stop on the right tap; G4 - the bigger table and the type step; P2 - 76 lit at 0.36s, 22 at 1.24s, off after 1.1s, no hand on inactivity; every page (T1 … CEL) 0 console errors. Cache version `?v=20261120b`.
+
+## The green answer boxes go back to normal; the game's ones as the pages' — 2026-11-20
+| Asked | Status | How it is built |
+|---|---|---|
+| "the sum number box gets green after adding but it remains green ... it should be normal" | ✅ | `settleGreen(el)`: a box (or digit) that turns green as its number comes in goes back to the normal box 1.2s later, fading in 0.45s (`.pv-settled`) - the written sum's answer on every page (each digit as it comes in, the whole number, a typed answer) and the game's sum boxes. A digit the voice lights keeps its light |
+| The ones' changes in the game too | ✅ | The game's ones (`col`): 1.3 x the rod's width (make board 43px, was 33; the sum board 25, was 19; the help board 21, was 16), about 10-18px apart (were 4-7), and a bigger tap area round each one to tap (`.pv-blk.pv-cube.gm-tap`, 7px) |
+Verified in the browser: T3 - 37 green at 2.9s, normal from 4.1s; the game's sum - 7 green at 5.3s, normal from 6.6s, 3 the same; the make board and the sum board with the bigger, spaced ones; 0 console errors. Cache version `?v=20261120c`.

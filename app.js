@@ -285,6 +285,11 @@ function setPlaying(on){
   // tut frame, so the in-card .tut-audio is the only visible affordance and must react to VO too).
   isPlaying=on;
   document.body.classList.toggle("vo-busy", !!on);   // user 2026-10-26: while a voice line plays nothing on the page takes a tap (style.css)
+  /* user 2026-11-20 (as File6, File4's logic): every speaker - the cover's, the header chip, the teaching card's - is greyed and takes
+     no tap while a voice plays (body.spk-busy), and stays so 0.7s after it stops, so it never flashes blue between two lines */
+  clearTimeout(setPlaying._spkT);
+  if(on) document.body.classList.add("spk-busy");
+  else setPlaying._spkT = setTimeout(()=>{ if(!isPlaying) document.body.classList.remove("spk-busy"); }, 700);
   bgmDuck();
   /* [QA 05] only the chip the audio is actually coming FROM animates, and only one at a time.
      It used to pulse every chip for every sound - option words, feedback, the count-aloud. */
@@ -385,7 +390,7 @@ function playSfx(id, onEnd){
 /* ---------- game-feel: procedural SFX (no audio files) + success particle burst ----------
    WebAudio resumes on the first user tap (autoplay policy), so taps/answers always sound. */
 let _juiceAC = null;
-function _ac(){ if(!_juiceAC){ try{ _juiceAC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+function _ac(){ if(window.__devMute) return null; if(!_juiceAC){ try{ _juiceAC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
   if(_juiceAC && _juiceAC.state === "suspended"){ try{ _juiceAC.resume(); }catch(e){} } return _juiceAC; }
 function _tone(freqs, type, dur, vol){ const c = _ac(); if(!c) return; const t0 = c.currentTime;
   freqs.forEach((f, i)=>{ const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = f;
@@ -1013,7 +1018,7 @@ const PVK = (function(){
   const pop = e =>{ if(!e) return; e.classList.remove("pv-pop"); void e.offsetWidth; e.classList.add("pv-pop");
     const end = ev =>{ if(!/^pv(Btn|Rod)?Pop$/.test(ev.animationName)) return; e.removeEventListener("animationend", end); e.classList.remove("pv-pop"); };
     e.addEventListener("animationend", end); };
-  const show = (e, on)=>{ if(!e) return; e.classList.toggle("pv-hide", on === false); if(on !== false) pop(e); };
+  const show = (e, on)=>{ if(!e) return; const was = e.classList.contains("pv-hide"); e.classList.toggle("pv-hide", on === false); if(on !== false && was) pop(e); };   // (only what was hidden pops in - an equation already up never blinks when the line changes; as File6, user 2026-11-20)
   /* the lateral buzz of the FLN kit (recipes 11/20): +-9px decaying, .4s, on `translate` */
   /* the decks' idle cue ("if idle, pulsate again"): the pulse restarts from its start, with the nudge chime - no hand
      (user 2026-10-15: match the decks; their hand nudges are only the answer counter's and the ghost drags) */
@@ -1140,8 +1145,11 @@ const PVK = (function(){
     const e = add(sc, "div", "pv-num " + (cls || ""), "height:" + px(h) + ";font-size:" + px(h * .7) + ";min-width:" + px(h * 1.55) + ";border-radius:" + px(h * .28));
     e.innerHTML = n == null ? "?" : numHTML(n); setXY(e, cx, y); e._n = n; return e;
   }
-  const lightDigit = (card, which, on)=>{ if(!card) return; const d = card.querySelector(which === "t" ? ".pv-dt" : ".pv-do");
-    if(d) d.classList.toggle(which === "t" ? "hl-t" : "hl-o", on !== false); };
+  /* (user 2026-11-20, as File6: the ones digit stayed lit to the end of its line - 1.6s against the tens' 1.1s) a digit lit with ms
+     goes off by itself after ms; an explicit off still turns it off at once */
+  const lightDigit = (card, which, on, ms)=>{ if(!card) return; const d = card.querySelector(which === "t" ? ".pv-dt" : ".pv-do");
+    if(!d) return; clearTimeout(d._hlT); d.classList.toggle(which === "t" ? "hl-t" : "hl-o", on !== false);
+    if(on !== false && ms) d._hlT = setTimeout(()=> d.classList.remove(which === "t" ? "hl-t" : "hl-o"), ms); };
   /* the equation row "a + b = ?" (one flex row, centred on cx) */
   /* ---- a dotted outline (the ten's ring, the drop target) with ONE dot missing: the gap travels round the shape a dot at a
      time while the dots stay put (review 2026-10-14). An SVG rect over the box: w x h its size, sw the line, r the corner,
@@ -1563,8 +1571,12 @@ Object.assign(PVK, (function(){
         ready(){ busy = false; arm(); },
         lock(){ layer3 = true; els.forEach(x =>{ if(x !== right){ x.classList.add("faded", "locked"); x.disabled = true; } });
           right.classList.add("hint-on"); K.softGlow(right); } };   // highlighted + the others faded (the decks' WA3) - no hand
+      /* (user 2026-11-20, lead review as File6: "pulse animation on options") after the idle time the cards still in play breathe (slow, small - .mq-opt.idle-pulse)
+         until one is tapped */
+      const idlePulse = on => els.forEach(x => x.classList.toggle("idle-pulse", !!on && !x.classList.contains("locked") && !x.classList.contains("pv-gone")));
       const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{
         if(!C.alive() || busy || over) return;
+        idlePulse(true);
         busy = true; C.say(cfg.reask || "ask").then(()=>{ busy = false; arm(); }, ()=>{}); }, IDLE_MS); };
       async function onWrong(o){
         wrong++; busy = true; clearTimeout(idleT);
@@ -1578,7 +1590,7 @@ Object.assign(PVK, (function(){
         if(C.alive() && !over){ busy = false; setSwMood("point"); arm(); }
       }
       async function onRight(o){
-        over = true; state.locked = true; busy = true; stopNudge(); clearTimeout(idleT);
+        over = true; state.locked = true; busy = true; stopNudge(); clearTimeout(idleT); idlePulse(false);
         o.classList.remove("hint-on"); o.classList.add("correct");
         els.forEach(x =>{ if(x !== o) x.classList.add("pv-gone"); });   // the other two go completely as the right one goes up (review 2026-10-14)
         try{ XAPI.send("question_answered", { slide_id: slide.id, type: slide.type, phase: slide.phase }, { is_correct: true, attempt: wrong + 1, score: wrong === 0 ? 1 : 0 }); }catch(e){}
@@ -1678,7 +1690,8 @@ Object.assign(PVK, (function(){
         slot.classList.toggle("on", open && !full); if(ok) okState(); };
       render();                                                    // the cursor shows from the start
       const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || busy || over) return;
-        if(!open) placeNudge(cfg.nudge || ans); else if(guide != null) lightKey(); else if(typed.length >= N) K.repulse(ok);   // the answer counter's hand (the decks); cfg.nudge: G4's one box (user 2026-11-02)
+        if(!open){ if(C.slide.type === "MENTAL_ADD") K.repulse(cfg.nudge || ans); else placeNudge(cfg.nudge || ans); }   // (user 2026-11-20, lead review as File6: no hand on the practice pages, the box pulses)
+        else if(guide != null) lightKey(); else if(typed.length >= N) K.repulse(ok);   // the answer counter's hand (the decks); cfg.nudge: G4's one box (user 2026-11-02)
         busy = true; C.say(P.reask || cfg.reask || "prompt").then(()=>{ busy = false; arm(); }, ()=>{}); }, IDLE_MS); };
       const openPad = ()=>{ if(open || over) return; open = true; stopNudge(); pad.classList.remove("pv-hide"); pop(pad); ans.classList.add("open"); render(); arm();
         if(cfg.onOpen) cfg.onOpen(P); };                              // (cfg.onOpen: the page moves things as the keypad comes - P2/P3, the game)
@@ -1688,7 +1701,7 @@ Object.assign(PVK, (function(){
         busy = true; clearTimeout(idleT); stopNudge(); okState();
         const v = (rtl ? typed.slice().reverse() : typed).join("");
         if(v === String(cfg.answer)){
-          over = true; if(!cfg.keep) state.locked = true; ans.classList.add("ok"); Object.values(keys).forEach(b => b.classList.add("locked")); okState();
+          over = true; if(!cfg.keep) state.locked = true; ans.classList.add("ok"); settleGreen(ans); Object.values(keys).forEach(b => b.classList.add("locked")); okState();
           try{ XAPI.send("question_answered", { slide_id: slide.id, type: slide.type, phase: slide.phase }, { is_correct: true, attempt: wrong + 1, score: wrong === 0 ? 1 : 0, response: v }); }catch(e){}
           if(!cfg.keep) recordResult(slide, wrong === 0);
           GameBus.emit("numpad_correct", { slide_id: slide.id, phase: slide.phase, value: wrong === 0, first_try: wrong === 0, attempts: wrong + 1, latency_ms: Date.now() - state.slideStart });
@@ -1746,7 +1759,7 @@ Object.assign(PVK, (function(){
   /* the table heads can carry a count: "दहाई" -> "3 दहाई" (deck page 11: "the table and the text header will reflect
      the correct remaining numbers"; page 3: "1 दहाई" / "2 इकाई" on the answer table) */
   /* the table heads show their word only (SME review 3: "remove the numerals written in the cell") - n is ignored */
-  function headCount(T, kind, n){ const h = kind === "t" ? T.th : T.oh; if(h.textContent !== W_[kind]) h.textContent = W_[kind]; }
+  function headCount(T, kind, n){ const h = kind === "t" ? T.th : T.oh, w = h.querySelector(".pv-hw") || h; if(w.textContent !== W_[kind]) w.textContent = W_[kind]; }
   const left = (T, kind)=> T.list(kind).filter(b => !b._removed);
   function liveHeads(T){ T.counts = ()=>{}; headCount(T, "t"); headCount(T, "o"); }
   function dropBlock(T, kind){ const b = T.list(kind).pop(); if(!b) return; PVSFX.unpop(); b.classList.add("pv-gone"); setTimeout(()=> b.remove(), 450); if(T.relayout) T.relayout(260); }
@@ -1755,7 +1768,11 @@ Object.assign(PVK, (function(){
     e.animate([{ scale: "1" }, { scale: "1.16" , offset: .32 }, { scale: ".96", offset: .62 }, { scale: "1.06", offset: .8 }, { scale: "1" }],
               { duration: 560, delay: i * (step == null ? 70 : step), easing: "ease-out" }); }); }
   /* a column of a table beats: its head and the blocks still standing in it */
-  function beatCol(T, kind){ beat([kind === "t" ? T.th : T.oh], 0); beat(left(T, kind), kind === "t" ? 90 : 60); }
+  /* (user 2026-11-20, lead review as File6: "only the दहाई / इकाई labels should pulsate, not the entire table cell") the head's WORD glows and pops; the strip
+     stays as it is. beatHead: the word alone - a line that names the column ("… 2 दहाई और 3 इकाई …") */
+  const headWord = h => (h && h.querySelector(".pv-hw")) || h;
+  function beatHead(T, kind){ const w = headWord(kind === "t" ? T.th : T.oh); if(!w) return; w.classList.remove("pv-hw-hl"); void w.offsetWidth; w.classList.add("pv-hw-hl"); beat([w], 0); }
+  function beatCol(T, kind){ beatHead(T, kind); beat(left(T, kind), kind === "t" ? 90 : 60); }
   /* the whole table pops (it and every block on it, together) */
   /* the whole table lights (its frame glows a moment) and pops - "इसमें" (SME review 4) */
   function hlTable(T){ T.el.classList.remove("pv-table-hl"); void T.el.offsetWidth; T.el.classList.add("pv-table-hl");
@@ -1813,16 +1830,19 @@ Object.assign(PVK, (function(){
       const sync = ()=>{ const nx = next();
         ["t", "o"].forEach(k =>{ const g = S[k], full = cnt(k) >= want[k]; g.plus.classList.toggle("off", full); g.classList.toggle("pv-done", full);
           g.classList.toggle("pulse", k === nx); }); };
-      const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin) return; const k = next();
-        if(k){ K.repulse(S[k]); if(C.slide.data.idle_hand) placeNudge(S[k].plus); } arm(); }, IDLE_MS); };   // (and the hand on that + - T2 / G1 only: user 2026-11-05; a tap removes it)
+      /* (user 2026-11-20, lead review as File6: "a hand on the + buttons") the hand on the + to press as the step starts, on the other + once its column is
+         full, and again on inactivity (it was on inactivity only) */
+      const handOn = ()=>{ if(!C.alive() || fin) return; const k = next(); if(k) placeNudge(S[k].dot || S[k].plus); };
+      const arm = ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>{ if(!C.alive() || fin) return; const k = next(); if(k){ K.repulse(S[k]); handOn(); } arm(); }, IDLE_MS); };
       const check = ()=>{ if(next() || fin) return; fin = true; clearTimeout(idleT); stopNudge(); vo.stop();
         ["t", "o"].forEach(k =>{ S[k].plus.onclick = null; S[k].classList.remove("pulse"); });
         setTimeout(res, 450); };
       ["t", "o"].forEach(k =>{ const g = S[k];
         g.plus.onclick = ()=>{ if(!C.alive() || fin || cnt(k) >= want[k]) return; stopNudge(); PVSFX.tap(); T.addBlock(k);
-          GameBus.emit("pv_block_added", { slide_id: C.slide.id, kind: k, count: cnt(k) }); sync(); check(); arm(); vo.arm(); };
+          GameBus.emit("pv_block_added", { slide_id: C.slide.id, kind: k, count: cnt(k) }); sync(); check(); arm(); vo.arm();
+          if(cnt(k) >= want[k] && next()) setTimeout(handOn, 350); };   // (its column full: the hand moves on to the other +)
       });
-      sync(); arm(); vo.arm(); check();
+      sync(); arm(); vo.arm(); check(); setTimeout(handOn, 350);
     });
   }
 
@@ -2038,7 +2058,7 @@ Object.assign(PVK, (function(){
     });
   }
 
-  return { headCount, liveHeads, dropBlock, beat, beatCol, popTable, hlTable, sparkles, sources, demoAdd, childBuild, takeAway, putBack, demoRemove, removeChild, copyLeft,
+  return { headCount, liveHeads, dropBlock, beat, beatHead, beatCol, popTable, hlTable, sparkles, sources, demoAdd, childBuild, takeAway, putBack, demoRemove, removeChild, copyLeft,
            eqSync, eqSyncAt, left, bringTen, splitTen, openTen, openChild };
 })());
 
@@ -2052,24 +2072,27 @@ Object.assign(PVK, (function(){
   /* o: { cx, y, G (a cube's width - a rod is ten of them), rowH, head }. V.show(n): the frame shows its first n rows */
   function vtable(sc, o){
     /* a rod a little shorter than its row (user 2026-10-29: "the tens block is touching the table border") */
-    const G = o.G, g = Math.max(3, Math.round(G * .24)), rH = Math.min(G * K.ROD.ar, Math.round(o.rowH * .82)), rW = rH / K.ROD.ar, rg = Math.max(5, Math.round(G * .55)), cH = G * K.CUBE.ar;
+    /* (user 2026-11-20, lead review as File6: "increase the size of ones blocks ... increase the space between ones blocks") the ones are CG wide - 1.3 x the
+       rod's width - and og apart (was G wide, g apart) */
+    const G = o.G, g = Math.max(3, Math.round(G * .24)), rH = Math.min(G * K.ROD.ar, Math.round(o.rowH * .82)), rW = rH / K.ROD.ar, rg = Math.max(5, Math.round(G * .55));
+    const CG = Math.round(G * 1.3), og = Math.max(9, Math.round(CG * .42)), cH = CG * K.CUBE.ar;
     const head = o.head || 44, rowH = o.rowH, colW = Math.round(9 * G + 8 * rg + 24), W = 2 * colW, x = o.cx - W / 2, fs = Math.round(head * .6);
     const el = add(sc, "div", "pv-table pv-vt", "width:" + px(W) + ";height:" + px(head + 3 * rowH) + ";--head:" + px(head));
-    el.innerHTML = '<div class="pv-th pv-th-t" style="width:' + px(colW) + ';height:' + px(head) + ';font-size:' + px(fs) + '">दहाई</div>' +
-      '<div class="pv-th pv-th-o" style="left:' + px(colW) + ';right:0;height:' + px(head) + ';font-size:' + px(fs) + '">इकाई</div>' +
+    el.innerHTML = '<div class="pv-th pv-th-t" style="width:' + px(colW) + ';height:' + px(head) + ';font-size:' + px(fs) + '"><span class="pv-hw pv-hw-t">दहाई</span></div>' +
+      '<div class="pv-th pv-th-o" style="left:' + px(colW) + ';right:0;height:' + px(head) + ';font-size:' + px(fs) + '"><span class="pv-hw pv-hw-o">इकाई</span></div>' +
       [0, 1, 2].map(r => '<i class="pv-vt-row pv-vt-r' + r + '" style="top:' + px(head + r * rowH) + ';height:' + px(rowH) + '"></i>').join("") +
       '<i class="pv-div" style="left:' + px(colW - 1.5) + '"></i>';
     setXY(el, x, o.y);
     const V = { sc, el, x, y: o.y, W, H: head + 3 * rowH, head, rowH, colW, cx: o.cx, G,
                 th: el.querySelector(".pv-th-t"), oh: el.querySelector(".pv-th-o"), bands: [...el.querySelectorAll(".pv-vt-row")] };
     function row(r){
-      const R = { sc, V, r, el: V.bands[r], x, y: o.y + head + r * rowH, W, H: rowH, G, g, rH, rW, rg, cH, pad: 0, head: 0, inH: rowH, tensW: colW, onesW: colW,
+      const R = { sc, V, r, el: V.bands[r], x, y: o.y + head + r * rowH, W, H: rowH, G: CG, g: og, rH, rW, rg, cH, pad: 0, head: 0, inH: rowH, tensW: colW, onesW: colW,
                   rods: [], cubes: [], ghosts: [], extra: [], th: V.th, oh: V.oh, laneRod: null };
       R.tensXY = (j, n)=>{ n = Math.max(n == null ? R.rods.length : n, j + 1, 1); const grp = n * rW + (n - 1) * rg;
         return { x: R.x + (colW - grp) / 2 + j * (rW + rg), y: R.y + (rowH - rH) / 2 }; };
       R.onesXY = (i, n)=>{ n = Math.max(n == null ? R.cubes.length : n, i + 1); const cols = Math.min(n, 5), rows = Math.ceil(n / 5);
-        const bw = cols * G + (cols - 1) * g, bh = rows * cH + (rows - 1) * g;
-        return { x: R.x + colW + (colW - bw) / 2 + (i % 5) * (G + g), y: R.y + (rowH - bh) / 2 + Math.floor(i / 5) * (cH + g) }; };
+        const bw = cols * CG + (cols - 1) * og, bh = rows * cH + (rows - 1) * og;
+        return { x: R.x + colW + (colW - bw) / 2 + (i % 5) * (CG + og), y: R.y + (rowH - bh) / 2 + Math.floor(i / 5) * (cH + og) }; };
       R.slot = (kind, i, n)=> kind === "t" ? R.tensXY(i, n) : R.onesXY(i, n);
       R.list = kind => kind === "t" ? R.rods : R.cubes;
       /* every block not in flight glides to its centred place; once all are still, once more (blocks added quickly) */
@@ -2079,7 +2102,7 @@ Object.assign(PVK, (function(){
           if([...R.rods, ...R.cubes].some(b => b._gl)){ R._settle = setTimeout(again, 120); return; }
           R.rods.forEach((b, j)=> go(b, R.tensXY(j), 220)); R.cubes.forEach((b, i)=> go(b, R.onesXY(i), 220)); }, ms + 80); };
       R.addBlock = kind =>{ PVSFX.appear(); const list = R.list(kind), p = R.slot(kind, list.length, list.length + 1);
-        const b = K.block(sc, kind, p.x, p.y, kind === "t" ? rH : G); b._row = r; list.push(b); pop(b); R.relayout(260, b); return b; };
+        const b = K.block(sc, kind, p.x, p.y, kind === "t" ? rH : CG); b._row = r; list.push(b); pop(b); R.relayout(260, b); return b; };
       R.fill = async (n, step)=>{ for(let j = 0; j < Math.floor(n / 10); j++){ R.addBlock("t"); await wait(step == null ? 110 : step); }
         for(let i = 0; i < n % 10; i++){ R.addBlock("o"); await wait(step == null ? 90 : step * .8); } };
       R.all = ()=> [...R.rods, ...R.cubes];
@@ -2115,9 +2138,9 @@ Object.assign(PVK, (function(){
     W.q.innerHTML = '<span class="pv-d pv-dt pv-qd">?</span><span class="pv-d pv-do pv-qd">?</span>';
     W.q._boxes = ()=> [...W.q.querySelectorAll(".pv-d")];
     W.fillDigit = (kind, v)=>{ const e = W.q.querySelector(kind === "t" ? ".pv-dt" : ".pv-do"); if(!e) return;
-      e.textContent = String(v); e.classList.remove("pv-qd"); e.classList.add("pv-df"); pop(e);
+      e.textContent = String(v); e.classList.remove("pv-qd"); e.classList.add("pv-df"); pop(e); settleGreen(e);
       if(!W.q.querySelector(".pv-qd")) W.q.classList.add("filled"); };
-    W.fill = n =>{ W.q.innerHTML = K.numHTML(n); W.q.classList.add("filled"); W.q.classList.remove("pv-typein"); pop(W.q); };
+    W.fill = n =>{ W.q.innerHTML = K.numHTML(n); W.q.classList.add("filled"); W.q.classList.remove("pv-typein"); pop(W.q); settleGreen(W.q); };
     W.all = ()=> [W.a, W.plus, W.b, W.line, W.q];
     W.place(cx, ys, h, 0);
     return W;
@@ -2202,7 +2225,10 @@ function pvWalk(parent, cls, src, S, H, x, foot, dx, ms, dress){
 }
 const PV_ADD_LAY = {
   tut:  { cx: 560, y: 118, G: 19, rowH: 136, head: 42, cardX: 970, cardH: 72 },   // (T2 has no heading - user 2026-10-29: the table grows into its room; bottom 586, clear of the → button)
-  main: { cx: 500, y: 156, G: 18, rowH: 136, head: 44, cardX: 890, cardH: 74 }
+  main: { cx: 500, y: 156, G: 18, rowH: 136, head: 44, cardX: 890, cardH: 74 },
+  /* (user 2026-11-20, lead review as File6: "increase the size of table where it's possible") G2 - G4 - no + box under the table: bigger rows and blocks,
+     the table a little left so it clears the written sum */
+  big:  { cx: 462, y: 152, G: 21, rowH: 150, head: 48, cardX: 890, cardH: 80 }
 };
 /* the rows' middles of a stacked table (where the written sum's cards stand) */
 const pvAddYs = V => V.rows.map(R => R.mid());
@@ -2223,8 +2249,8 @@ function pvAddSumLine(C, V, W, kind, role){
    on the card and the number 37 in sync with the VO") */
 function pvAddTotal(C, V, W){
   const d = C.slide.data, S = V.rows[2], c = (d.cues || {}).total || { t: .35, o: .55, n: .85 }, K = PVK;
-  return C.cue("total", [[c.t, ()=>{ K.beatCol(S, "t"); if(!W.q.classList.contains("filled")) W.fill(d.a + d.b); K.lightDigit(W.q, "t"); }],
-                         [c.o, ()=>{ K.beatCol(S, "o"); K.lightDigit(W.q, "t", false); K.lightDigit(W.q, "o"); }],
+  return C.cue("total", [[c.t, ()=>{ K.beatCol(S, "t"); if(!W.q.classList.contains("filled")) W.fill(d.a + d.b); K.lightDigit(W.q, "t", true, 1100); }],
+                         [c.o, ()=>{ K.beatCol(S, "o"); K.lightDigit(W.q, "t", false); K.lightDigit(W.q, "o", true, 1100); }],
                          [c.n, ()=>{ K.lightDigit(W.q, "o", false); K.sayEl(W.q); }]]);
 }
 /* a line naming a, b and the sum ("इसलिए, 23 और 14 को जोड़ने पर 37 मिलता है।", "शाबाश! 42 और 35 का जोड़ 77 है।"): each card says its number */
@@ -2241,6 +2267,10 @@ const PV_LAY = {
   main: { eqY: 166, eqH: 62, tableY: 254, sumY: 466, cube: 29, blk: 28, pad: 10, cxL: 410, cxR: 922, cx: 666 }    // under the header band
 };
 const pvSplit = n =>({ t: Math.floor(n / 10), o: n % 10 });
+/* user 2026-11-20: "the sum number box gets green after adding but it remains green ... it should be normal" - an answer box (or
+   digit) turned green as its number comes in goes back to the normal box after a moment (.pv-settled - style.css) */
+function settleGreen(el, ms){ if(!el) return; clearTimeout(el._sgT); el.classList.remove("pv-settled");
+  el._sgT = setTimeout(()=>{ if(el.isConnected) el.classList.add("pv-settled"); }, ms || 1200); }
 /* the keypad pages (P1, P4) in the sibling's layout (MTG2A01_L03_S01 PV_NUMPAD, user 2026-10-22): the one table on the left,
    level with the 3 x 4 pad's middle; the pad on the right under the "?"; the equation spread over them - a over the दहाई
    column, b over the इकाई column, the − between, the "=" midway to the "?" - and the child types into the "?" */
@@ -2257,6 +2287,7 @@ function pvPadPage(sc, L, d, hidden){
 /* every table of the lesson is the same size (SME review 3): its tens column is wide enough for nine rods */
 const pvTable = (sc, L, cx, y)=> PVK.table(sc, { cx, y, cube: L.cube, blk: L.blk, pad: L.pad, tensMax: 9, tensFinal: 0, onesMax: 9 });
 function pvReplay(C){ state.replayAudio = ()=>{ if(!isPlaying && C.cur && C.alive()) C.say(C.cur).catch(()=>{}); };
+  if(C.seq === undefined) C.seq = true;   // (user 2026-11-20, as File6: the page is "talking" from its first frame - its speaker never blinks blue before its first line)
   /* [QA BUG_09 / 04 / 07, as HI02H11_L02_S02] the speaker of the page: it takes a tap only when the page is WAITING FOR THE CHILD
      (a build / take-away / cards / keypad step that is not itself talking) or its flow has ended - never while the page
      talks (its opening lines and the pauses between them, a hint sequence, the lines after a right answer), and never
@@ -2356,8 +2387,8 @@ const PVModules = {
         await C.cue("intro", [[0.45, ()=>{ K.showTable(TA); src.show(); }]]);
         [src.t, src.o].forEach(g => g.classList.add("demo", "off"));
         const cd = CU.digits || { t: .3, o: .6 };
-        await C.cue("digits", [[cd.t, ()=>{ K.lightDigit(card, "t"); K.beat([src.t], 0); }],
-                               [cd.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o"); K.beat([src.o], 0); }]]);
+        await C.cue("digits", [[cd.t, ()=>{ K.lightDigit(card, "t", true, 1100); K.beat([src.t], 0); }],
+                               [cd.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o", true, 1100); K.beat([src.o], 0); }]]);
         await C.wait(200); K.lightDigit(card, "o", false);
         const H = K.hand(sc);
         await Promise.all([C.say("tens"), C.wait(700).then(()=> K.demoAdd(C, H, src.t, TA, A.t, "t"))]);
@@ -2374,7 +2405,7 @@ const PVModules = {
         const inn = (...els)=>{ els.forEach(e => K.show(e)); sfxPop(); };
         const cs = CU.sub || { a: .12, op: .2, b: .3, q: .4, t: .62, o: .8 };
         await C.cue("sub", [[cs.a, ()=> inn(E.a)], [cs.op, ()=> inn(E.op)], [cs.b, ()=> inn(E.b)], [cs.q, ()=> inn(E.eq, E.q)],
-                            [cs.t, ()=> K.lightDigit(E.b, "t")], [cs.o, ()=>{ K.lightDigit(E.b, "t", false); K.lightDigit(E.b, "o"); }]]);
+                            [cs.t, ()=> K.lightDigit(E.b, "t", true, 1100)], [cs.o, ()=>{ K.lightDigit(E.b, "t", false); K.lightDigit(E.b, "o", true, 1100); }]]);
         eqP.forEach(e => K.show(e));
         K.lightDigit(E.b, "o", false);
         TA.rods.forEach(x => x.classList.add("pv-dim"));                       // "Tens are disabled"
@@ -2461,7 +2492,7 @@ const PVModules = {
       const eqIn = async role =>{ eqP.forEach(e => e.classList.add("pv-hide")); K.show(E.el);
         const cs = CU[role] || { a: .12, op: .2, b: .3, q: .4 };
         await C.cue(role, [[cs.a, ()=> inn(E.a)], [cs.op, ()=> inn(E.op)], [cs.b, ()=> inn(E.b)], [cs.q, ()=> inn(E.eq, E.q)],
-                           [cs.o, ()=> K.lightDigit(E.b, "o")]]);
+                           [cs.o, ()=> K.lightDigit(E.b, "o", true, 1100)]]);
         eqP.forEach(e => K.show(e)); K.lightDigit(E.b, "o", false); };
       K.run(C, async ()=>{
         await C.wait(250);
@@ -2473,8 +2504,8 @@ const PVModules = {
                               [Math.max(.45, ci.n), ()=>{ K.showTable(TA); src.show(); }]]);
         if(d.demo) [src.t, src.o].forEach(g => g.classList.add("demo", "off"));
         const cd = CU.digits || { t: .3, o: .6 };
-        await C.cue("digits", [[cd.t, ()=>{ K.lightDigit(card, "t"); K.beat([src.t], 0); }],
-                               [cd.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o"); K.beat([src.o], 0); }]]);
+        await C.cue("digits", [[cd.t, ()=>{ K.lightDigit(card, "t", true, 1100); K.beat([src.t], 0); }],
+                               [cd.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o", true, 1100); K.beat([src.o], 0); }]]);
         await C.wait(200); K.lightDigit(card, "o", false);
         if(d.demo){
           await Promise.all([C.say("tens"), C.wait(700).then(()=> K.demoAdd(C, H, src.t, TA, A.t, "t"))]);
@@ -2492,7 +2523,7 @@ const PVModules = {
         /* "5 इकाई में से 6 इकाई नहीं घटाई जा सकती…": the 5 of 25 lights on "5 इकाई", the 6 on "6 इकाई"; both stay lit through the
            line (user 2026-10-27) */
         if(C.has("cant")){ const c = CU.cant || { o: .05, b: .25 };
-          await C.cue("cant", [[c.o, ()=>{ K.lightDigit(E.a, "o"); bO(); }], [c.b, ()=> K.lightDigit(E.b, "o")]]);
+          await C.cue("cant", [[c.o, ()=>{ K.lightDigit(E.a, "o", true, 1100); bO(); }], [c.b, ()=> K.lightDigit(E.b, "o", true, 1100)]]);
           K.lightDigit(E.a, "o", false); K.lightDigit(E.b, "o", false); }
         /* the ten: brought in on "हम 1 दहाई को यहाँ लाएँगे", opened on "तोड़ेंगे" */
         const co = CU.open || { bring: .3, split: .55 };
@@ -2631,8 +2662,8 @@ const PVModules = {
         if(d.build){
           const src = K.sources(sc, TA, TA.y + TA.H + 14), cb = CU.build || { t: .62, o: .82 };
           /* "…जिसमें 3 दहाई और 4 इकाई होते हैं": the rod + pops on "3 दहाई", the cube + on "4 इकाई" (SME review 3) */
-          await C.cue("build", [[0.12, ()=> src.show()], [cb.t, ()=>{ K.lightDigit(E.a, "t"); K.beat([src.t], 0); }],
-                                [cb.o, ()=>{ K.lightDigit(E.a, "t", false); K.lightDigit(E.a, "o"); K.beat([src.o], 0); }]]);
+          await C.cue("build", [[0.12, ()=> src.show()], [cb.t, ()=>{ K.lightDigit(E.a, "t", true, 1100); K.beat([src.t], 0); }],
+                                [cb.o, ()=>{ K.lightDigit(E.a, "t", false); K.lightDigit(E.a, "o", true, 1100); K.beat([src.o], 0); }]]);
           K.lightDigit(E.a, "o", false);
           await K.childBuild(C, TA, d.a, src); C.guard();
           GameBus.emit("pv_build_done", { slide_id: slide.id });
@@ -2642,7 +2673,7 @@ const PVModules = {
         let cfg = { to, settle: 1100, onesFirst: true, sayStep: !d.steps };   // (every page: only the ones can be tapped until they are done - SME review 4)
         if(C.has("sub")){ const c = CU.sub || { b: .05, t: .6, o: .82 };
           await C.cue("sub", [...(c.this != null ? [[c.this, ()=> K.hlTable(TA)]] : []), [c.b, ()=> K.pop(E.b)],
-                              [c.t, ()=> K.lightDigit(E.b, "t")], [c.o, ()=>{ K.lightDigit(E.b, "t", false); K.lightDigit(E.b, "o"); }]]); }
+                              [c.t, ()=> K.lightDigit(E.b, "t", true, 1100)], [c.o, ()=>{ K.lightDigit(E.b, "t", false); K.lightDigit(E.b, "o", true, 1100); }]]); }
         K.lightDigit(E.b, "o", false);
         const sweepO = ()=> K.beatCol(TA, "o"), sweepT = ()=> K.beatCol(TA, "t");
         /* S02 - the ones are too few: the child opens a ten first (taps a rod: it comes into the इकाई column and opens into
@@ -2706,8 +2737,8 @@ const PVModules = {
       const E = PAD ? PAD.E : K.equation(sc, d.a, d.b, L.cx, 282, L.eqH, "−"); if(!PAD) E.el.classList.add("big");
       const say = e =>{ e.classList.remove("pv-say"); void e.offsetWidth; e.classList.add("pv-say"); };
       const order = async ()=>{ const c = CU.order || { o: .36, t: .68 };
-        await C.cue("order", [[c.o, ()=>{ K.lightDigit(E.a, "o"); K.lightDigit(E.b, "o"); }],
-                              [c.t, ()=>{ K.lightDigit(E.a, "o", false); K.lightDigit(E.b, "o", false); K.lightDigit(E.a, "t"); K.lightDigit(E.b, "t"); }]]);
+        await C.cue("order", [[c.o, ()=>{ K.lightDigit(E.a, "o", true, 1100); K.lightDigit(E.b, "o", true, 1100); }],
+                              [c.t, ()=>{ K.lightDigit(E.a, "o", false); K.lightDigit(E.b, "o", false); K.lightDigit(E.a, "t", true, 1100); K.lightDigit(E.b, "t", true, 1100); }]]);
         K.lightDigit(E.a, "t", false); K.lightDigit(E.b, "t", false); };
       let T = null;
       /* the blocks: the answer hidden, the equation up, a's blocks, then the line - b taken away as it is said */
@@ -2840,7 +2871,7 @@ const PVModules = {
         if(src && src.bar.isConnected) K.glide(src.bar, { x: src.bar._x, y: topFor(n) + L.head + n * L.rowH + 16 }, 600, false);   // (the + buttons stay under the table)
         return Promise.all([V.moveBy(dy, 600), W.place(L.cardX, pvAddYs(V), L.cardH, 600)]); };
       const digits = (card, role)=>{ const c = CU[role] || { t: .4, o: .7 };
-        return C.cue(role, [[c.t, ()=>{ K.lightDigit(card, "t"); K.beat([V.th], 0); }], [c.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o"); K.beat([V.oh], 0); }]])
+        return C.cue(role, [[c.t, ()=>{ K.lightDigit(card, "t", true, 1100); K.beatHead(V, "t"); }], [c.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o", true, 1100); K.beatHead(V, "o"); }]])
           .then(()=>{ K.lightDigit(card, "o", false); }); };
       K.run(C, async ()=>{
         await C.wait(250);
@@ -2854,11 +2885,11 @@ const PVModules = {
         src.show(); [src.t, src.o].forEach(g => g.classList.add("demo", "off"));
         await Promise.all([C.say("tens"), C.wait(600).then(()=> K.demoAdd(C, H, src.t, R0, A.t, "t"))]);
         await Promise.all([C.say("ones"), C.wait(600).then(()=> K.demoAdd(C, H, src.o, R0, A.o, "o"))]);
-        H.off(); V.lightRow(0, false);
+        H.off(); V.lightRow(0, false); src.show(false);                       // (user 2026-11-20, lead review as File6: the + buttons only while blocks are added)
         await grow(2); C.guard(); V.lightRow(1); K.show(W.b); sfxPop();
         await digits(W.b, "r2");
         [src.t, src.o].forEach(g => g.classList.remove("demo", "off", "pv-done"));
-        await C.say("build");
+        src.show(); await C.say("build");                                      // (the + buttons back for the child's build)
         await K.childBuild(C, R1, d.b, src); C.guard();
         GameBus.emit("pv_build_done", { slide_id: slide.id });
         V.lightRow(1, false);
@@ -2891,7 +2922,7 @@ const PVModules = {
        it), the keypad on a tap; the answer flies into the "?". Help: 1 h1, 2 h2 (the blocks beat as named), 3 the right card lit /
        the right keys in turn. data: { a, b, build, answer, options, prompt2, cues }. */
     mount(host, slide){
-      const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {}, L = PV_ADD_LAY.main, s = d.a + d.b;
+      const d = slide.data, K = PVK, sc = K.scene(host), C = K.ctx(slide, sc), CU = d.cues || {}, L = d.build ? PV_ADD_LAY.main : PV_ADD_LAY.big, s = d.a + d.b;
       state.ownsAudio = true; state.locked = false; setNavActive(false); $("navBtn").style.display = "none"; setSwMood("point"); pvReplay(C);
       const A = pvSplit(d.a), B = pvSplit(d.b);
       const V = K.vtable(sc, L), [R0, R1, S] = V.rows; V.show(3);
@@ -2907,12 +2938,13 @@ const PVModules = {
             /* "[Auto tap on the row]" - the row lights by itself, no hand on the table (user 2026-10-29); then the child
                builds it - the tens + pulsing first */
             await C.wait(250); V.lightRow(R.r); PVSFX.tap();
-            const src = K.sources(sc, { x: V.x, W: V.W, G: V.G }, V.y + V.H + 10); src.show();
+            const src = K.sources(sc, { x: V.x, W: V.W, G: V.G }, V.y + V.H + 10);   // (shown only for the build - user 2026-11-20, lead review as File6)
             const card = R.r ? W.b : W.a, c = CU[role] || { t: .2, o: .4 };
             const off = ()=> K.lightDigit(card, "o", false);                  // (SME 2026-10-30: off as "…4 इकाई हैं।" ends, not with the clip)
-            await C.cue(role, [[c.t, ()=>{ K.lightDigit(card, "t"); K.beat([src.t], 0); }], [c.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o"); K.beat([src.o], 0); }]]
+            await C.cue(role, [[c.t, ()=>{ K.lightDigit(card, "t", true, 1100); K.beatHead(V, "t"); }], [c.o, ()=>{ K.lightDigit(card, "t", false); K.lightDigit(card, "o", true, 1100); K.beatHead(V, "o"); }]]
               .concat(c.x ? [[c.x, off]] : []));
             K.lightDigit(card, "o", false);
+            src.show(); await C.wait(400);                                     // (the + buttons only now, to add the blocks)
             await K.childBuild(C, R, n, src); C.guard();
             src.fade(); V.lightRow(R.r, false); await C.wait(300);
           }
@@ -2996,8 +3028,8 @@ const PVModules = {
       const padTo = (P, x, ms)=> P.place(x, W.ys[2] - P.rowY("2"), ms);   // (P.place: kept below the band, on the screen)
       const W = K.vcards(sc, d.a, d.b, BIG.cx, BIG.ys, BIG.h);
       const h1 = async ()=>{ const c = CU.h1 || { ao: .2, bo: .35, at: .55, bt: .7 };
-        await C.cue("h1", [[c.ao, ()=> K.lightDigit(W.a, "o")], [c.bo, ()=> K.lightDigit(W.b, "o")],
-                           [c.at, ()=>{ K.lightDigit(W.a, "o", false); K.lightDigit(W.b, "o", false); K.lightDigit(W.a, "t"); }], [c.bt, ()=> K.lightDigit(W.b, "t")]]);
+        await C.cue("h1", [[c.ao, ()=> K.lightDigit(W.a, "o", true, 1100)], [c.bo, ()=> K.lightDigit(W.b, "o", true, 1100)],
+                           [c.at, ()=>{ K.lightDigit(W.a, "o", false); K.lightDigit(W.b, "o", false); K.lightDigit(W.a, "t", true, 1100); }], [c.bt, ()=> K.lightDigit(W.b, "t", true, 1100)]]);
         K.lightDigit(W.a, "t", false); K.lightDigit(W.b, "t", false); };
       let V = null;
       /* 2nd help (SME 2026-10-30 "animation of addition", as File6/File7 - user 2026-11-02): the stacked table at the left,
@@ -3040,7 +3072,12 @@ const PVModules = {
           return;
         }
         await K.numpad(C, { answer: s, x: BIG.cx, y: 600, reask: "reask", target: W.q, padAt: PAD,
-          onReady: P =>{ P.hide(true); C.say("prompt").then(()=>{ P.hide(false); P.ready(); }, ()=>{}); },
+          onReady: P =>{ P.hide(true);
+            /* (user 2026-11-20, lead review as File6: "highlight the question's numbers") "76 और 22 को जोड़िए…" lights 76, then 22 - each 1.1s as it is said */
+            const cp = CU.prompt || {}, lit = e =>{ [W.a, W.b].forEach(x => x.classList.remove("pv-lit")); e.classList.add("pv-lit"); K.beat([e], 0);
+              clearTimeout(e._litT); e._litT = setTimeout(()=> e.classList.remove("pv-lit"), 1100); };
+            const at = [cp.a != null ? [cp.a, ()=> lit(W.a)] : null, cp.b != null ? [cp.b, ()=> lit(W.b)] : null].filter(Boolean);
+            (at.length ? C.cue("prompt", at) : C.say("prompt")).then(()=>{ P.hide(false); P.ready(); }, ()=>{}); },
           onOpen: P =>{ if(V) return; W.place(520, BIG.ys, BIG.h, 450); padTo(P, PAD.x); },   // (the sum to the left, the keypad beside it)
           onRight: ()=> W.fill(s),
           sayCorrect: ()=> C.cue("correct", [[((CU[C.right("correct")] || CU.correct || {}).n) || .8, ()=> K.sayEl(W.q)]]),
@@ -3149,11 +3186,13 @@ const PVModules = {
       const badge = (k, n, x, y)=>{ const e = put(add(sc, "div", "gm-badge")); e.innerHTML = '<b>' + k.name + '</b><span>' + n + '</span><i>ब्लॉक्स</i>'; setXY(e, x, y); K.pop(e); return e; };
       /* a column of one kind of block, centred in its box (x0, y0, w, h); its blocks are scene elements */
       const col = (kind, x0, y0, w, h, G)=>{
-        const rH = G * K.ROD.ar, cH = G * K.CUBE.ar, gp = Math.max(4, G * .22), rg = Math.max(5, G * .3), Q = { kind, list: [], G };
-        Q.size = kind === "t" ? rH : G;
+        /* (user 2026-11-20: "the changes you did for ones block ... make the same change ... in the game part") the ones are CG
+           wide - 1.3 x the rod's width - and og apart (were G wide, gp apart) */
+        const rH = G * K.ROD.ar, CG = Math.round(G * 1.3), og = Math.max(9, Math.round(CG * .42)), cH = CG * K.CUBE.ar, rg = Math.max(5, G * .3), Q = { kind, list: [], G };
+        Q.size = kind === "t" ? rH : CG;
         Q.at = (i, n)=>{ if(kind === "t") return { x: x0 + (w - (n * G + (n - 1) * rg)) / 2 + i * (G + rg), y: y0 + (h - rH) / 2 };
-          const cols = Math.min(n, 5), rows = Math.ceil(n / 5), bw = cols * G + (cols - 1) * gp, bh = rows * cH + (rows - 1) * gp;
-          return { x: x0 + (w - bw) / 2 + (i % 5) * (G + gp), y: y0 + (h - bh) / 2 + Math.floor(i / 5) * (cH + gp) }; };
+          const cols = Math.min(n, 5), rows = Math.ceil(n / 5), bw = cols * CG + (cols - 1) * og, bh = rows * cH + (rows - 1) * og;
+          return { x: x0 + (w - bw) / 2 + (i % 5) * (CG + og), y: y0 + (h - bh) / 2 + Math.floor(i / 5) * (cH + og) }; };
         Q.lay = ms => Q.list.forEach((b, i)=> glide(b, Q.at(i, Q.list.length), ms == null ? 240 : ms, false));
         Q.add = ()=>{ const n = Q.list.length + 1, p = Q.at(n - 1, n), b = put(K.block(sc, kind, p.x, p.y, Q.size));
           b.classList.add("gm-blk"); Q.list.push(b); K.pop(b); PVSFX.appear(); Q.lay(240); return b; };
@@ -3372,7 +3411,7 @@ const PVModules = {
           e.innerHTML = (plus ? '<i class="gm-plus">+</i>' : '') + (k ? '<span class="gm-sum gm-nums">' + String(n).split("").map(c => '<b class="gm-d">' + c + '</b>').join("") + '</span>'
             : '<span class="gm-sum"><b class="gm-d gm-dt">?</b><b class="gm-d gm-do">?</b></span>'); return e; };   // (every number in boxes, a digit each - SME 2026-11-05)
         const la = lab(KA, a, 0), lb = lab(KB, b, 1, true), ls = lab(null, 0, 2);
-        const fillD = (kind, v)=>{ const e = ls.querySelector(kind === "t" ? ".gm-dt" : ".gm-do"); e.textContent = String(v); e.classList.add("on"); K.pop(e); sfxPop(); };
+        const fillD = (kind, v)=>{ const e = ls.querySelector(kind === "t" ? ".gm-dt" : ".gm-do"); e.textContent = String(v); e.classList.add("on"); K.pop(e); sfxPop(); settleGreen(e); };
         const line = put(add(sc, "i", "gm-line")); setXY(line, LX + 22, B.y0 + 2 * rowH - 2); line.style.width = px(820 - 44);
         const cols = [0, 1, 2].map(r => ({ t: col("t", B.x0, B.y0 + r * rowH, B.cw, rowH, G), o: col("o", B.x0 + B.cw, B.y0 + r * rowH, B.cw, rowH, G) }));
         await Promise.all([cols[0].t.fill(A.t), cols[0].o.fill(A.o), cols[1].t.fill(Bn.t), cols[1].o.fill(Bn.o)]);
@@ -5034,6 +5073,7 @@ function boot(){
     b.setAttribute("aria-disabled", ready ? "false" : "true");
     if(img) img.src = ready ? "assets/btn-play-round.svg" : "assets/btn-play-round-waiting.svg";   // HI02H11_L01_S01's round play button (review 2026-10-06)
     if(!ready){ disarmStartPulse(); b.classList.remove("sg-pop"); return; }
+    b.classList.add("sg-shown");   // (user 2026-11-20, as File6 / File4: once it has been shown it stays on screen - a replay greys it)
     if(!was){ b.classList.remove("sg-pop"); void b.offsetWidth; b.classList.add("sg-pop");
       setTimeout(()=> b.classList.remove("sg-pop"), 900); }
     armStartPulse();
@@ -5054,6 +5094,9 @@ function boot(){
     /* review 2026-10-05: "why is the sound box getting disabled - this should not happen anywhere in the game": the
        speaker is never greyed out (the QA checklist's disabled-while-the-greeting-speaks state is gone). A tap while the
        greeting is still playing is ignored, as on every speaker (replayTap), so it never restarts the line mid-way. */
+    /* user 2026-11-20 (as File6 / File4 MTG204_L01_S01, its round 26): a replay of the greeting from the speaker turns the play button
+       into the grey disabled disc (on screen, no tap, no pulse) until the line ends; then it is live again */
+    if(_greetingHeard) setStartBtnReady(false);
     play(landSrc, ()=>{ if(voEl.ended){ _greetingHeard = true; releaseStart(); } });
   };
   // any tap on the landing restarts the 5s idle timer (only once the button is live)
@@ -5265,6 +5308,7 @@ function boot(){
   };
   var _actx = null;
   M.audio = function(){
+    if(window.__devMute) return null;   // dev nav mute
     try{
       var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return null;
       _actx = _actx || new AC();
@@ -5957,6 +6001,27 @@ function boot(){
 /* [engine JS] DEV NAV — a review/QA slide navigator. Shows ONLY with ?dev=1 or ?nav=1 (children never
    see it). Jump to any slide by dropdown, step ◀▶, first/last, or back to the landing. Uses the
    engine's own mountSlide + state.idx; a light poll keeps the label synced when the game self-advances. */
+/* user 2026-11-20 (as File6): a MUTE button on the dev nav, for testing in silence. Every clip still PLAYS (muted), so the VO-driven
+   flow, its cues and the lip-sync keep their timing; only the speaker is off. Covers the VO, the SFX pool, the music and any other
+   <audio>/Audio (play() is wrapped), and the two WebAudio tone makers (_ac, FLNMotion.audio). Remembered across reloads
+   (localStorage "devMute"). Dev nav only: without ?dev=1 / ?nav=1 none of this runs. */
+const _devMedia = new Set();
+function devMuteInit(){
+  if(devMuteInit.done) return; devMuteInit.done = true;
+  const play = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function(){ _devMedia.add(this); this.muted = !!window.__devMute; return play.apply(this, arguments); };
+  let on = false; try{ on = localStorage.getItem("devMute") === "1"; }catch(e){}
+  if(on) devSetMute(true);
+}
+function devSetMute(on){
+  window.__devMute = !!on;
+  try{ localStorage.setItem("devMute", on ? "1" : ""); }catch(e){}
+  const all = new Set(_devMedia);
+  try{ all.add(voEl); _sfxPool.forEach(m => all.add(m)); }catch(e){}
+  try{ if(typeof BGM !== "undefined" && BGM && BGM.el) all.add(BGM.el); }catch(e){}
+  document.querySelectorAll("audio,video").forEach(m => all.add(m));
+  all.forEach(m =>{ try{ if(m) m.muted = !!on; }catch(e){} });
+}
 function buildDevNav(){
   if(document.getElementById("devNav")) return;
   const bar = document.createElement("div"); bar.id = "devNav"; bar.className = "dev-nav";
@@ -5986,7 +6051,11 @@ function buildDevNav(){
   sel.onchange = ()=>{const value=sel.value;if(value.startsWith("game:")){
     const [a,p]=value.slice(5).split(".");window.PV_GAME_JUMP=a==="final"?{part:"final"}:{i:+a,part:p};go(gi);
   }else go(parseInt(value,10));};
-  bar.append(land, first, prev, sel, lbl, next, last);
+  const mute = mk("", "mute / unmute all sound (dev only)"); mute.classList.add("dev-nav-mute");
+  const paintMute = ()=>{ mute.textContent = window.__devMute ? "\u{1F507}" : "\u{1F50A}"; mute.classList.toggle("on", !!window.__devMute); };
+  mute.onclick = ()=>{ devSetMute(!window.__devMute); paintMute(); };
+  devMuteInit(); paintMute();
+  bar.append(land, first, prev, sel, lbl, next, last, mute);
   document.body.appendChild(bar);
   setInterval(sync, 300); sync();
 }

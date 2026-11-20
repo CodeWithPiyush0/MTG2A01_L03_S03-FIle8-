@@ -55,7 +55,7 @@ slides = []
 # deck page 2 - replaced: "कुल कितने ब्लॉक्स?" Akash and Moni with their blocks and their numbers, 23 / + 14 one under the
 # other; everything in sync with the VO (one deck line, said as three clips so the pictures can follow it)
 slides.append({
-    "id": "T1", "phase": "tutorial", "eis": "iconic", "type": "STORY_ADD", "prompt_hi": "कुल कितने ब्लॉक्स?",
+    "id": "T1", "phase": "tutorial", "eis": "iconic", "type": "STORY_ADD", "prompt_hi": "",   # (no heading - lead review as File6, user 2026-11-20; its line is still said)
     "audio": {"a": vo("vo_t1_a", "आकाश और मोनी ब्लॉक्स से खेल रहे हैं, और ये सारे ब्लॉक्स मिलाकर एक ऊँची बिल्डिंग बना रहे हैं।"),
               "b": vo("vo_t1_b", "आकाश के पास 23 ब्लॉक्स हैं और मोनी के पास 14 ब्लॉक्स हैं।"),
               "ask": vo("vo_t1_ask", "चलिए, पता करते हैं, दोनों के पास मिलाकर कुल कितने ब्लॉक्स हैं?")},
@@ -244,6 +244,11 @@ def weight(t):
     return len(re.sub(r"[।,.!?—;]", "oo", t))
 
 
+# user 2026-11-20 (lead review as File6): P2 / P3 - the question's two numbers light as it says them; seconds in the recordings
+# (loudness: "छिहत्तर" 0.28 | "बाईस" 1.16; "सैंतीस" 0.30 | "साठ" 1.26)
+PROMPT_AT = {"vo_p2_prompt": {"a": 0.30, "b": 1.16}, "vo_p3_prompt": {"a": 0.30, "b": 1.26}}
+
+
 def frac(cid, phrase, after=None):
     """where `phrase` starts in clip `cid`, as a share of its length (the 0.28s lead and 0.36s tail of build_vo.py known)"""
     text = VO[cid]; i0 = text.index(after) + len(after) if after else 0
@@ -310,6 +315,8 @@ for sl in slides:
                               "n": frac(au[role], str(s), after=str(b))}
         if "h2" in au:
             cues["h2"] = {"t": frac(au["h2"], f"{st} दहाइयाँ"), "o": frac(au["h2"], f"{so} इकाइयाँ")}
+    if sl["type"] == "MENTAL_ADD" and au.get("prompt") in PROMPT_AT and clip_len(au["prompt"]):
+        dur = clip_len(au["prompt"]); cues["prompt"] = {k: round(v / dur, 3) for k, v in PROMPT_AT[au["prompt"]].items()}
     if sl["type"] == "MENTAL_ADD":
         cues["h1"] = {"ao": frac(au["h1"], f"{ao} इकाई"), "bo": frac(au["h1"], f"{bo} इकाई", after=f"{ao} इकाई"),
                       "at": frac(au["h1"], f"{at} दहाई"), "bt": frac(au["h1"], f"{bt} दहाई", after=f"{at} दहाई")}

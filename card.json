@@ -22,6 +22,7 @@
   "title_paint": "meadow",
   "walk": true,
   "pile": true,
+  "construct": "castle",
   "start_at": 0,
   "a": 25,
   "b": 12,
@@ -33,8 +34,7 @@
    "q": 4.29,
    "cheer": 4.83,
    "end": 5.52
-  },
-  "construct": "castle"
+  }
  },
  "skill_description_hi": "दो अंकों की दो संख्याओं को ऊपर-नीचे लिखकर (बिना हासिल के) जोड़ता है: पहले इकाई, फिर दहाई।",
  "phase_distribution": {
@@ -277,7 +277,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_ADD",
-   "prompt_hi": "कुल कितने ब्लॉक्स?",
+   "prompt_hi": "",
    "audio": {
     "a": "vo_t1_a",
     "b": "vo_t1_b",
@@ -728,6 +728,10 @@
     "b": 22,
     "answer": "numpad",
     "cues": {
+     "prompt": {
+      "a": 0.073,
+      "b": 0.283
+     },
      "h1": {
       "ao": 0.213,
       "bo": 0.344,
@@ -769,6 +773,10 @@
     "b": 60,
     "answer": "numpad",
     "cues": {
+     "prompt": {
+      "a": 0.067,
+      "b": 0.282
+     },
      "h1": {
       "ao": 0.211,
       "bo": 0.343,
